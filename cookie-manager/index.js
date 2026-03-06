@@ -1,5 +1,6 @@
 import { chromium } from "playwright";
 import { writeFileSync, existsSync, mkdirSync } from "fs";
+import { execSync } from "child_process";
 
 const COOKIES_PATH = "/data/cookies.txt";
 const STATE_DIR = "/data/browser-state";
@@ -68,10 +69,34 @@ async function waitForLogin(context) {
   }
 }
 
+function findChromiumPath() {
+  const paths = [
+    "/ms-playwright/chromium-1148/chrome-linux/chrome",
+    "/ms-playwright/chromium_headless_shell-1148/chrome-linux/headless_shell",
+  ];
+  for (const p of paths) {
+    if (existsSync(p)) return p;
+  }
+  // Fallback: find it
+  try {
+    return execSync("find /ms-playwright -name 'chrome' -type f 2>/dev/null | head -1")
+      .toString().trim();
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
   if (!existsSync(STATE_DIR)) mkdirSync(STATE_DIR, { recursive: true });
 
-  const browser = await chromium.launchPersistentContext(STATE_DIR, {
+  // Find Chromium binary path
+  const chromePath = findChromiumPath();
+  if (chromePath) {
+    console.log(`[cookie-manager] Found Chromium at: ${chromePath}`);
+  }
+
+  // Launch persistent context with explicit executablePath
+  const launchOpts = {
     headless: true,
     args: [
       `--remote-debugging-port=${CDP_PORT}`,
@@ -84,13 +109,24 @@ async function main() {
     locale: "en-US",
     userAgent:
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-  });
+  };
+  if (chromePath) launchOpts.executablePath = chromePath;
+
+  const browser = await chromium.launchPersistentContext(STATE_DIR, launchOpts);
 
   console.log(`[cookie-manager] Browser started, CDP on port ${CDP_PORT}`);
 
+  // Verify CDP is accessible
+  try {
+    const res = await fetch(`http://0.0.0.0:${CDP_PORT}/json/version`);
+    const data = await res.json();
+    console.log(`[cookie-manager] CDP verified: ${data.Browser || "ok"}`);
+  } catch (e) {
+    console.log(`[cookie-manager] CDP check failed: ${e.message}`);
+  }
+
   // Check if already logged in (persistent context from previous run)
   if (!(await isLoggedIn(browser))) {
-    // Open YouTube so user has a page to work with
     const page = await browser.newPage();
     await page.goto("https://accounts.google.com/ServiceLogin?service=youtube", {
       waitUntil: "domcontentloaded",

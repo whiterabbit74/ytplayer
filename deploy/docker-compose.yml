@@ -10,7 +10,7 @@ services:
     image: ghcr.io/voenniy/ytplayer-cookie-manager:latest
     restart: unless-stopped
     ports:
-      - "127.0.0.1:9222:9222"
+      - "127.0.0.1:9222:9223"
     volumes:
       - cookie-data:/data
     networks:
