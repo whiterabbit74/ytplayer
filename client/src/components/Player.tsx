@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { getThumbUrl } from "@/lib/api";
 import { usePlayerStore } from "@/stores/player";
 import { usePlaylistsStore } from "@/stores/playlists";
 import { Button } from "@/components/ui/button";
@@ -10,9 +11,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Play, Pause, SkipForward, Volume2, Repeat1, ListPlus, ListMinus, FolderPlus, Plus, ExternalLink } from "lucide-react";
+import { Play, Pause, SkipForward, Volume2, Repeat1, ListPlus, ListMinus, FolderPlus, Plus, ExternalLink, Heart } from "lucide-react";
 import { handleImgError } from "@/lib/img-fallback";
 import { useTranslation } from "@/i18n";
+import { useFavoritesStore } from "@/stores/favorites";
 
 function formatTime(sec: number): string {
   if (!sec || !isFinite(sec)) return "0:00";
@@ -54,6 +56,8 @@ export function Player({
   const createPlaylist = usePlaylistsStore((s) => s.createPlaylist);
   const addTrackToPlaylist = usePlaylistsStore((s) => s.addTrack);
   const loadPlaylists = usePlaylistsStore((s) => s.loadPlaylists);
+  const isFavorite = useFavoritesStore((s) => s.isFavorite);
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
 
   useEffect(() => { loadPlaylists(); }, [loadPlaylists]);
 
@@ -61,11 +65,12 @@ export function Player({
 
   const queueIndex = queue.findIndex((t) => t.id === currentTrack.id);
   const isInQueue = queueIndex >= 0;
+  const isFav = isFavorite(currentTrack.id);
 
   return (
     <div data-testid="player" className="border-t bg-card px-4 py-3">
       <div className="flex items-center gap-4 max-w-4xl mx-auto">
-        <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-12 h-12 rounded" onError={handleImgError} />
+        <img src={getThumbUrl(currentTrack.thumbnail)} alt={currentTrack.title} className="w-12 h-12 rounded" onError={handleImgError} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{currentTrack.title}</p>
           <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
@@ -94,6 +99,14 @@ export function Player({
           </Button>
           <Button variant="ghost" size="icon" onClick={toggleRepeat}>
             <Repeat1 className={`h-5 w-5 ${repeatMode === "one" ? "text-green-500" : ""}`} />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => toggleFavorite(currentTrack)}
+            title={isFav ? t("favorites.removed") : t("favorites.added")}
+          >
+            <Heart className={`h-5 w-5 ${isFav ? "fill-red-500 text-red-500" : ""}`} />
           </Button>
           <Button
             variant="ghost"

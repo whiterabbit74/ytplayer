@@ -1,0 +1,47 @@
+services:
+  bgutil-provider:
+    image: brainicism/bgutil-ytdlp-pot-provider:latest
+    restart: unless-stopped
+    init: true
+    networks:
+      - stonks_default
+
+  cookie-manager:
+    image: ghcr.io/voenniy/ytplayer-cookie-manager:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9222:9222"
+    volumes:
+      - ytplayer-cookie-data:/data
+    networks:
+      - stonks_default
+
+  musicplay:
+    build:
+      context: .
+      args:
+        COMMIT_HASH: "${COMMIT_HASH:-dev}"
+    container_name: musicplay
+    restart: unless-stopped
+    depends_on:
+      - bgutil-provider
+      - cookie-manager
+    env_file:
+      - .env
+    environment:
+      - LOG_DIR=/app/logs
+      - BGUTIL_POT_BASE_URL=http://bgutil-provider:4416
+    volumes:
+      - ./data:/app/data
+      - ytplayer-cookie-data:/app/cookie-data:ro
+    networks:
+      - stonks_default
+    expose:
+      - "3001"
+
+volumes:
+  ytplayer-cookie-data:
+
+networks:
+  stonks_default:
+    external: true

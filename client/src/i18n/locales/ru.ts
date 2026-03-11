@@ -45,6 +45,12 @@ const ru = {
   "nav.search": "Поиск",
   "nav.playlists": "Плейлисты",
   "nav.queue": "Очередь",
+  "nav.favorites": "Избранное",
+
+  // Избранное
+  "favorites.added": "Добавлено в избранное",
+  "favorites.removed": "Удалено из избранного",
+  "favorites.empty": "В избранном пока ничего нет",
 } as const;
 
 export default ru;

@@ -1,8 +1,8 @@
-import { Search, ListMusic, ListOrdered } from "lucide-react";
+import { Search, ListMusic, ListOrdered, Heart } from "lucide-react";
 import { useTranslation } from "@/i18n";
 import type { TranslationKey } from "@/i18n";
 
-export type MobileTab = "search" | "playlists" | "queue";
+export type MobileTab = "search" | "playlists" | "favorites" | "queue";
 
 interface MobileNavProps {
   activeTab: MobileTab;
@@ -12,6 +12,7 @@ interface MobileNavProps {
 const tabs: { id: MobileTab; labelKey: TranslationKey; icon: typeof Search }[] = [
   { id: "search", labelKey: "nav.search", icon: Search },
   { id: "playlists", labelKey: "nav.playlists", icon: ListMusic },
+  { id: "favorites", labelKey: "nav.favorites", icon: Heart },
   { id: "queue", labelKey: "nav.queue", icon: ListOrdered },
 ];
 

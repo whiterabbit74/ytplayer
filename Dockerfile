@@ -5,7 +5,7 @@ WORKDIR /app/client
 COPY client/package.json client/package-lock.json ./
 RUN npm ci
 COPY client/ ./
-RUN VITE_COMMIT_HASH=$COMMIT_HASH npx vite build
+RUN VITE_COMMIT_HASH=$COMMIT_HASH npx vite build --base=/music/
 
 # --- Stage 2: Build server ---
 FROM node:22-alpine AS server-build

@@ -45,9 +45,17 @@ export function useAudio(onEnded?: () => void, repeatOne?: boolean): UseAudioRet
     const audio = getAudio();
     audio.volume = volume;
 
+    let lastUpdate = 0;
     const onTimeUpdate = () => {
-      setCurrentTime(audio.currentTime);
       const now = Date.now();
+      
+      // Throttle UI update to ~500ms
+      if (now - lastUpdate > 500) {
+        setCurrentTime(audio.currentTime);
+        lastUpdate = now;
+      }
+
+      // Keep persistence logic (2s threshold)
       if (now - lastSaveRef.current > 2000) {
         localStorage.setItem("musicplay-position", String(audio.currentTime));
         lastSaveRef.current = now;

@@ -47,6 +47,12 @@ const kk: Translations = {
   "nav.search": "Іздеу",
   "nav.playlists": "Ойнату тізімдері",
   "nav.queue": "Кезек",
+  "nav.favorites": "Таңдаулылар",
+
+  // Таңдаулылар
+  "favorites.added": "Таңдаулыларға қосылды",
+  "favorites.removed": "Таңдаулылардан өшірілді",
+  "favorites.empty": "Таңдаулыларда әлі ештеңе жоқ",
 };
 
 export default kk;

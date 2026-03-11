@@ -47,6 +47,12 @@ const en: Translations = {
   "nav.search": "Search",
   "nav.playlists": "Playlists",
   "nav.queue": "Queue",
+  "nav.favorites": "Favorites",
+
+  // Favorites
+  "favorites.added": "Added to favorites",
+  "favorites.removed": "Removed from favorites",
+  "favorites.empty": "Favorites are empty",
 };
 
 export default en;

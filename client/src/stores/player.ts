@@ -22,6 +22,7 @@ interface PlayerState {
   setSearchResults: (tracks: Track[], nextPageToken?: string) => void;
   appendSearchResults: (tracks: Track[], nextPageToken?: string) => void;
   clearQueue: () => void;
+  setQueue: (tracks: Track[], index?: number) => void;
   shuffle: () => void;
 }
 
@@ -117,6 +118,9 @@ export const usePlayerStore = create<PlayerState>()(
 
       clearQueue: () =>
         set({ queue: [], currentIndex: -1, currentTrack: null, isPlaying: false }),
+
+      setQueue: (tracks, index = 0) =>
+        set({ queue: tracks, currentIndex: index }),
 
       shuffle: () =>
         set((state) => {

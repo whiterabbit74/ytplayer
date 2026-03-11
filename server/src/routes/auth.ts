@@ -2,7 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { getDb } from "../db";
-import { requireAuth, JWT_SECRET, COOKIE_NAME, MAX_AGE, type AuthRequest } from "../middleware/auth";
+import { requireAuth, JWT_SECRET, COOKIE_NAME, MAX_AGE, TOKEN_TTL, type AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -22,7 +22,7 @@ router.post("/login", (req, res) => {
     return;
   }
 
-  const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "365d" });
+  const token = jwt.sign({ userId: user.id }, JWT_SECRET as string, { expiresIn: TOKEN_TTL as any });
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

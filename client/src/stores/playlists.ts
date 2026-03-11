@@ -15,20 +15,38 @@ interface PlaylistsState {
   addTrack: (playlistId: number, track: Track) => Promise<void>;
   removeTrack: (playlistId: number, trackId: number) => Promise<void>;
   reorderTracks: (playlistId: number, trackIds: number[]) => Promise<void>;
+  isLoading: boolean;
+  lastLoaded: number;
 }
+const LOAD_THRESHOLD = 5000; // 5 seconds
+let inFlightLoad: Promise<void> | null = null;
 
 export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
   playlists: [],
   activePlaylistId: null,
   activePlaylistTracks: [],
+  isLoading: false,
+  lastLoaded: 0,
 
   loadPlaylists: async () => {
-    try {
-      const playlists = await api.fetchPlaylists();
-      set({ playlists });
-    } catch (err) {
-      console.error("Failed to load playlists:", err);
-    }
+    const { lastLoaded, isLoading } = get();
+    if (isLoading && inFlightLoad) return inFlightLoad;
+    if (Date.now() - lastLoaded < LOAD_THRESHOLD) return;
+
+    set({ isLoading: true });
+    inFlightLoad = (async () => {
+      try {
+        const playlists = await api.fetchPlaylists();
+        set({ playlists, lastLoaded: Date.now() });
+      } catch (err) {
+        console.error("Failed to load playlists:", err);
+      } finally {
+        set({ isLoading: false });
+        inFlightLoad = null;
+      }
+    })();
+
+    return inFlightLoad;
   },
 
   createPlaylist: async (name) => {

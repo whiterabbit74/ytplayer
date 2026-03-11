@@ -40,10 +40,15 @@ export function invalidateCache(videoId: string): void {
 }
 
 function pickBestAudioFormat(formats: any[]): { url: string; contentLength: number; mimeType: string; httpHeaders: Record<string, string> } | null {
-  const audioOnly = formats.filter((f) => f.vcodec === "none" && f.acodec !== "none" && f.url);
-  if (audioOnly.length === 0) return null;
-  audioOnly.sort((a, b) => (b.abr || 0) - (a.abr || 0));
-  const best = audioOnly[0];
+  // Prefer audio-only formats
+  let candidates = formats.filter((f) => f.vcodec === "none" && f.acodec !== "none" && f.url);
+  // Fallback: combined formats that have audio (web/ios clients don't return audio-only)
+  if (candidates.length === 0) {
+    candidates = formats.filter((f) => f.acodec && f.acodec !== "none" && f.url);
+  }
+  if (candidates.length === 0) return null;
+  candidates.sort((a, b) => (b.abr || 0) - (a.abr || 0));
+  const best = candidates[0];
   // mime_type from yt-dlp: "audio/webm; codecs=opus" — strip codecs for Content-Type
   const mimeType = best.mime_type
     ? best.mime_type.split(";")[0].trim()
@@ -67,7 +72,7 @@ function findCookiesPath(): string | null {
 function buildYtdlpArgs(videoUrl: string, useCookies: boolean): string[] {
   const args = [
     "--dump-json", "--no-warnings", "--no-playlist",
-    "-f", "bestaudio",
+    "-f", "bestaudio*",
     "--geo-bypass",
     "--force-ipv4",
   ];
@@ -77,6 +82,11 @@ function buildYtdlpArgs(videoUrl: string, useCookies: boolean): string[] {
   if (bgutilUrl) {
     args.push("--extractor-args", `youtubepot-bgutilhttp:base_url=${bgutilUrl}`);
   }
+
+  // JS solvers and clients
+  args.push("--js-runtimes", "node");
+  args.push("--remote-components", "ejs:github");
+  args.push("--extractor-args", "youtube:player-client=web,ios");
 
   // Cookies только по запросу (fallback при "Sign in" ошибке)
   if (useCookies) {
@@ -121,20 +131,17 @@ function spawnYtdlp(videoId: string, useCookies: boolean): Promise<any> {
 const SIGN_IN_ERROR = "Sign in to confirm";
 
 async function fetchYtdlpJson(videoId: string): Promise<any> {
-  // 1. Try without cookies first (avoids geo-mismatch issues)
-  try {
-    return await spawnYtdlp(videoId, false);
-  } catch (err: any) {
-    const needsAuth = err.stderr && err.stderr.includes(SIGN_IN_ERROR);
-    if (!needsAuth) throw err;
-
-    // 2. Fallback: retry with cookies for "Sign in" errors
-    const cookiePath = findCookiesPath();
-    if (!cookiePath) throw err;
-
-    log.info({ videoId }, "Retrying with cookies after Sign-in error");
-    return await spawnYtdlp(videoId, true);
+  // Always use cookies when available (server IP gets bot-checked without them)
+  const cookiePath = findCookiesPath();
+  if (cookiePath) {
+    try {
+      return await spawnYtdlp(videoId, true);
+    } catch (err: any) {
+      log.error({ err, videoId }, "yt-dlp failed with cookies, retrying without");
+    }
   }
+  // Fallback: try without cookies
+  return await spawnYtdlp(videoId, false);
 }
 
 export async function resolveAudioUrl(videoId: string): Promise<AudioInfo> {

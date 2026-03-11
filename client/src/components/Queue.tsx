@@ -1,4 +1,5 @@
 import { usePlayerStore } from "@/stores/player";
+import { getThumbUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { X, Shuffle, Trash2, Volume2, Pause, ExternalLink } from "lucide-react";
@@ -54,7 +55,7 @@ export function Queue() {
                     )}
                   </div>
                 ) : (
-                  <img src={track.thumbnail} alt="" className="w-8 h-8 rounded object-cover" onError={handleImgError} />
+                  <img src={getThumbUrl(track.thumbnail)} alt="" className="w-8 h-8 rounded object-cover" onError={handleImgError} loading="lazy" />
                 )}
                 <div className="flex-1 min-w-0">
                   <p className={`text-xs font-medium truncate ${isCurrent ? "text-primary" : ""}`}>{track.title}</p>

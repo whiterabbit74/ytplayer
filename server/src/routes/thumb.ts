@@ -43,7 +43,11 @@ router.get("/:videoId", async (req, res) => {
   }
 
   try {
-    const upstream = await fetch(THUMB_URL(videoId));
+    const upstream = await fetch(THUMB_URL(videoId), {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      }
+    });
     if (!upstream.ok) {
       return res.status(upstream.status).json({ error: "Upstream error" });
     }
@@ -56,7 +60,7 @@ router.get("/:videoId", async (req, res) => {
     evict();
 
     res.setHeader("Content-Type", contentType);
-    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader("Cache-Control", "public, max-age=604800, immutable"); // 7 days
     res.end(buffer);
   } catch (err) {
     log.error({ err, videoId }, "Fetch error");

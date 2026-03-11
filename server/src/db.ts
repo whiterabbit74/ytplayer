@@ -52,6 +52,21 @@ export function initDb(path: string = process.env.DB_PATH || "./musicplay.db"): 
     );
 
     CREATE INDEX IF NOT EXISTS idx_search_cache_created_at ON search_cache(created_at);
+
+    CREATE TABLE IF NOT EXISTS favorites (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      video_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      artist TEXT NOT NULL,
+      thumbnail TEXT NOT NULL,
+      duration INTEGER DEFAULT 0,
+      added_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(user_id, video_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_playlist_tracks_playlist_id_position ON playlist_tracks(playlist_id, position);
+    CREATE INDEX IF NOT EXISTS idx_favorites_user_id ON favorites(user_id);
+    CREATE INDEX IF NOT EXISTS idx_playlists_user_id ON playlists(user_id);
   `);
 
   // Миграция: добавить колонки если таблица уже существует без них

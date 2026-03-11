@@ -15,3 +15,7 @@ dist/
 .opencode/
 .windsurf/
 skills/
+.DS_Store
+yt-dlp
+.env*
+!.env.example

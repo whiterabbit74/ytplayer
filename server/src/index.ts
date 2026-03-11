@@ -9,6 +9,7 @@ import playlistsRouter from "./routes/playlists";
 import authRouter from "./routes/auth";
 import playerStateRouter from "./routes/player-state";
 import thumbRouter from "./routes/thumb";
+import favoritesRouter from "./routes/favorites";
 import { initDb } from "./db";
 import { requireAuth } from "./middleware/auth";
 import { logger } from "./lib/logger";
@@ -28,13 +29,14 @@ cleanExpiredCache();
 
 // Public routes
 app.use("/api/auth", authRouter);
+app.use("/api/thumb", thumbRouter);
 
 // Protected routes
 app.use("/api/search", requireAuth, searchRouter);
 app.use("/api/stream", requireAuth, streamRouter);
 app.use("/api/playlists", requireAuth, playlistsRouter);
 app.use("/api/player", requireAuth, playerStateRouter);
-app.use("/api/thumb", requireAuth, thumbRouter);
+app.use("/api/favorites", requireAuth, favoritesRouter);
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { getThumbUrl } from "@/lib/api";
 import { usePlayerStore } from "@/stores/player";
 import { usePlaylistsStore } from "@/stores/playlists";
 import { Button } from "@/components/ui/button";
@@ -63,7 +64,7 @@ export function MiniPlayer({
         onClick={onTap}
       >
         <img
-          src={currentTrack.thumbnail}
+          src={getThumbUrl(currentTrack.thumbnail)}
           alt={currentTrack.title}
           className="w-10 h-10 rounded object-cover"
           onError={handleImgError}

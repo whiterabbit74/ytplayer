@@ -1,6 +1,6 @@
 import type { Track } from "./api";
 
-const API_BASE = "/api";
+const API_BASE = import.meta.env.BASE_URL + "api";
 
 export interface PlayerStateData {
   queue: Track[];

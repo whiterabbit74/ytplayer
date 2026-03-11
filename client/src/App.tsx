@@ -10,12 +10,14 @@ import { Queue } from "@/components/Queue";
 import { MobileNav, type MobileTab } from "@/components/MobileNav";
 import { MiniPlayer } from "@/components/MiniPlayer";
 import { FullscreenPlayer } from "@/components/FullscreenPlayer";
-import { searchTracks } from "@/lib/api";
+import { FavoritesList } from "@/components/FavoritesList";
+import { searchTracks, getThumbUrl } from "@/lib/api";
 import { usePlayerStore } from "@/stores/player";
 import { useAudio } from "@/hooks/useAudio";
 import { useMediaSession } from "@/hooks/useMediaSession";
 import { usePlayerSync } from "@/hooks/usePlayerSync";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFavoritesStore } from "@/stores/favorites";
 import { LoginPage } from "@/components/LoginPage";
 import { useTranslation } from "@/i18n";
 
@@ -63,6 +65,7 @@ function AuthenticatedApp() {
   const nextPageToken = usePlayerStore((s) => s.nextPageToken);
   const play = usePlayerStore((s) => s.play);
   const addToQueue = usePlayerStore((s) => s.addToQueue);
+  const loadFavoriteIds = useFavoritesStore((s) => s.loadFavoriteIds);
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const storeIsPlaying = usePlayerStore((s) => s.isPlaying);
   const storePause = usePlayerStore((s) => s.pause);
@@ -124,7 +127,7 @@ function AuthenticatedApp() {
   useMediaSession({
     title: currentTrack?.title,
     artist: currentTrack?.artist,
-    artwork: currentTrack?.thumbnail,
+    artwork: currentTrack?.thumbnail ? getThumbUrl(currentTrack.thumbnail) : undefined,
     isPlaying: storeIsPlaying,
     onPlay: handlePlay,
     onPause: handlePauseAction,
@@ -133,6 +136,7 @@ function AuthenticatedApp() {
 
   // Auto-search on page load if URL has ?q= parameter (with StrictMode protection)
   useEffect(() => {
+    loadFavoriteIds();
     if (lastQuery && !hasAutoSearchedRef.current) {
       hasAutoSearchedRef.current = true;
       handleSearch(lastQuery);
@@ -187,6 +191,12 @@ function AuthenticatedApp() {
         return (
           <div className="flex-1 overflow-auto">
             <MobilePlaylistsView />
+          </div>
+        );
+      case "favorites":
+        return (
+          <div className="flex-1 overflow-auto">
+            <FavoritesList />
           </div>
         );
       case "queue":

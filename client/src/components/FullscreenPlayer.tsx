@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { getThumbUrl } from "@/lib/api";
 import { usePlayerStore } from "@/stores/player";
 import { usePlaylistsStore } from "@/stores/playlists";
 import { Slider } from "@/components/ui/slider";
@@ -15,9 +16,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Play, Pause, SkipBack, SkipForward, ChevronDown, Repeat1, ListPlus, ListMinus, FolderPlus, Plus } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, ChevronDown, Repeat1, ListPlus, ListMinus, FolderPlus, Plus, Heart } from "lucide-react";
 import { handleImgError } from "@/lib/img-fallback";
 import { useTranslation } from "@/i18n";
+import { useFavoritesStore } from "@/stores/favorites";
 import { VisuallyHidden } from "radix-ui";
 const VisuallyHiddenRoot = VisuallyHidden.Root;
 
@@ -63,6 +65,8 @@ export function FullscreenPlayer({
   const createPlaylist = usePlaylistsStore((s) => s.createPlaylist);
   const addTrackToPlaylist = usePlaylistsStore((s) => s.addTrack);
   const loadPlaylists = usePlaylistsStore((s) => s.loadPlaylists);
+  const isFavorite = useFavoritesStore((s) => s.isFavorite);
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
 
   useEffect(() => { loadPlaylists(); }, [loadPlaylists]);
 
@@ -70,6 +74,7 @@ export function FullscreenPlayer({
 
   const queueIndex = queue.findIndex((t) => t.id === currentTrack.id);
   const isInQueue = queueIndex >= 0;
+  const isFav = isFavorite(currentTrack.id);
 
   return (
     <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
@@ -97,7 +102,7 @@ export function FullscreenPlayer({
           {/* Album cover */}
           <div className="flex-1 flex items-center justify-center py-4">
             <img
-              src={currentTrack.thumbnail}
+              src={getThumbUrl(currentTrack.thumbnail)}
               alt={currentTrack.title}
               className="w-72 h-72 rounded-lg object-cover shadow-2xl"
               onError={handleImgError}
@@ -166,6 +171,9 @@ export function FullscreenPlayer({
             </Button>
             <Button variant="ghost" size="icon" onClick={toggleRepeat}>
               <Repeat1 className={`h-5 w-5 ${repeatMode === "one" ? "text-green-500" : ""}`} />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => toggleFavorite(currentTrack)}>
+              <Heart className={`h-5 w-5 ${isFav ? "fill-red-500 text-red-500" : ""}`} />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

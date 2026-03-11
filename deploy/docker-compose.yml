@@ -16,8 +16,9 @@ services:
     networks:
       - web
 
-  app:
-    image: ghcr.io/voenniy/ytplayer:latest
+  musicplay:
+    image: ytplayer-musicplay:latest
+    container_name: musicplay
     restart: unless-stopped
     depends_on:
       - bgutil-provider
@@ -26,10 +27,12 @@ services:
     environment:
       - LOG_DIR=/app/logs
       - BGUTIL_POT_BASE_URL=http://bgutil-provider:4416
+    ports:
+      - "127.0.0.1:2999:3001"
     volumes:
       - db-data:/app/data
       - ./logs:/app/logs
-      - cookie-data:/app/cookie-data:ro
+      - cookie-data:/app/cookie-data
     networks:
       - web
 

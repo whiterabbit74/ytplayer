@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import type { Track } from "@/lib/api";
+import { type Track, getThumbUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,7 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { usePlaylistsStore } from "@/stores/playlists";
-import { Eye, ThumbsUp, Clock, ArrowUpDown, Loader2, ListPlus, ListMinus, Plus, Volume2, Pause, ExternalLink, FolderPlus, MoreVertical } from "lucide-react";
+import { useFavoritesStore } from "@/stores/favorites";
+import { Eye, ThumbsUp, Clock, ArrowUpDown, Loader2, ListPlus, ListMinus, Plus, Volume2, Pause, ExternalLink, FolderPlus, MoreVertical, Heart } from "lucide-react";
 import { usePlayerStore } from "@/stores/player";
 import { handleImgError } from "@/lib/img-fallback";
 import { useTranslation } from "@/i18n";
@@ -94,6 +95,8 @@ export function TrackList({ tracks, onPlay, onAddToQueue, onLoadMore, hasMore, i
   const storeIsPlaying = usePlayerStore((s) => s.isPlaying);
   const queue = usePlayerStore((s) => s.queue);
   const removeFromQueue = usePlayerStore((s) => s.removeFromQueue);
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const isFavorite = useFavoritesStore((s) => s.isFavorite);
   const [sortField, setSortField] = useState<SortField>("default");
   const [sortAsc, setSortAsc] = useState(false);
 
@@ -104,6 +107,14 @@ export function TrackList({ tracks, onPlay, onAddToQueue, onLoadMore, hasMore, i
       return sortAsc ? diff : -diff;
     });
   }, [tracks, sortField, sortAsc]);
+
+  const queueMap = useMemo(() => {
+    const m = new Map<string, number>();
+    queue.forEach((t, i) => {
+      if (!m.has(t.id)) m.set(t.id, i);
+    });
+    return m;
+  }, [queue]);
 
   if (tracks.length === 0) return null;
 
@@ -147,8 +158,9 @@ export function TrackList({ tracks, onPlay, onAddToQueue, onLoadMore, hasMore, i
       <div className="space-y-1">
         {sortedTracks.map((track) => {
           const isCurrent = track.id === currentTrackId;
-          const queueIndex = queue.findIndex((t) => t.id === track.id);
-          const isInQueue = queueIndex >= 0;
+          const queueIndex = queueMap.get(track.id);
+          const isInQueue = queueIndex !== undefined;
+          const isFav = isFavorite(track.id);
           return (
           <div
             key={track.id}
@@ -164,7 +176,7 @@ export function TrackList({ tracks, onPlay, onAddToQueue, onLoadMore, hasMore, i
                 )}
               </div>
             ) : (
-              <img src={track.thumbnail} alt={track.title} className="w-12 h-12 rounded object-cover shrink-0" onError={handleImgError} />
+              <img src={getThumbUrl(track.thumbnail)} alt={track.title} className="w-12 h-12 rounded object-cover shrink-0" onError={handleImgError} loading="lazy" />
             )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{track.title}</p>
@@ -226,6 +238,15 @@ export function TrackList({ tracks, onPlay, onAddToQueue, onLoadMore, hasMore, i
                 <ListPlus className="h-4 w-4" />
               )}
             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden md:inline-flex opacity-0 group-hover:opacity-100 shrink-0"
+              onClick={(e) => { e.stopPropagation(); toggleFavorite(track); }}
+              title={isFav ? t("favorites.removed") : t("favorites.added")}
+            >
+              <Heart className={`h-4 w-4 ${isFav ? "fill-red-500 text-red-500" : ""}`} />
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -262,6 +283,10 @@ export function TrackList({ tracks, onPlay, onAddToQueue, onLoadMore, hasMore, i
                     <ListPlus className="h-4 w-4 mr-2" />
                   )}
                   {isInQueue ? t("queue.removeFromQueue") : t("queue.addToQueue")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); toggleFavorite(track); }}>
+                  <Heart className={`h-4 w-4 mr-2 ${isFav ? "fill-red-500 text-red-500" : ""}`} />
+                  {isFav ? t("favorites.removed") : t("favorites.added")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <TrackPlaylistMenu track={track} />

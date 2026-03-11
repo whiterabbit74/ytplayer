@@ -1,4 +1,4 @@
-const API_BASE = "/api";
+const API_BASE = import.meta.env.BASE_URL + "api";
 
 export interface Track {
   id: string;
@@ -34,4 +34,13 @@ export async function fetchSuggestions(query: string): Promise<string[]> {
 
 export function getStreamUrl(videoId: string): string {
   return `${API_BASE}/stream/${videoId}`;
+}
+
+export function getThumbUrl(thumbnail: string): string {
+  const base = import.meta.env.BASE_URL;
+  // Server returns "/api/thumb/..." — prepend base path if needed
+  if (base && base !== "/" && thumbnail.startsWith("/api/")) {
+    return base + thumbnail.slice(1); // "/music/" + "api/thumb/..." = "/music/api/thumb/..."
+  }
+  return thumbnail;
 }
