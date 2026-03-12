@@ -5,3 +5,7 @@ dist
 .git
 .agents
 .claude
+ios
+docs
+design
+server/musicplay.db.remote*

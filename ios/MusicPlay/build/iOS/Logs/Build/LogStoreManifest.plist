@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>logFormatVersion</key>
+	<integer>11</integer>
+	<key>logs</key>
+	<dict>
+		<key>501A3F9F-E7BA-4A4C-BAB2-C979DAB32BCF</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>501A3F9F-E7BA-4A4C-BAB2-C979DAB32BCF.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>MusicPlay project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>MusicPlay</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Cleaning project MusicPlay with scheme MusicPlay</string>
+			<key>timeStartedRecording</key>
+			<real>794977449.81972098</real>
+			<key>timeStoppedRecording</key>
+			<real>794977450.09901595</real>
+			<key>title</key>
+			<string>Cleaning project MusicPlay with scheme MusicPlay</string>
+			<key>uniqueIdentifier</key>
+			<string>501A3F9F-E7BA-4A4C-BAB2-C979DAB32BCF</string>
+		</dict>
+		<key>BDEE32E8-CCFD-468C-A18A-D3240F5118ED</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>BDEE32E8-CCFD-468C-A18A-D3240F5118ED.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>W</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>2</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>MusicPlay project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>MusicPlay</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project MusicPlay with scheme MusicPlay</string>
+			<key>timeStartedRecording</key>
+			<real>794977338.42204702</real>
+			<key>timeStoppedRecording</key>
+			<real>794977360.97590804</real>
+			<key>title</key>
+			<string>Building project MusicPlay with scheme MusicPlay</string>
+			<key>uniqueIdentifier</key>
+			<string>BDEE32E8-CCFD-468C-A18A-D3240F5118ED</string>
+		</dict>
+		<key>C8A94E00-78D4-493C-AEC8-492BACB26A6E</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>C8A94E00-78D4-493C-AEC8-492BACB26A6E.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>E</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>1</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>MusicPlay project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>MusicPlay</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project MusicPlay with scheme MusicPlay</string>
+			<key>timeStartedRecording</key>
+			<real>794977450.10326803</real>
+			<key>timeStoppedRecording</key>
+			<real>794977451.87145197</real>
+			<key>title</key>
+			<string>Building project MusicPlay with scheme MusicPlay</string>
+			<key>uniqueIdentifier</key>
+			<string>C8A94E00-78D4-493C-AEC8-492BACB26A6E</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

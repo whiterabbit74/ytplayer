@@ -14,10 +14,27 @@ IMAGE_NAME="ytplayer-musicplay"
 echo "🚀 MusicPlay DEPLOY"
 echo "==================="
 
-# 1. ВЕРСИЯ КОДА
+# 1. ПРОВЕРКА СОСТОЯНИЯ GIT
+echo "🔍 Проверка актуальности кода в GitHub..."
+git fetch origin main 2>/dev/null || true
+LOCAL=$(git rev-parse HEAD)
+REMOTE=$(git rev-parse origin/main 2>/dev/null || echo "")
+
+if [ "$LOCAL" != "$REMOTE" ] && [ -n "$REMOTE" ]; then
+    echo "❌ ОШИБКА: Локальный код не совпадает с GitHub (origin/main)."
+    echo "Сначала сделайте 'git push' или 'git pull'."
+    exit 1
+fi
+
+if ! git diff-index --quiet HEAD --; then
+    echo "❌ ОШИБКА: У вас есть незакоммиченные изменения."
+    echo "Закоммитьте или очистите рабочую директорию перед деплоем."
+    exit 1
+fi
+
 GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "dev")
 GIT_DATE=$(git log -1 --format=%cd --date=format:'%Y-%m-%d %H:%M:%S' 2>/dev/null || echo "unknown")
-echo "📋 Версия: ${GIT_COMMIT} от ${GIT_DATE}"
+echo "✅ Код актуален. Версия: ${GIT_COMMIT} от ${GIT_DATE}"
 
 # 2. ЛОКАЛЬНАЯ СБОРКА DOCKER ОБРАЗА (cross для amd64 сервера)
 echo ""
@@ -45,7 +62,10 @@ echo "📁 Синхронизация конфигурации..."
 scp -o StrictHostKeyChecking=no \
     "$PROJECT_DIR/deploy/docker-compose.yml" \
     "${SERVER}:${REMOTE_DIR}/docker-compose.yml"
-echo "✅ docker-compose.yml обновлён"
+scp -o StrictHostKeyChecking=no \
+    "$PROJECT_DIR/deploy/Caddyfile" \
+    "${SERVER}:${REMOTE_DIR}/Caddyfile"
+echo "✅ Конфиги обновлены"
 
 # 5. РАЗВЕРТЫВАНИЕ НА СЕРВЕРЕ
 echo ""

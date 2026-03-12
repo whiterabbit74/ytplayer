@@ -1,0 +1,18 @@
+"/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/PlaylistDetailView.swift":
+  diagnostics: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView.dia"
+  const-values: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView.swiftconstvalues"
+  swift-dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView.swiftdeps"
+  object: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView.o"
+  dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView.d"
+"/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Stores/PlayerStore.swift":
+  dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerStore.d"
+  object: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerStore.o"
+  diagnostics: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerStore.dia"
+  const-values: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerStore.swiftconstvalues"
+  swift-dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerStore.swiftdeps"
+"/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Services/PlayerSyncService.swift":
+  dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerSyncService.d"
+  object: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerSyncService.o"
+  swift-dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerSyncService.swiftdeps"
+  const-values: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerSyncService.swiftconstvalues"
+  diagnostics: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerSyncService.dia"

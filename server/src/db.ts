@@ -64,9 +64,18 @@ export function initDb(path: string = process.env.DB_PATH || "./musicplay.db"): 
       added_at TEXT DEFAULT (datetime('now')),
       UNIQUE(user_id, video_id)
     );
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,
+      created_at INTEGER NOT NULL
+    );
     CREATE INDEX IF NOT EXISTS idx_playlist_tracks_playlist_id_position ON playlist_tracks(playlist_id, position);
     CREATE INDEX IF NOT EXISTS idx_favorites_user_id ON favorites(user_id);
     CREATE INDEX IF NOT EXISTS idx_playlists_user_id ON playlists(user_id);
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
   `);
 
   // Миграция: добавить колонки если таблица уже существует без них

@@ -1,0 +1,238 @@
+{
+  "" : {
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MusicPlay-master.dia",
+    "emit-module-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MusicPlay-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MusicPlay-master-emit-module.dia",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MusicPlay-master.swiftdeps"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/API/APIClient.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/APIClient.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/APIClient.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/APIClient.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/APIClient.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/APIClient.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/APIClient.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/APIClient.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/APIClient~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/API/Models.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/Models.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/Models.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/Models.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/Models.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/Models.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/Models.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/Models.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/Models~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/API/TokenStore.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TokenStore.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TokenStore.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TokenStore.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TokenStore.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TokenStore.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TokenStore.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TokenStore.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TokenStore~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/AppState.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/AppState.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/AppState.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/AppState.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/AppState.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/AppState.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/AppState.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/AppState.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/AppState~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/MusicPlayApp.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MusicPlayApp.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MusicPlayApp.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MusicPlayApp.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MusicPlayApp.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MusicPlayApp.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MusicPlayApp.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MusicPlayApp.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MusicPlayApp~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Services/ImageCache.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/ImageCache.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/ImageCache.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/ImageCache.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/ImageCache.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/ImageCache.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/ImageCache.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/ImageCache.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/ImageCache~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Services/PlayerService.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerService.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerService.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerService.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerService.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerService.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerService.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerService.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerService~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Services/PlayerSyncService.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerSyncService.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerSyncService.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerSyncService.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerSyncService.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerSyncService.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerSyncService.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerSyncService.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerSyncService~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Stores/FavoritesStore.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesStore.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesStore.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesStore.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesStore.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesStore.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesStore.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesStore.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesStore~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Stores/PlayerStore.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerStore.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerStore.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerStore.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerStore.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerStore.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerStore.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerStore.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerStore~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Stores/PlaylistsStore.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsStore.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsStore.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsStore.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsStore.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsStore.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsStore.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsStore.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsStore~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Stores/SearchStore.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchStore.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchStore.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchStore.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchStore.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchStore.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchStore.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchStore.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchStore~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/FavoritesView.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesView.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesView.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesView.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesView.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesView.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesView~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/LoginView.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/LoginView.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/LoginView.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/LoginView.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/LoginView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/LoginView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/LoginView.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/LoginView.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/LoginView~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/MainTabView.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MainTabView.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MainTabView.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MainTabView.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MainTabView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MainTabView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MainTabView.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MainTabView.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/MainTabView~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/PlayerFullView.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerFullView.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerFullView.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerFullView.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerFullView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerFullView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerFullView.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerFullView.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerFullView~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/PlayerMiniView.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerMiniView.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerMiniView.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerMiniView.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerMiniView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerMiniView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerMiniView.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerMiniView.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlayerMiniView~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/PlaylistDetailView.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/PlaylistsView.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsView.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsView.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsView.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsView.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsView.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/PlaylistsView~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/QueueView.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/QueueView.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/QueueView.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/QueueView.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/QueueView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/QueueView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/QueueView.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/QueueView.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/QueueView~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/SearchView.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchView.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchView.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchView.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchView.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchView.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchView~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/SettingsView.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SettingsView.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SettingsView.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SettingsView.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SettingsView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SettingsView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SettingsView.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SettingsView.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SettingsView~partial.swiftmodule"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/TrackRow.swift" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TrackRow.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TrackRow.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TrackRow.dia",
+    "index-unit-output-path" : "/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TrackRow.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TrackRow.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TrackRow.o",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TrackRow.swiftdeps",
+    "swiftmodule" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/TrackRow~partial.swiftmodule"
+  }
+}

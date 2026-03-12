@@ -1,0 +1,69 @@
+{
+  "info" : {
+    "arguments" : [
+      "devicectl",
+      "device",
+      "info",
+      "apps",
+      "--device",
+      "00008140-001875A43082201C",
+      "--json-output",
+      "apps.json"
+    ],
+    "commandType" : "devicectl.device.info.apps",
+    "environment" : {
+      "TERM" : "xterm-256color"
+    },
+    "jsonVersion" : 2,
+    "outcome" : "success",
+    "version" : "397.28"
+  },
+  "result" : {
+    "apps" : [
+      {
+        "appClip" : false,
+        "builtByDeveloper" : true,
+        "bundleIdentifier" : "com.q.audiobooks",
+        "bundleVersion" : "1",
+        "defaultApp" : false,
+        "hidden" : false,
+        "internalApp" : false,
+        "name" : "Audiobooks",
+        "removable" : true,
+        "url" : "file:///private/var/containers/Bundle/Application/D26AAD71-3C1F-4EBC-B840-E4F33500ECE1/Audiobooks.app/",
+        "version" : "1.0"
+      },
+      {
+        "appClip" : false,
+        "builtByDeveloper" : true,
+        "bundleIdentifier" : "com.q.mindmap.iphone",
+        "bundleVersion" : "1",
+        "defaultApp" : false,
+        "hidden" : false,
+        "internalApp" : false,
+        "name" : "Mind Maps",
+        "removable" : true,
+        "url" : "file:///private/var/containers/Bundle/Application/33F0779C-7ADE-4919-B8E6-E0EC1A7C0274/MindMapiPhoneApp.app/",
+        "version" : "1.0"
+      },
+      {
+        "appClip" : false,
+        "builtByDeveloper" : true,
+        "bundleIdentifier" : "com.musicplay.app",
+        "bundleVersion" : "2",
+        "defaultApp" : false,
+        "hidden" : false,
+        "internalApp" : false,
+        "name" : "MusicPlay",
+        "removable" : true,
+        "url" : "file:///private/var/containers/Bundle/Application/9F79B135-4F23-4104-A66C-7060984C8594/MusicPlay.app/",
+        "version" : "1.2.1"
+      }
+    ],
+    "defaultAppsIncluded" : false,
+    "deviceIdentifier" : "C7C0F040-A833-4BC2-B6E3-EAACD9A9F782",
+    "hiddenAppsIncluded" : false,
+    "internalAppsIncluded" : false,
+    "removableAppsIncluded" : true
+  }
+}

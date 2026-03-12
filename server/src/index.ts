@@ -1,12 +1,13 @@
+import "dotenv/config";
 import express from "express";
 import path from "path";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import dotenv from "dotenv";
 import searchRouter from "./routes/search";
 import streamRouter from "./routes/stream";
 import playlistsRouter from "./routes/playlists";
 import authRouter from "./routes/auth";
+import v1Router from "./routes/v1";
 import playerStateRouter from "./routes/player-state";
 import thumbRouter from "./routes/thumb";
 import favoritesRouter from "./routes/favorites";
@@ -15,7 +16,6 @@ import { requireAuth } from "./middleware/auth";
 import { logger } from "./lib/logger";
 import { cleanExpiredCache } from "./services/search-cache";
 
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -30,6 +30,7 @@ cleanExpiredCache();
 // Public routes
 app.use("/api/auth", authRouter);
 app.use("/api/thumb", thumbRouter);
+app.use("/api/v1", v1Router);
 
 // Protected routes
 app.use("/api/search", requireAuth, searchRouter);

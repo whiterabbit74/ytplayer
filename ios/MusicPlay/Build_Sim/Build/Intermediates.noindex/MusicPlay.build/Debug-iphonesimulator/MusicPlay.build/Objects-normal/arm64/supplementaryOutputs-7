@@ -1,0 +1,18 @@
+"/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/SearchView.swift":
+  diagnostics: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchView.dia"
+  dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchView.d"
+  object: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchView.o"
+  const-values: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchView.swiftconstvalues"
+  swift-dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchView.swiftdeps"
+"/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/SettingsView.swift":
+  swift-dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SettingsView.swiftdeps"
+  const-values: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SettingsView.swiftconstvalues"
+  diagnostics: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SettingsView.dia"
+  object: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SettingsView.o"
+  dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SettingsView.d"
+"/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Stores/SearchStore.swift":
+  diagnostics: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchStore.dia"
+  object: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchStore.o"
+  const-values: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchStore.swiftconstvalues"
+  dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchStore.d"
+  swift-dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/SearchStore.swiftdeps"

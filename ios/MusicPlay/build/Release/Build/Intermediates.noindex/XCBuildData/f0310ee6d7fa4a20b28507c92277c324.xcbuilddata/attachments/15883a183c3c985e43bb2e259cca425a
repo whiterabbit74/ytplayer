@@ -1,0 +1,125 @@
+{
+  "" : {
+    "const-values" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/MusicPlay-master.swiftconstvalues",
+    "dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/MusicPlay-master.d",
+    "diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/MusicPlay-master.dia",
+    "emit-module-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/MusicPlay-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/MusicPlay-master-emit-module.dia",
+    "swift-dependencies" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/MusicPlay-master.swiftdeps"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/API/APIClient.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/APIClient.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/APIClient.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/APIClient.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/API/Models.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/Models.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/Models.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/Models.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/API/TokenStore.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/TokenStore.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/TokenStore.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/TokenStore.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/AppState.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/AppState.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/AppState.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/AppState.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/MusicPlayApp.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/MusicPlayApp.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/MusicPlayApp.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/MusicPlayApp.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Services/ImageCache.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/ImageCache.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/ImageCache.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/ImageCache.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Services/PlayerService.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlayerService.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlayerService.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlayerService.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Services/PlayerSyncService.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlayerSyncService.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlayerSyncService.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlayerSyncService.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Stores/FavoritesStore.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/FavoritesStore.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/FavoritesStore.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/FavoritesStore.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Stores/PlayerStore.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlayerStore.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlayerStore.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlayerStore.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Stores/PlaylistsStore.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlaylistsStore.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlaylistsStore.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlaylistsStore.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Stores/SearchStore.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/SearchStore.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/SearchStore.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/SearchStore.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/FavoritesView.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/FavoritesView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/FavoritesView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/FavoritesView.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/LoginView.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/LoginView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/LoginView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/LoginView.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/MainTabView.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/MainTabView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/MainTabView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/MainTabView.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/PlayerFullView.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlayerFullView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlayerFullView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlayerFullView.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/PlayerMiniView.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlayerMiniView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlayerMiniView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlayerMiniView.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/PlaylistDetailView.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlaylistDetailView.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/PlaylistsView.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlaylistsView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlaylistsView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/PlaylistsView.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/QueueView.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/QueueView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/QueueView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/QueueView.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/SearchView.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/SearchView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/SearchView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/SearchView.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/SettingsView.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/SettingsView.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/SettingsView.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/SettingsView.o"
+  },
+  "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/TrackRow.swift" : {
+    "index-unit-output-path" : "/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/TrackRow.o",
+    "llvm-bc" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/TrackRow.bc",
+    "object" : "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/build/Release/Build/Intermediates.noindex/MusicPlay.build/Release-iphoneos/MusicPlay.build/Objects-normal/arm64/TrackRow.o"
+  }
+}

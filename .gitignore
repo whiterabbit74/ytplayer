@@ -5,6 +5,7 @@ dist/
 *.db-shm
 *.db-wal
 *.db-journal
+server/musicplay.db.remote*
 
 # AI tool skills/config (generated)
 .agent/

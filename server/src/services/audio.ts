@@ -62,6 +62,9 @@ function pickBestAudioFormat(formats: any[]): { url: string; contentLength: numb
 }
 
 function findCookiesPath(): string | null {
+  if (process.env.YOUTUBE_COOKIES_PATH && existsSync(process.env.YOUTUBE_COOKIES_PATH)) {
+    return process.env.YOUTUBE_COOKIES_PATH;
+  }
   const paths = ["/app/cookie-data/cookies.txt", "/app/cookies.txt"];
   for (const p of paths) {
     if (existsSync(p)) return p;
@@ -71,24 +74,15 @@ function findCookiesPath(): string | null {
 
 function buildYtdlpArgs(videoUrl: string, useCookies: boolean): string[] {
   const args = [
-    "--dump-json", "--no-warnings", "--no-playlist",
-    "-f", "bestaudio*",
+    "--dump-json",
+    "--no-warnings",
+    "--no-playlist",
+    "-f", "bestaudio/best",
     "--geo-bypass",
     "--force-ipv4",
   ];
 
-  // bgutil PO-token provider (обход YouTube JS challenge)
-  const bgutilUrl = process.env.BGUTIL_POT_BASE_URL;
-  if (bgutilUrl) {
-    args.push("--extractor-args", `youtubepot-bgutilhttp:base_url=${bgutilUrl}`);
-  }
-
-  // JS solvers and clients
-  args.push("--js-runtimes", "node");
-  args.push("--remote-components", "ejs:github");
-  args.push("--extractor-args", "youtube:player-client=web,ios");
-
-  // Cookies только по запросу (fallback при "Sign in" ошибке)
+  // Cookies
   if (useCookies) {
     const cookiePath = findCookiesPath();
     if (cookiePath) {

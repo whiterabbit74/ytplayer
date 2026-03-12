@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     init: true
     networks:
-      - web
+      - stonks_default
 
   cookie-manager:
     image: ghcr.io/voenniy/ytplayer-cookie-manager:latest
@@ -12,9 +12,9 @@ services:
     ports:
       - "127.0.0.1:9222:9223"
     volumes:
-      - cookie-data:/data
+      - ytplayer-cookie-data:/data
     networks:
-      - web
+      - stonks_default
 
   musicplay:
     image: ytplayer-musicplay:latest
@@ -23,38 +23,22 @@ services:
     depends_on:
       - bgutil-provider
       - cookie-manager
-    env_file: .env
+    env_file:
+      - .env
     environment:
       - LOG_DIR=/app/logs
       - BGUTIL_POT_BASE_URL=http://bgutil-provider:4416
-    ports:
-      - "127.0.0.1:2999:3001"
     volumes:
-      - db-data:/app/data
-      - ./logs:/app/logs
-      - cookie-data:/app/cookie-data
+      - ./data:/app/data
+      - ytplayer-cookie-data:/app/cookie-data:ro
     networks:
-      - web
-
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
-    networks:
-      - web
+      - stonks_default
+    expose:
+      - "3001"
 
 volumes:
-  db-data:
-  caddy-data:
-  caddy-config:
-  cookie-data:
+  ytplayer-cookie-data:
 
 networks:
-  web:
+  stonks_default:
+    external: true

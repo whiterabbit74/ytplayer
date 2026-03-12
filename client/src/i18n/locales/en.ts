@@ -53,6 +53,11 @@ const en: Translations = {
   "favorites.added": "Added to favorites",
   "favorites.removed": "Removed from favorites",
   "favorites.empty": "Favorites are empty",
+
+  // Settings
+  "settings.title": "Settings",
+  "settings.account": "Account",
+  "settings.loggedInAs": "Logged in as:",
 };
 
 export default en;

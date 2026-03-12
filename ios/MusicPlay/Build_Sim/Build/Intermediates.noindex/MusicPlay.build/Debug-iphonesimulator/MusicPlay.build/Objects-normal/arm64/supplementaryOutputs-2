@@ -1,0 +1,18 @@
+"/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/LoginView.swift":
+  swift-dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/LoginView.swiftdeps"
+  diagnostics: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/LoginView.dia"
+  dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/LoginView.d"
+  object: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/LoginView.o"
+  const-values: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/LoginView.swiftconstvalues"
+"/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Views/FavoritesView.swift":
+  diagnostics: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesView.dia"
+  dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesView.d"
+  object: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesView.o"
+  swift-dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesView.swiftdeps"
+  const-values: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/FavoritesView.swiftconstvalues"
+"/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Sources/Services/ImageCache.swift":
+  diagnostics: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/ImageCache.dia"
+  const-values: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/ImageCache.swiftconstvalues"
+  object: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/ImageCache.o"
+  dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/ImageCache.d"
+  swift-dependencies: "/Users/q/Work/NOTMY/ytplayer/ios/MusicPlay/Build_Sim/Build/Intermediates.noindex/MusicPlay.build/Debug-iphonesimulator/MusicPlay.build/Objects-normal/arm64/ImageCache.swiftdeps"

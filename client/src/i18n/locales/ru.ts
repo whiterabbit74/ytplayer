@@ -51,6 +51,11 @@ const ru = {
   "favorites.added": "Добавлено в избранное",
   "favorites.removed": "Удалено из избранного",
   "favorites.empty": "В избранном пока ничего нет",
+
+  // Настройки
+  "settings.title": "Настройки",
+  "settings.account": "Аккаунт",
+  "settings.loggedInAs": "Вы вошли как:",
 } as const;
 
 export default ru;

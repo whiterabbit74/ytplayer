@@ -52,7 +52,12 @@ const kk: Translations = {
   // Таңдаулылар
   "favorites.added": "Таңдаулыларға қосылды",
   "favorites.removed": "Таңдаулылардан өшірілді",
-  "favorites.empty": "Таңдаулыларда әлі ештеңе жоқ",
-};
+  "favorites.empty": "Таңдаулыларда әзірге ештеңе жоқ",
+
+  // Параметрлер
+  "settings.title": "Параметрлер",
+  "settings.account": "Аккаунт",
+  "settings.loggedInAs": "Сіз келесі ретінде кірдіңіз:",
+} as const;
 
 export default kk;

@@ -1,0 +1,7 @@
+name: TmpApp
+targets:
+  TmpApp:
+    type: application
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources: [Sources]

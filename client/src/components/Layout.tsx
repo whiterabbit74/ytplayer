@@ -1,9 +1,6 @@
 import type { ReactNode } from "react";
 import { Queue } from "./Queue";
-import { useAuth } from "@/contexts/AuthContext";
-import { LogOut } from "lucide-react";
-import { useTranslation } from "@/i18n";
-import { LanguageSwitcher } from "./LanguageSwitcher";
+import { SettingsMenu } from "./SettingsMenu";
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,9 +9,6 @@ interface LayoutProps {
 }
 
 export function Layout({ children, desktopPlayer, mobileBottom }: LayoutProps) {
-  const { logout } = useAuth();
-  const { t } = useTranslation();
-
   return (
     <div className="h-screen bg-background text-foreground flex flex-col">
       <header className="border-b px-4 py-3 shrink-0 flex items-center justify-between">
@@ -23,10 +17,7 @@ export function Layout({ children, desktopPlayer, mobileBottom }: LayoutProps) {
           <span className="text-[10px] text-muted-foreground">{__APP_VERSION__}</span>
         </div>
         <div className="flex items-center gap-1">
-          <LanguageSwitcher />
-          <button onClick={logout} className="text-muted-foreground hover:text-foreground" title={t("auth.logout")}>
-            <LogOut className="h-5 w-5" />
-          </button>
+          <SettingsMenu />
         </div>
       </header>
       <div className="flex flex-1 min-h-0 overflow-hidden">

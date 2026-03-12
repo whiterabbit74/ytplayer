@@ -81,6 +81,9 @@ cp server/.env.example server/.env
 ```
 YOUTUBE_API_KEY=<твой YouTube Data API ключ>
 JWT_SECRET=<случайная строка для подписи JWT>
+JWT_ACCESS_SECRET=<секрет для access-токенов (если не задан, используется JWT_SECRET)>
+JWT_ACCESS_TTL=15m
+JWT_REFRESH_TTL_DAYS=30
 ```
 
 ### 3. Создание пользователя
@@ -125,6 +128,16 @@ npm run dev
 | POST | `/api/playlists/:id/tracks` | Добавить трек |
 | DELETE | `/api/playlists/:id/tracks/:trackId` | Удалить трек |
 | PUT | `/api/playlists/:id/tracks/reorder` | Изменить порядок треков |
+
+### Mobile API (Bearer tokens)
+
+`/api/v1/*` — версия API для мобильных клиентов. Авторизация через `Authorization: Bearer <accessToken>`.
+
+| Метод | Путь | Описание |
+|-------|------|----------|
+| POST | `/api/v1/auth/login` | Вход → `accessToken` + `refreshToken` |
+| POST | `/api/v1/auth/refresh` | Обновление access-токена |
+| POST | `/api/v1/auth/logout` | Инвалидация refresh-токена |
 
 ## Деплой
 
