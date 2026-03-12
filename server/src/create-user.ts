@@ -24,12 +24,13 @@ if (!email || !password) {
 initDb();
 const db = getDb();
 
-const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(email);
-if (existing) {
-  console.error(`User with email ${email} already exists`);
-  process.exit(1);
-}
-
+const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(email) as { id: number } | undefined;
 const hash = bcrypt.hashSync(password, 10);
-const result = db.prepare("INSERT INTO users (email, password_hash) VALUES (?, ?)").run(email, hash);
-console.log(`User created: ${email} (id: ${result.lastInsertRowid})`);
+
+if (existing) {
+  db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(hash, existing.id);
+  console.log(`User updated: ${email} (id: ${existing.id})`);
+} else {
+  const result = db.prepare("INSERT INTO users (email, password_hash) VALUES (?, ?)").run(email, hash);
+  console.log(`User created: ${email} (id: ${result.lastInsertRowid})`);
+}

@@ -251,6 +251,7 @@ function proactiveReadAhead(buf: StreamBuffer): void {
 // --- Route handler ---
 router.get("/:videoId", async (req, res) => {
   const { videoId } = req.params;
+  const quality = req.query.quality === "low" ? "low" : "high";
 
   if (!videoId || !isValidVideoId(videoId)) {
     return res.status(400).json({ error: "Invalid video ID" });
@@ -258,16 +259,18 @@ router.get("/:videoId", async (req, res) => {
 
   let audioInfo;
   try {
-    audioInfo = await resolveAudioUrl(videoId);
+    audioInfo = await resolveAudioUrl(videoId, quality);
   } catch (err) {
-    log.error({ err, videoId }, "Failed to resolve audio URL");
+    log.error({ err, videoId, quality }, "Failed to resolve audio URL");
     return res.status(502).json({ error: "Failed to resolve audio" });
   }
 
   let { audioUrl, contentLength, contentType, httpHeaders } = audioInfo;
 
   // Update buffer with current upstream info
-  const buf = getOrCreateBuffer(videoId);
+  const bufferKey = `${videoId}_${quality}`;
+  const buf = getOrCreateBuffer(bufferKey);
+  buf.videoId = bufferKey; // Use combination for logging
   buf.audioUrl = audioUrl;
   buf.httpHeaders = httpHeaders;
   buf.contentLength = contentLength;
@@ -277,6 +280,21 @@ router.get("/:videoId", async (req, res) => {
   }
 
   const rangeHeader = req.headers.range;
+
+  // ---- Full Download ----
+  if (req.headers["x-full-download"] === "true") {
+    const upstream = await fetch(audioUrl, { headers: httpHeaders }).catch(() => null);
+    if (!upstream || !upstream.ok) {
+      return res.status(502).json({ error: "Upstream fetch failed" });
+    }
+    res.status(200);
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Length", contentLength);
+    if (!upstream.body) return res.end();
+    const { Readable } = require("stream");
+    Readable.fromWeb(upstream.body as any).pipe(res);
+    return;
+  }
 
   // ---- No Range header: first request ----
   if (!rangeHeader) {
@@ -349,9 +367,10 @@ router.get("/:videoId", async (req, res) => {
 
   const upstreamStart = start;
   const upstreamEnd = Math.min(upstreamStart + READ_AHEAD - 1, contentLength - 1);
-  const browserBytes = end - start + 1;
+  const actualEnd = Math.min(end, upstreamEnd);
+  const browserBytes = actualEnd - start + 1;
 
-  log.debug({ videoId, upstreamStart, upstreamEnd, start, end }, "Buffer miss");
+  log.debug({ videoId, upstreamStart, upstreamEnd, start, end, actualEnd }, "Buffer miss");
 
   const MAX_ATTEMPTS = 2;
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
@@ -366,9 +385,9 @@ router.get("/:videoId", async (req, res) => {
     }
 
     if (upstream.status === 403 && attempt === 0) {
-      invalidateCache(videoId);
+      invalidateCache(bufferKey);
       try {
-        const fresh = await resolveAudioUrl(videoId);
+        const fresh = await resolveAudioUrl(videoId, quality);
         audioUrl = fresh.audioUrl;
         contentLength = fresh.contentLength;
         contentType = fresh.contentType;
@@ -377,7 +396,7 @@ router.get("/:videoId", async (req, res) => {
         buf.httpHeaders = httpHeaders;
         buf.contentLength = contentLength;
       } catch (err) {
-        log.error({ err, videoId }, "Failed to re-resolve audio URL");
+        log.error({ err, videoId, quality }, "Failed to re-resolve audio URL");
         return res.status(502).json({ error: "Failed to resolve audio" });
       }
       continue;
@@ -390,7 +409,7 @@ router.get("/:videoId", async (req, res) => {
     res.status(206);
     res.setHeader("Content-Type", contentType);
     res.setHeader("Accept-Ranges", "bytes");
-    res.setHeader("Content-Range", `bytes ${start}-${end}/${contentLength}`);
+    res.setHeader("Content-Range", `bytes ${start}-${actualEnd}/${contentLength}`);
     res.setHeader("Content-Length", browserBytes);
 
     if (!upstream.body) {

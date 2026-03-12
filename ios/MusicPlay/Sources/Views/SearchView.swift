@@ -2,7 +2,6 @@ import SwiftUI
 
 struct SearchView: View {
     @EnvironmentObject var appState: AppState
-    @Environment(\.dismissSearch) private var dismissSearch
     @State private var query = ""
     @State private var showSettings = false
     @Binding var showPlayer: Bool
@@ -14,21 +13,13 @@ struct SearchView: View {
                 loadMoreButton
             }
             .listStyle(.plain)
-            .navigationTitle("Search (v1.2.1)")
-            .searchable(text: $query, prompt: "Search songs, artists...") {
-                ForEach(appState.searchStore.suggestions, id: \.self) { suggestion in
-                    Button {
-                        query = suggestion
-                        Task {
-                            await appState.searchStore.search(query: suggestion)
-                            dismissSearch()
-                        }
-                    } label: {
-                        HStack {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundStyle(.secondary)
-                            Text(suggestion)
-                        }
+            .navigationTitle("Search")
+            .searchable(text: $query, prompt: "Search songs, artists...")
+            .searchSuggestions {
+                if !appState.searchStore.suggestions.isEmpty {
+                    ForEach(appState.searchStore.suggestions, id: \.self) { suggestion in
+                        Text(suggestion)
+                            .searchCompletion(suggestion)
                     }
                 }
             }
@@ -44,14 +35,19 @@ struct SearchView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
+                    .environmentObject(appState)
             }
             .onChange(of: query) { _, newValue in
                 appState.searchStore.fetchSuggestions(query: newValue)
+                // Clear results when query is emptied
+                if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    appState.searchStore.clearResults()
+                }
             }
             .onSubmit(of: .search) {
+                appState.searchStore.addRecentSearch(query)
                 Task {
                     await appState.searchStore.search(query: query)
-                    dismissSearch()
                 }
             }
             .onAppear { Task { await appState.playlistsStore.loadPlaylists() } }
@@ -60,7 +56,10 @@ struct SearchView: View {
 
     @ViewBuilder
     private var resultsList: some View {
-        if appState.searchStore.isSearching && appState.searchStore.results.isEmpty {
+        let store = appState.searchStore
+
+        if store.isSearching && store.results.isEmpty {
+            // First search — show loading
             Section {
                 HStack {
                     Spacer()
@@ -69,25 +68,74 @@ struct SearchView: View {
                     Spacer()
                 }
             }
-        } else if appState.searchStore.results.isEmpty && !appState.searchStore.isSearching && query.isEmpty {
-            ContentUnavailableView("Search YouTube", systemImage: "magnifyingglass", description: Text("Find your favorite music"))
-        } else {
-            ForEach(appState.searchStore.results) { track in
-                TrackRow(track: track, baseURL: appState.baseURL, onPlay: {
-                    appState.playerStore.play(track)
-                    appState.playerService.play(track: track)
-                    showPlayer = true
-                }, onAddToQueue: {
-                    appState.playerStore.addToQueue(track)
-                }, isFavorite: appState.favoritesStore.isFavorite(track.id), onToggleFavorite: {
-                    Task { await appState.favoritesStore.toggleFavorite(track) }
-                })
-                .contextMenu {
-                    ForEach(appState.playlistsStore.playlists) { pl in
-                        Button("Add to \(pl.name)") {
-                            Task { await appState.playlistsStore.addTrack(playlistId: pl.id, track: track) }
+        } else if store.results.isEmpty && store.hasSearched && !store.isSearching {
+            // Search completed but no results
+            ContentUnavailableView.search(text: query)
+        } else if store.results.isEmpty && !store.hasSearched {
+            // Initial state — no search yet
+            if !store.recentSearches.isEmpty && query.isEmpty {
+                Section {
+                    ForEach(store.recentSearches, id: \.self) { recent in
+                        Button {
+                            query = recent
+                            store.addRecentSearch(recent)
+                            Task { await store.search(query: recent) }
+                        } label: {
+                            HStack {
+                                Image(systemName: "clock")
+                                    .foregroundStyle(.secondary)
+                                Text(recent)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                Image(systemName: "arrow.up.left")
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
+                } header: {
+                    HStack {
+                        Text("Recent Searches")
+                        Spacer()
+                        Button("Clear") {
+                            store.clearRecentSearches()
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    }
+                }
+            } else {
+                ContentUnavailableView("Search YouTube", systemImage: "magnifyingglass", description: Text("Find your favorite music"))
+            }
+        } else {
+            // Show results
+            ForEach(store.results) { track in
+                trackRow(track)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func trackRow(_ track: Track) -> some View {
+        TrackRow(
+            track: track,
+            baseURL: appState.baseURL,
+            onPlay: {
+                appState.playerStore.setQueue(appState.searchStore.results, index: appState.searchStore.results.firstIndex(of: track) ?? 0)
+                appState.playerService.play(track: track)
+                showPlayer = true
+            },
+            onAddToQueue: {
+                appState.playerStore.addToQueue(track)
+            },
+            isFavorite: appState.favoritesStore.isFavorite(track.id),
+            onToggleFavorite: {
+                Task { await appState.favoritesStore.toggleFavorite(track) }
+            }
+        )
+        .contextMenu {
+            ForEach(appState.playlistsStore.playlists) { pl in
+                Button("Add to \(pl.name)") {
+                    Task { await appState.playlistsStore.addTrack(playlistId: pl.id, track: track) }
                 }
             }
         }
@@ -95,7 +143,7 @@ struct SearchView: View {
 
     @ViewBuilder
     private var loadMoreButton: some View {
-        if appState.searchStore.nextPageToken != nil {
+        if appState.searchStore.nextPageToken != nil && !appState.searchStore.results.isEmpty {
             Button {
                 Task { await appState.searchStore.loadMore(query: query) }
             } label: {

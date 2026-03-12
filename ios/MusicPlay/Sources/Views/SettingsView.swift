@@ -21,6 +21,16 @@ struct SettingsView: View {
                     }
                 }
                 
+                Section("Playback") {
+                    Picker("Audio Quality", selection: Binding(
+                        get: { appState.audioQuality },
+                        set: { appState.updateAudioQuality($0) }
+                    )) {
+                        Text("High (Best m4a)").tag("high")
+                        Text("Low (Data saver)").tag("low")
+                    }
+                }
+                
                 Section("App Information") {
                     HStack {
                         Text("Server URL")
@@ -51,9 +61,16 @@ struct SettingsView: View {
 
     private func logout() {
         Task {
+            // Stop player and sync
+            appState.playerSyncService.stop()
+            appState.playerService.stop()
+            appState.playerStore.clearQueue()
+            
             try? await appState.apiClient.logout()
-            appState.refreshAuthState()
-            dismiss()
+            await MainActor.run {
+                appState.refreshAuthState()
+                dismiss()
+            }
         }
     }
 }

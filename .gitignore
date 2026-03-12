@@ -20,3 +20,12 @@ skills/
 yt-dlp
 .env*
 !.env.example
+
+# Xcode
+build/
+DerivedData/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcuserstate
+ios/build/
+*.mobileprovision

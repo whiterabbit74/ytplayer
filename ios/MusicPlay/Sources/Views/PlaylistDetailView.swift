@@ -5,7 +5,8 @@ struct PlaylistDetailView: View {
     let playlist: Playlist
     @Binding var showPlayer: Bool
 
-    @State private var editMode: EditMode = .inactive
+    @State private var showRenameAlert = false
+    @State private var newName = ""
 
     var body: some View {
         List {
@@ -16,28 +17,15 @@ struct PlaylistDetailView: View {
                     Spacer()
                 }
                 .listRowSeparator(.hidden)
+            } else if appState.playlistsStore.activeTracks.isEmpty && !appState.playlistsStore.isLoading {
+                ContentUnavailableView("Empty Playlist", systemImage: "music.note.list", description: Text("Add tracks from search"))
             }
             
             ForEach(appState.playlistsStore.activeTracks) { track in
-                TrackRow(
-                    track: track,
-                    baseURL: appState.baseURL,
-                    onPlay: {
-                        appState.playerStore.play(track)
-                        appState.playerService.play(track: track)
-                        showPlayer = true
-                    },
-                    onAddToQueue: {
-                        appState.playerStore.addToQueue(track)
-                    },
-                    isFavorite: appState.favoritesStore.isFavorite(track.id),
-                    onToggleFavorite: {
-                        Task { await appState.favoritesStore.toggleFavorite(track) }
-                    }
-                )
+                trackRow(track)
             }
             .onDelete { indexSet in
-                for index in indexSet {
+                for index in indexSet.sorted(by: >) {
                     let t = appState.playlistsStore.activeTracks[index]
                     if let rowId = t.rowId {
                         Task { await appState.playlistsStore.removeTrack(playlistId: playlist.id, trackId: rowId) }
@@ -51,11 +39,55 @@ struct PlaylistDetailView: View {
                 Task { await appState.playlistsStore.reorderTracks(playlistId: playlist.id, trackIds: ids) }
             }
         }
-        .environment(\.editMode, $editMode)
         .navigationTitle(playlist.name)
         .toolbar {
-            EditButton()
+            ToolbarItem(placement: .topBarTrailing) {
+                EditButton()
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button {
+                        newName = playlist.name
+                        showRenameAlert = true
+                    } label: {
+                        Label("Rename", systemImage: "pencil")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+            }
+        }
+        .alert("Rename Playlist", isPresented: $showRenameAlert) {
+            TextField("Playlist name", text: $newName)
+            Button("Cancel", role: .cancel) { }
+            Button("Save") {
+                let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmed.isEmpty else { return }
+                Task { await appState.playlistsStore.renamePlaylist(id: playlist.id, name: trimmed) }
+            }
         }
         .onAppear { Task { await appState.playlistsStore.selectPlaylist(id: playlist.id) } }
+    }
+
+    @ViewBuilder
+    private func trackRow(_ track: Track) -> some View {
+        TrackRow(
+            track: track,
+            baseURL: appState.baseURL,
+            onPlay: {
+                let tracks = appState.playlistsStore.activeTracks
+                let index = tracks.firstIndex(of: track) ?? 0
+                appState.playerStore.setQueue(tracks, index: index)
+                appState.playerService.play(track: track)
+                showPlayer = true
+            },
+            onAddToQueue: {
+                appState.playerStore.addToQueue(track)
+            },
+            isFavorite: appState.favoritesStore.isFavorite(track.id),
+            onToggleFavorite: {
+                Task { await appState.favoritesStore.toggleFavorite(track) }
+            }
+        )
     }
 }

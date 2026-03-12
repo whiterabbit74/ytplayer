@@ -52,4 +52,33 @@ final class FavoritesStore: ObservableObject {
     func isFavorite(_ videoId: String) -> Bool {
         favoriteIds.contains(videoId)
     }
+
+    @MainActor
+    func removeFavorite(at offsets: IndexSet) async {
+        guard let api else { return }
+        let tracksToRemove = offsets.map { favorites[$0] }
+        favorites.remove(atOffsets: offsets)
+        for t in tracksToRemove {
+            favoriteIds.remove(t.id)
+            do {
+                try await api.removeFavorite(videoId: t.id)
+            } catch {
+                print("removeFavorite error", error)
+                await loadFavorites()
+            }
+        }
+    }
+
+    @MainActor
+    func reorderFavorites(from source: IndexSet, to destination: Int) async {
+        guard let api else { return }
+        favorites.move(fromOffsets: source, toOffset: destination)
+        let trackIds = favorites.map { $0.id }
+        do {
+            try await api.reorderFavorites(trackIds: trackIds)
+        } catch {
+            print("reorderFavorites error", error)
+            await loadFavorites()
+        }
+    }
 }

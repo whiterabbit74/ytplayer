@@ -5,7 +5,7 @@ final class PlayerStore: ObservableObject {
     @Published var queue: [Track] = []
     @Published var currentIndex: Int = -1
     @Published var isPlaying: Bool = false
-    @Published var repeatMode: String = "off"
+    @Published var repeatMode: String = "off" // "off", "one", "all"
     @Published var position: Double = 0
 
     private var api: APIClient?
@@ -14,9 +14,26 @@ final class PlayerStore: ObservableObject {
         self.api = api
     }
 
+    /// Play a track — adds it to queue if not already there.
     func play(_ track: Track) {
         if let idx = queue.firstIndex(of: track) {
             currentIndex = idx
+        } else {
+            // Track not in queue — set entire queue to just this track
+            queue.append(track)
+            currentIndex = queue.count - 1
+        }
+        currentTrack = track
+        isPlaying = true
+    }
+
+    /// Play a track from queue and also set the whole queue context.
+    func playTrackInContext(_ track: Track, queue newQueue: [Track]) {
+        queue = newQueue
+        if let idx = newQueue.firstIndex(of: track) {
+            currentIndex = idx
+        } else {
+            currentIndex = 0
         }
         currentTrack = track
         isPlaying = true
@@ -36,9 +53,19 @@ final class PlayerStore: ObservableObject {
     func removeFromQueue(index: Int) {
         guard index >= 0 && index < queue.count else { return }
         queue.remove(at: index)
-        if index < currentIndex { currentIndex -= 1 }
-        if index == currentIndex {
-            if currentIndex >= queue.count { currentIndex = queue.count - 1 }
+        if queue.isEmpty {
+            currentIndex = -1
+            currentTrack = nil
+            isPlaying = false
+            return
+        }
+        if index < currentIndex {
+            currentIndex -= 1
+        } else if index == currentIndex {
+            // Current track was removed
+            if currentIndex >= queue.count {
+                currentIndex = queue.count - 1
+            }
             currentTrack = currentIndex >= 0 ? queue[currentIndex] : nil
         }
     }
@@ -67,18 +94,36 @@ final class PlayerStore: ObservableObject {
         isPlaying = false
     }
 
-    func playNext() {
+    /// Returns true if a next track was found, false if playback should stop.
+    @discardableResult
+    func playNext() -> Bool {
+        guard !queue.isEmpty else {
+            isPlaying = false
+            return false
+        }
         let next = currentIndex + 1
         if next >= queue.count {
+            if repeatMode == "all" {
+                playFromQueue(index: 0)
+                return true
+            }
             isPlaying = false
-            return
+            return false
         }
         playFromQueue(index: next)
+        return true
     }
 
     func playPrev() {
+        guard !queue.isEmpty else { return }
         let prev = currentIndex - 1
-        if prev < 0 { return }
+        if prev < 0 {
+            if repeatMode == "all" {
+                playFromQueue(index: queue.count - 1)
+                return
+            }
+            return
+        }
         playFromQueue(index: prev)
     }
 }

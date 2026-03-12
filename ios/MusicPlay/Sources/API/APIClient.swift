@@ -6,9 +6,11 @@ final class APIClient {
     private let session: URLSession
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder
+    private var isRefreshing = false
+    var audioQuality: String = "high"
 
     init(baseURL: String, tokenStore: TokenStore) {
-        self.baseURL = URL(string: baseURL) ?? URL(string: "http://localhost:3001")!
+        self.baseURL = URL(string: baseURL) ?? URL(string: "http://192.168.1.235:3001")!
         self.tokenStore = tokenStore
         self.session = URLSession(configuration: .default)
         self.decoder = JSONDecoder()
@@ -46,7 +48,9 @@ final class APIClient {
         body: Encodable? = nil,
         auth: Bool = true
     ) async throws -> T {
-        var req = URLRequest(url: makeURL(path, queryItems: query))
+        let url = makeURL(path, queryItems: query)
+        print("🚀 [API] Requesting: \(method) \(url.absoluteString)")
+        var req = URLRequest(url: url)
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Accept")
         if let body = body {
@@ -56,21 +60,42 @@ final class APIClient {
         if auth, let token = tokenStore.accessToken {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
-
-        let (data, response) = try await session.data(for: req)
-        if let http = response as? HTTPURLResponse, http.statusCode == 401, auth {
-            let refreshed = try await refreshToken()
-            if refreshed {
-                return try await request(path, method: method, query: query, body: body, auth: auth)
+        
+        do {
+            let (data, response) = try await session.data(for: req)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ [API] Error: Not an HTTP response")
+                throw URLError(.badServerResponse)
             }
-        }
-        if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
-            if let apiErr = try? decoder.decode(APIErrorResponse.self, from: data) {
-                throw apiErr
+            
+            print("✅ [API] Response: \(httpResponse.statusCode) for \(path)")
+            
+            if httpResponse.statusCode == 401 && !isRefreshing && auth {
+                print("🔄 [API] 401 Unauthorized, attempting token refresh...")
+                let refreshed = try await refreshToken()
+                if refreshed {
+                    return try await request(path, method: method, query: query, body: body, auth: auth)
+                } else {
+                    print("🚫 [API] Refresh failed, clearing session")
+                    tokenStore.clear()
+                    throw URLError(.userAuthenticationRequired)
+                }
             }
-            throw URLError(.badServerResponse)
+            
+            if !(200...299).contains(httpResponse.statusCode) {
+                print("⚠️ [API] Server Error Response: \(httpResponse.statusCode)")
+                if let apiErr = try? decoder.decode(APIErrorResponse.self, from: data) {
+                    throw apiErr
+                }
+                throw URLError(.badServerResponse)
+            }
+            
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            print("❌ [API] Request failed: \(req.url?.absoluteString ?? "unknown") - Error: \(error)")
+            throw error
         }
-        return try decoder.decode(T.self, from: data)
     }
 
     private func requestVoid(
@@ -80,7 +105,9 @@ final class APIClient {
         body: Encodable? = nil,
         auth: Bool = true
     ) async throws {
-        var req = URLRequest(url: makeURL(path, queryItems: query))
+        let url = makeURL(path, queryItems: query)
+        print("🚀 [API] Void Request: \(method) \(url.absoluteString)")
+        var req = URLRequest(url: url)
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Accept")
         if let body = body {
@@ -91,20 +118,38 @@ final class APIClient {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        let (data, response) = try await session.data(for: req)
-        if let http = response as? HTTPURLResponse, http.statusCode == 401, auth {
-            let refreshed = try await refreshToken()
-            if refreshed {
-                return try await requestVoid(path, method: method, query: query, body: body, auth: auth)
+        do {
+            let (data, response) = try await session.data(for: req)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ [API] Error: Not an HTTP response")
+                return
             }
-        }
-        if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
-            if let apiErr = try? decoder.decode(APIErrorResponse.self, from: data) {
-                throw apiErr
+            
+            print("✅ [API] Void Response: \(httpResponse.statusCode) for \(path)")
+            
+            if httpResponse.statusCode == 401 && !isRefreshing && auth {
+                let refreshed = try await refreshToken()
+                if refreshed {
+                    return try await requestVoid(path, method: method, query: query, body: body, auth: auth)
+                } else {
+                    tokenStore.clear()
+                    throw URLError(.userAuthenticationRequired)
+                }
             }
-            throw URLError(.badServerResponse)
+            
+            if !(200...299).contains(httpResponse.statusCode) {
+                if let apiErr = try? decoder.decode(APIErrorResponse.self, from: data) {
+                    throw apiErr
+                }
+                throw URLError(.badServerResponse)
+            }
+        } catch {
+            print("❌ [API] Void Request failed: \(req.url?.absoluteString ?? "unknown") - Error: \(error)")
+            throw error
         }
     }
+
 
     // MARK: Auth
 
@@ -122,26 +167,34 @@ final class APIClient {
 
     func refreshToken() async throws -> Bool {
         guard let refresh = tokenStore.refreshToken else { return false }
-        let resp: RefreshResponse = try await request(
-            "/api/v1/auth/refresh",
-            method: "POST",
-            body: ["refreshToken": refresh],
-            auth: false
-        )
-        tokenStore.accessToken = resp.accessToken
-        tokenStore.refreshToken = resp.refreshToken
-        return true
+        guard !isRefreshing else { return false }
+        isRefreshing = true
+        defer { isRefreshing = false }
+        do {
+            let resp: RefreshResponse = try await request(
+                "/api/v1/auth/refresh",
+                method: "POST",
+                body: ["refreshToken": refresh],
+                auth: false
+            )
+            tokenStore.accessToken = resp.accessToken
+            tokenStore.refreshToken = resp.refreshToken
+            return true
+        } catch {
+            tokenStore.clear()
+            return false
+        }
     }
 
     func logout() async throws {
+        defer { tokenStore.clear() }
         guard let refresh = tokenStore.refreshToken else { return }
-        try await requestVoid(
+        try? await requestVoid(
             "/api/v1/auth/logout",
             method: "POST",
             body: ["refreshToken": refresh],
             auth: false
         )
-        tokenStore.clear()
     }
 
     // MARK: Search
@@ -171,6 +224,10 @@ final class APIClient {
 
     func deletePlaylist(id: Int) async throws {
         try await requestVoid("/api/v1/playlists/\(id)", method: "DELETE")
+    }
+
+    func renamePlaylist(id: Int, name: String) async throws {
+        try await requestVoid("/api/v1/playlists/\(id)", method: "PUT", body: ["name": name])
     }
 
     func fetchPlaylistTracks(id: Int) async throws -> [Track] {
@@ -227,6 +284,10 @@ final class APIClient {
         try await requestVoid("/api/v1/favorites/\(videoId)", method: "DELETE")
     }
 
+    func reorderFavorites(trackIds: [String]) async throws {
+        try await requestVoid("/api/v1/favorites/reorder", method: "PUT", body: ["trackIds": trackIds])
+    }
+
     // MARK: Player state
 
     func fetchPlayerState() async throws -> PlayerState {
@@ -251,7 +312,7 @@ final class APIClient {
     // MARK: Helpers
 
     func streamURL(for videoId: String) -> URL {
-        makeURL("/api/v1/stream/\(videoId)")
+        makeURL("/api/v1/stream/\(videoId)", queryItems: [URLQueryItem(name: "quality", value: audioQuality)])
     }
 
     func thumbURL(for videoId: String) -> URL {

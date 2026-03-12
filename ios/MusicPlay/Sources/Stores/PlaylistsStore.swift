@@ -51,6 +51,17 @@ final class PlaylistsStore: ObservableObject {
     }
 
     @MainActor
+    func renamePlaylist(id: Int, name: String) async {
+        guard let api else { return }
+        do {
+            try await api.renamePlaylist(id: id, name: name)
+            await loadPlaylists()
+        } catch {
+            print("renamePlaylist error", error)
+        }
+    }
+
+    @MainActor
     func selectPlaylist(id: Int) async {
         guard let api else { return }
         isLoading = true
@@ -102,6 +113,61 @@ final class PlaylistsStore: ObservableObject {
             }
         } catch {
             print("reorder error", error)
+        }
+    }
+}
+
+final class DownloadsStore: ObservableObject {
+    @Published var downloadedTracks: [Track] = []
+    @Published var downloadProgresses: [String: Double] = [:]
+    
+    private let defaultsKey = "musicplay_downloaded_tracks"
+    
+    init() {
+        loadFromDefaults()
+        NotificationCenter.default.addObserver(forName: NSNotification.Name("TrackDownloadProgress"), object: nil, queue: .main) { [weak self] note in
+            if let id = note.object as? String, let progress = note.userInfo?["progress"] as? Double {
+                self?.downloadProgresses[id] = progress
+                if progress >= 1.0 {
+                    self?.downloadProgresses.removeValue(forKey: id)
+                }
+            }
+        }
+    }
+    
+    func saveTrack(_ track: Track) {
+        if !downloadedTracks.contains(where: { $0.id == track.id }) {
+            downloadedTracks.append(track)
+            saveToDefaults()
+        }
+    }
+    
+    func removeTrack(_ id: String) {
+        downloadedTracks.removeAll { $0.id == id }
+        downloadProgresses.removeValue(forKey: id)
+        saveToDefaults()
+    }
+    
+    func isDownloaded(id: String) -> Bool {
+        downloadedTracks.contains(where: { $0.id == id })
+    }
+    
+    func moveTracks(from source: IndexSet, to destination: Int) {
+        downloadedTracks.move(fromOffsets: source, toOffset: destination)
+        saveToDefaults()
+    }
+    
+    private func loadFromDefaults() {
+        if let data = UserDefaults.standard.data(forKey: defaultsKey) {
+            if let decoded = try? JSONDecoder().decode([Track].self, from: data) {
+                downloadedTracks = decoded
+            }
+        }
+    }
+    
+    private func saveToDefaults() {
+        if let data = try? JSONEncoder().encode(downloadedTracks) {
+            UserDefaults.standard.set(data, forKey: defaultsKey)
         }
     }
 }

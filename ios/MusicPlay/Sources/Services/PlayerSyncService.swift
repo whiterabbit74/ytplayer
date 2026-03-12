@@ -1,15 +1,20 @@
 import Foundation
+import UIKit
 
 final class PlayerSyncService: ObservableObject {
     private var api: APIClient?
     private weak var playerStore: PlayerStore?
+    private weak var playerService: PlayerService?
     private var timer: Timer?
     private var lastSync: Date = .distantPast
     private var isSyncing = false
+    private var backgroundObserver: Any?
+    private var terminateObserver: Any?
 
-    func configure(api: APIClient, playerStore: PlayerStore) {
+    func configure(api: APIClient, playerStore: PlayerStore, playerService: PlayerService) {
         self.api = api
         self.playerStore = playerStore
+        self.playerService = playerService
     }
 
     func start() {
@@ -17,11 +22,34 @@ final class PlayerSyncService: ObservableObject {
         timer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             Task { await self?.sync() }
         }
+
+        // Save state when app goes to background or is about to terminate
+        backgroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { await self?.sync(force: true) }
+        }
+
+        terminateObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.willTerminateNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { await self?.sync(force: true) }
+        }
     }
 
     func stop() {
         timer?.invalidate()
         timer = nil
+        if let obs = backgroundObserver {
+            NotificationCenter.default.removeObserver(obs)
+            backgroundObserver = nil
+        }
+        if let obs = terminateObserver {
+            NotificationCenter.default.removeObserver(obs)
+            terminateObserver = nil
+        }
     }
 
     @MainActor
@@ -29,11 +57,22 @@ final class PlayerSyncService: ObservableObject {
         guard let api else { return }
         do {
             let state = try await api.fetchPlayerState()
-            playerStore?.queue = state.queue
-            playerStore?.currentIndex = state.currentIndex
-            playerStore?.currentTrack = state.currentTrack ?? state.queue[safe: state.currentIndex]
-            playerStore?.repeatMode = state.repeatMode
-            playerStore?.position = state.position
+            guard let store = playerStore else { return }
+
+            store.queue = state.queue
+            store.currentIndex = state.currentIndex
+            store.repeatMode = state.repeatMode
+            store.position = state.position
+
+            // Determine current track
+            let track = state.currentTrack ?? state.queue[safe: state.currentIndex]
+            store.currentTrack = track
+
+            // If there was a track playing, prepare the player at the saved position
+            // but don't auto-play — user will tap play when ready
+            if let track, let service = playerService {
+                service.prepareTrack(track, at: state.position)
+            }
         } catch {
             print("loadInitialState error", error)
         }
@@ -49,10 +88,14 @@ final class PlayerSyncService: ObservableObject {
             isSyncing = false
             lastSync = Date()
         }
+
+        // Use live position from PlayerService if available
+        let position = playerService?.currentTime ?? store.position
+
         let state = PlayerState(
             queue: store.queue,
             currentIndex: store.currentIndex,
-            position: store.position,
+            position: position,
             repeatMode: store.repeatMode,
             currentTrack: store.currentTrack
         )

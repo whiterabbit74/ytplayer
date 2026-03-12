@@ -44,19 +44,26 @@ fi
 
 echo "📦 Путь к приложению: $APP_PATH"
 
-# 5. Проверка версии v2.5
+# 5. Проверка версии
 echo "🔍 Проверка версии в коде..."
-grep -a "v2.5" "$APP_PATH/MusicPlay" > /dev/null
+grep -a "MusicPlay_BUILD_VERSION_2.6" "$APP_PATH/MusicPlay" > /dev/null
 if [ $? -eq 0 ]; then
-    echo "✅ Код актуален (версия v2.5 найдена)."
+    echo "✅ Код актуален (MusicPlay_BUILD_VERSION_2.6 найдена)."
 else
-    echo "⚠️ ПРЕДУПРЕЖДЕНИЕ: Маркер v2.5 не найден. Возможно сборка из старого кеша!"
+    echo "⚠️ ПРЕДУПРЕЖДЕНИЕ: Маркер версии не найден в бинарнике!"
 fi
 
 # 6. Внедрение профайла и подпись
 echo "✍️ Подпись приложения (Team ID: $TEAM_ID)..."
 cp "$PROFILE_PATH" "$APP_PATH/embedded.mobileprovision"
-codesign -f -s "$SIGN_ID" --entitlements tmp.entitlements --deep "$APP_PATH"
+
+# Явно подписываем все библиотеки, так как --deep игнорирует dylib в корне бандла
+find "$APP_PATH" -name "*.dylib" -o -name "*.framework" | while read -r lib; do
+    echo "Подпись библиотеки: $(basename "$lib")"
+    codesign -f -s "$SIGN_ID" "$lib"
+done
+
+codesign -f -s "$SIGN_ID" --entitlements tmp.entitlements "$APP_PATH"
 
 # 7. Установка на устройство
 echo "📲 Установка на iPhone..."
@@ -71,4 +78,4 @@ fi
 echo "🏁 Запуск приложения..."
 xcrun devicectl device process launch --device "$DEVICE_ID" "$BUNDLE_ID"
 
-echo "✅ ГОТОВО! Приложение версии v1.2.0 (v2.5) запущено на iPhone."
+echo "✅ ГОТОВО! Приложение версии v1.2.3 (v2.6) запущено на iPhone."

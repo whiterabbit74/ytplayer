@@ -19,14 +19,25 @@ struct MainTabView: View {
                 QueueView(showPlayer: $showPlayer)
                     .tabItem { Label("Queue", systemImage: "list.bullet") }
             }
-            
+
+            // Mini-player above the tab bar — use safeAreaInset approach
             if appState.playerStore.currentTrack != nil {
                 PlayerMiniView(showPlayer: $showPlayer)
-                    .padding(.bottom, 60) // Simple fixed padding above tab bar
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .animation(.spring(response: 0.35, dampingFraction: 0.8), value: appState.playerStore.currentTrack != nil)
             }
         }
         .sheet(isPresented: $showPlayer) {
             PlayerFullView()
+                .environmentObject(appState)
+        }
+        .onAppear {
+            // Load initial player state from server
+            Task { await appState.playerSyncService.loadInitialState() }
+            appState.playerSyncService.start()
+        }
+        .onDisappear {
+            appState.playerSyncService.stop()
         }
     }
 }

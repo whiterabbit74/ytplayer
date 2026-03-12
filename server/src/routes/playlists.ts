@@ -34,6 +34,21 @@ router.post("/", (req, res) => {
   res.status(201).json({ id: result.lastInsertRowid, name });
 });
 
+// PUT /api/playlists/:id (rename)
+router.put("/:id", (req, res) => {
+  if (!verifyPlaylistOwner(req.params.id, (req as AuthRequest).userId!)) {
+    res.status(404).json({ error: "Playlist not found" });
+    return;
+  }
+  const { name } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: "Name is required" });
+  }
+  const db = getDb();
+  db.prepare("UPDATE playlists SET name = ? WHERE id = ? AND user_id = ?").run(name.trim(), req.params.id, (req as AuthRequest).userId);
+  res.json({ id: Number(req.params.id), name: name.trim() });
+});
+
 // DELETE /api/playlists/:id
 router.delete("/:id", (req, res) => {
   if (!verifyPlaylistOwner(req.params.id, (req as AuthRequest).userId!)) {

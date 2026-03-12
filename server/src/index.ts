@@ -18,11 +18,26 @@ import { cleanExpiredCache } from "./services/search-cache";
 
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = Number(process.env.PORT) || 3001;
+const HOST = "0.0.0.0";
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
+
+// Request logging middleware
+app.use((req, _res, next) => {
+  logger.info({
+    method: req.method,
+    url: req.url,
+    ip: req.ip,
+    headers: {
+      range: req.headers.range,
+      authorization: req.headers.authorization ? "Present" : "Missing"
+    }
+  }, "Incoming request");
+  next();
+});
 
 initDb();
 cleanExpiredCache();
@@ -50,8 +65,8 @@ app.get("{*path}", (_req, res) => {
   res.sendFile(path.join(publicDir, "index.html"));
 });
 
-app.listen(PORT, () => {
-  logger.info({ port: PORT }, "Server started");
+app.listen(PORT, HOST, () => {
+  logger.info({ port: PORT, host: HOST }, "Server started");
 });
 
 export default app;

@@ -6,46 +6,77 @@ struct PlayerMiniView: View {
 
     var body: some View {
         if let track = appState.playerStore.currentTrack {
-            HStack(spacing: 12) {
-                CachedAsyncImage(url: thumbURL(track), contentMode: .fill)
-                    .frame(width: 44, height: 44)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(track.title).font(.subheadline.weight(.medium)).lineLimit(1)
-                    Text(track.artist).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            VStack(spacing: 0) {
+                // Progress bar at the top of mini-player
+                GeometryReader { geo in
+                    let progress = appState.playerService.duration > 0
+                        ? appState.playerService.currentTime / appState.playerService.duration
+                        : 0
+                    Rectangle()
+                        .fill(Color.white)
+                        .frame(width: geo.size.width * min(max(progress, 0), 1))
                 }
+                .frame(height: 2)
 
-                Spacer()
-
-                HStack(spacing: 16) {
+                HStack(spacing: 12) {
+                    // Track info — tapping opens full player
                     Button {
-                        if appState.playerService.isPlaying {
-                            appState.playerService.pause()
-                        } else {
-                            appState.playerService.resume()
-                        }
+                        showPlayer = true
                     } label: {
-                        Image(systemName: appState.playerService.isPlaying ? "pause.fill" : "play.fill")
-                            .font(.title3)
+                        HStack(spacing: 12) {
+                            CachedAsyncImage(url: thumbURL(track), contentMode: .fill)
+                                .frame(width: 44, height: 44)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(track.title)
+                                    .font(.subheadline.weight(.medium))
+                                    .lineLimit(1)
+                                Text(track.artist)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
 
-                    Button {
-                        appState.playerStore.playNext()
-                        if let next = appState.playerStore.currentTrack {
-                            appState.playerService.play(track: next)
+                    Spacer()
+
+                    // Playback controls — do NOT open full player
+                    HStack(spacing: 16) {
+                        Button {
+                            appState.playerService.togglePlayPause()
+                        } label: {
+                            Image(systemName: appState.playerService.isPlaying ? "pause.fill" : "play.fill")
+                                .font(.title3)
+                                .frame(width: 36, height: 36)
+                                .contentShape(Rectangle())
                         }
-                    } label: {
-                        Image(systemName: "forward.fill")
-                            .font(.title3)
+                        .buttonStyle(.plain)
+
+                        Button {
+                            let hasNext = appState.playerStore.playNext()
+                            if hasNext, let next = appState.playerStore.currentTrack {
+                                appState.playerService.play(track: next)
+                            }
+                        } label: {
+                            Image(systemName: "forward.fill")
+                                .font(.title3)
+                                .frame(width: 36, height: 36)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
             }
-            .padding(12)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-            .shadow(radius: 5)
-            .padding(.horizontal, 12)
-            .onTapGesture { showPlayer = true }
+            .shadow(color: .black.opacity(0.15), radius: 8, y: -2)
+            .padding(.horizontal, 8)
+            .padding(.bottom, 49) // Offset above tab bar — NOT tappable
         }
     }
 

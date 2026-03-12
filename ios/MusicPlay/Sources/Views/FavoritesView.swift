@@ -8,38 +8,60 @@ struct FavoritesView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(appState.favoritesStore.favorites) { track in
-                    TrackRow(
-                        track: track,
-                        baseURL: appState.baseURL,
-                        onPlay: {
-                            appState.playerStore.play(track)
-                            appState.playerService.play(track: track)
-                            showPlayer = true
-                        },
-                        onAddToQueue: {
-                            appState.playerStore.addToQueue(track)
-                        },
-                        isFavorite: true,
-                        onToggleFavorite: {
-                            Task { await appState.favoritesStore.toggleFavorite(track) }
-                        }
-                    )
+                if appState.favoritesStore.isLoading && appState.favoritesStore.favorites.isEmpty {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+                    .listRowSeparator(.hidden)
+                } else if appState.favoritesStore.favorites.isEmpty && !appState.favoritesStore.isLoading {
+                    ContentUnavailableView("No Favorites", systemImage: "heart", description: Text("Tap the heart icon on any track to add it here"))
+                } else {
+                    let tracks = appState.favoritesStore.favorites
+                    ForEach(tracks) { track in
+                        TrackRow(
+                            track: track,
+                            baseURL: appState.baseURL,
+                            onPlay: {
+                                // Set all favorites as queue context
+                                let index = tracks.firstIndex(of: track) ?? 0
+                                appState.playerStore.setQueue(tracks, index: index)
+                                appState.playerService.play(track: track)
+                                showPlayer = true
+                            },
+                            onAddToQueue: {
+                                appState.playerStore.addToQueue(track)
+                            }
+                        )
+                    }
+                    .onDelete { offsets in
+                        Task { await appState.favoritesStore.removeFavorite(at: offsets) }
+                    }
+                    .onMove { source, destination in
+                        Task { await appState.favoritesStore.reorderFavorites(from: source, to: destination) }
+                    }
                 }
             }
             .listStyle(.plain)
             .navigationTitle("Favorites")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showSettings = true
-                    } label: {
-                        Image(systemName: "gear")
+                    HStack {
+                        if !appState.favoritesStore.favorites.isEmpty {
+                            EditButton()
+                        }
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Image(systemName: "gear")
+                        }
                     }
                 }
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
+                    .environmentObject(appState)
             }
             .onAppear { Task { await appState.favoritesStore.loadFavorites() } }
         }

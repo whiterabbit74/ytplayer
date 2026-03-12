@@ -26,6 +26,13 @@ struct PlaylistsView: View {
                 .padding(.horizontal, 12)
 
                 List {
+                    NavigationLink {
+                        DownloadsView(showPlayer: $showPlayer)
+                    } label: {
+                        Label("Downloads", systemImage: "arrow.down.circle")
+                            .font(.headline)
+                    }
+
                     ForEach(appState.playlistsStore.playlists) { pl in
                         NavigationLink(pl.name) {
                             PlaylistDetailView(playlist: pl, showPlayer: $showPlayer)
@@ -52,8 +59,64 @@ struct PlaylistsView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
+                    .environmentObject(appState)
             }
             .onAppear { Task { await appState.playlistsStore.loadPlaylists() } }
         }
+    }
+}
+
+struct DownloadsView: View {
+    @EnvironmentObject var appState: AppState
+    @Binding var showPlayer: Bool
+
+    var body: some View {
+        List {
+            if appState.downloadsStore.downloadedTracks.isEmpty {
+                ContentUnavailableView("No Downloads", systemImage: "arrow.down.to.line.circle", description: Text("Download tracks to listen offline"))
+            }
+
+            ForEach(appState.downloadsStore.downloadedTracks) { track in
+                trackRow(track)
+            }
+            .onDelete { indexSet in
+                for index in indexSet.sorted(by: >) {
+                    let t = appState.downloadsStore.downloadedTracks[index]
+                    appState.downloadsStore.removeTrack(t.id)
+                    AudioCacheService.shared.removeTrack(id: t.id)
+                }
+            }
+            .onMove { from, to in
+                appState.downloadsStore.moveTracks(from: from, to: to)
+            }
+        }
+        .navigationTitle("Downloads")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                EditButton()
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func trackRow(_ track: Track) -> some View {
+        TrackRow(
+            track: track,
+            baseURL: appState.baseURL,
+            onPlay: {
+                let tracks = appState.downloadsStore.downloadedTracks
+                let index = tracks.firstIndex(of: track) ?? 0
+                appState.playerStore.setQueue(tracks, index: index)
+                appState.playerService.play(track: track)
+                showPlayer = true
+            },
+            onAddToQueue: {
+                appState.playerStore.addToQueue(track)
+            },
+            isFavorite: appState.favoritesStore.isFavorite(track.id),
+            onToggleFavorite: {
+                Task { await appState.favoritesStore.toggleFavorite(track) }
+            }
+        )
     }
 }

@@ -101,6 +101,21 @@ export function initDb(path: string = process.env.DB_PATH || "./musicplay.db"): 
   if (!playlistColNames.has("user_id")) {
     db.exec("ALTER TABLE playlists ADD COLUMN user_id INTEGER REFERENCES users(id)");
   }
+
+  // Миграция: добавить position в favorites
+  const favCols = db.prepare("PRAGMA table_info(favorites)").all() as any[];
+  const favColNames = new Set(favCols.map((c: any) => c.name));
+  if (!favColNames.has("position")) {
+    db.exec("ALTER TABLE favorites ADD COLUMN position INTEGER DEFAULT 0");
+    // Update existing positions
+    const users = db.prepare("SELECT DISTINCT user_id FROM favorites").all() as any[];
+    for (const u of users) {
+      const favs = db.prepare("SELECT id FROM favorites WHERE user_id = ? ORDER BY added_at ASC").all(u.user_id) as any[];
+      favs.forEach((f, i) => {
+        db.prepare("UPDATE favorites SET position = ? WHERE id = ?").run(i, f.id);
+      });
+    }
+  }
 }
 
 export function getDb(): Database.Database {
