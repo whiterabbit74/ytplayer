@@ -55,7 +55,10 @@ struct LoginView: View {
         isLoading = true
         errorMessage = nil
         do {
-            _ = try await appState.apiClient.login(email: email, password: password)
+            _ = try await appState.apiClient.login(
+                email: email.trimmingCharacters(in: .whitespacesAndNewlines),
+                password: password
+            )
             appState.refreshAuthState()
         } catch let apiError as APIErrorResponse {
             errorMessage = apiError.error.message

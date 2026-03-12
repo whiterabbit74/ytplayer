@@ -50,10 +50,31 @@ class StreamBuffer {
   }
 
   slice(start: number, end: number): Buffer {
-    const offset = start - this.bufferStart;
     const length = end - start + 1;
-    const combined = Buffer.concat(this.chunks);
-    return combined.subarray(offset, offset + length);
+    const result = Buffer.allocUnsafe(length);
+    let resultOffset = 0;
+    let currentChunkStart = this.bufferStart;
+
+    for (const chunk of this.chunks) {
+      const chunkEnd = currentChunkStart + chunk.length - 1;
+      
+      // If chunk overlaps with the requested range [start, end]
+      if (chunkEnd >= start && currentChunkStart <= end) {
+        const sliceStart = Math.max(0, start - currentChunkStart);
+        const sliceEnd = Math.min(chunk.length, end - currentChunkStart + 1);
+        const bytesToCopy = sliceEnd - sliceStart;
+        
+        if (bytesToCopy > 0) {
+          chunk.copy(result, resultOffset, sliceStart, sliceEnd);
+          resultOffset += bytesToCopy;
+        }
+      }
+      
+      currentChunkStart += chunk.length;
+      if (currentChunkStart > end) break;
+    }
+    
+    return result;
   }
 
   append(chunk: Buffer): void {
@@ -292,7 +313,11 @@ router.get("/:videoId", async (req, res) => {
     res.setHeader("Content-Length", contentLength);
     if (!upstream.body) return res.end();
     const { Readable } = require("stream");
-    Readable.fromWeb(upstream.body as any).pipe(res);
+    const stream = Readable.fromWeb(upstream.body as any);
+    stream.on("error", (err: any) => {
+      log.error({ err, videoId }, "Full download stream error");
+    });
+    stream.pipe(res);
     return;
   }
 

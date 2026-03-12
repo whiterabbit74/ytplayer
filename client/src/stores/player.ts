@@ -11,6 +11,7 @@ interface PlayerState {
   nextPageToken: string | null;
 
   play: (track: Track) => void;
+  playTrackInContext: (track: Track, queue: Track[]) => void;
   playFromQueue: (index: number) => void;
   pause: () => void;
   resume: () => void;
@@ -37,8 +38,29 @@ export const usePlayerStore = create<PlayerState>()(
       nextPageToken: null,
 
       play: (track) => {
-        const idx = get().queue.findIndex((t) => t.id === track.id);
-        set({ currentTrack: track, isPlaying: true, currentIndex: idx });
+        const { queue } = get();
+        const idx = queue.findIndex((t) => t.id === track.id);
+        if (idx >= 0) {
+          set({ currentTrack: track, isPlaying: true, currentIndex: idx });
+        } else {
+          // If not in queue, add it and play
+          set({
+            queue: [...queue, track],
+            currentTrack: track,
+            isPlaying: true,
+            currentIndex: queue.length
+          });
+        }
+      },
+
+      playTrackInContext: (track, newQueue) => {
+        const idx = newQueue.findIndex((t) => t.id === track.id);
+        set({
+          queue: newQueue,
+          currentTrack: track,
+          currentIndex: idx >= 0 ? idx : 0,
+          isPlaying: true
+        });
       },
 
       playFromQueue: (index) => {
@@ -74,12 +96,22 @@ export const usePlayerStore = create<PlayerState>()(
         }),
 
       playNext: () => {
-        const { queue, currentIndex } = get();
-        const nextIdx = currentIndex + 1;
+        const { queue, currentIndex, repeatMode } = get();
+        if (queue.length === 0) return;
+
+        let nextIdx = currentIndex + 1;
         if (nextIdx >= queue.length) {
-          set({ isPlaying: false });
-          return;
+          if (repeatMode === "off") {
+            set({ isPlaying: false });
+            return;
+          } else {
+            // "one" is handled by useAudio, so "off" here means we stop.
+            // If we had "all", we would loop here.
+            set({ isPlaying: false });
+            return;
+          }
         }
+        
         set({
           currentTrack: queue[nextIdx],
           currentIndex: nextIdx,

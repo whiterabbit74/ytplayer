@@ -11,23 +11,12 @@ export function FavoritesList() {
   const isLoading = useFavoritesStore((s) => s.isLoading);
   const loadFavorites = useFavoritesStore((s) => s.loadFavorites);
   
-  const play = usePlayerStore((s) => s.play);
   const addToQueue = usePlayerStore((s) => s.addToQueue);
-  const setQueue = usePlayerStore((s) => s.setQueue);
-
+  
   useEffect(() => {
     loadFavorites();
   }, [loadFavorites]);
 
-  const handlePlay = (track: import("@/lib/api").Track) => {
-    const startIndex = favorites.findIndex(t => t.id === track.id);
-    if (startIndex !== -1) {
-      setQueue(favorites, startIndex);
-      play(favorites[startIndex]);
-    } else {
-      play(track);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -59,7 +48,6 @@ export function FavoritesList() {
       </div>
       <TrackList 
         tracks={favorites} 
-        onPlay={handlePlay} 
         onAddToQueue={addToQueue} 
       />
     </div>

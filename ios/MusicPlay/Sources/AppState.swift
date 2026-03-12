@@ -4,6 +4,7 @@ import Combine
 final class AppState: ObservableObject {
     @Published var isAuthenticated = false
     @Published var isLoading = true
+    @Published var isServerAvailable = true
     @Published var baseURL: String
     @Published var audioQuality: String
 
@@ -20,7 +21,7 @@ final class AppState: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     init() {
-        let localURL = "http://192.168.1.235:3001"
+        let localURL = "http://qs-MacBook-Air.local:3001"
         let savedQuality = UserDefaults.standard.string(forKey: "musicplay_audio_quality") ?? "high"
         
         self.baseURL = localURL
@@ -29,10 +30,52 @@ final class AppState: ObservableObject {
         self.apiClient.audioQuality = savedQuality
         self.isAuthenticated = tokenStore.accessToken != nil
         self.isLoading = false
+        
+        setupAPIConnectionTracking()
         wireStores()
         bindNestedStores()
-        
-        UserDefaults.standard.set(localURL, forKey: "musicplay_base_url")
+        startHealthCheck()
+    }
+
+    private func setupAPIConnectionTracking() {
+        apiClient.onConnectionError = { [weak self] _ in
+            DispatchQueue.main.async {
+                if self?.isServerAvailable == true {
+                    print("📡 Server became unreachable")
+                    self?.isServerAvailable = false
+                }
+            }
+        }
+        apiClient.onConnectionSuccess = { [weak self] in
+            DispatchQueue.main.async {
+                if self?.isServerAvailable == false {
+                    print("📡 Server back online")
+                    self?.isServerAvailable = true
+                }
+            }
+        }
+    }
+
+    private func startHealthCheck() {
+        // Periodic check if server is back
+        Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            guard let self = self, !self.isServerAvailable else { return }
+            Task { await self.checkConnection() }
+        }
+    }
+
+    func checkConnection() async {
+        do {
+            // Simple ping to /api/v1/auth/refresh (or any lightweight endpoint)
+            _ = try await apiClient.fetchPlaylists() 
+            DispatchQueue.main.async { self.isServerAvailable = true }
+        } catch {
+            // If it's a 401 or something, the server IS up. 
+            // Only actual URLErrors count as "server down" in this context.
+            if let nsError = error as NSError?, nsError.domain != NSURLErrorDomain {
+                DispatchQueue.main.async { self.isServerAvailable = true }
+            }
+        }
     }
 
     func updateBaseURL(_ url: String) {
@@ -114,13 +157,48 @@ struct RootView: View {
     @EnvironmentObject var appState: AppState
 
     var body: some View {
-        Group {
-            if appState.isLoading {
-                ProgressView()
-            } else if appState.isAuthenticated {
-                MainTabView()
-            } else {
-                LoginView()
+        ZStack {
+            Group {
+                if appState.isLoading {
+                    ProgressView()
+                } else if appState.isAuthenticated {
+                    MainTabView()
+                } else {
+                    LoginView()
+                }
+            }
+
+            
+            if !appState.isServerAvailable {
+                VStack {
+                    HStack(spacing: 8) {
+                        Image(systemName: "wifi.slash")
+                            .font(.caption)
+                        Text("No Server Connection")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                        
+                        Spacer()
+                        
+                        Button("Retry") {
+                            Task { await appState.checkConnection() }
+                        }
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(4)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(.red.opacity(0.8))
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+                    .padding(.horizontal, 10)
+                    .padding(.top, 4) // Safe area will push it down
+                    
+                    Spacer()
+                }
             }
         }
         .preferredColorScheme(.dark)

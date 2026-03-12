@@ -21,9 +21,8 @@ export function PlaylistDetail({ playlistId, onBack }: PlaylistDetailProps) {
   const selectPlaylist = usePlaylistsStore((s) => s.selectPlaylist);
   const removeTrack = usePlaylistsStore((s) => s.removeTrack);
   const reorderTracks = usePlaylistsStore((s) => s.reorderTracks);
-  const play = usePlayerStore((s) => s.play);
-  const clearQueue = usePlayerStore((s) => s.clearQueue);
-  const addToQueue = usePlayerStore((s) => s.addToQueue);
+  const playTrackInContext = usePlayerStore((s) => s.playTrackInContext);
+
   const currentTrackId = usePlayerStore((s) => s.currentTrack?.id);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
 
@@ -35,10 +34,8 @@ export function PlaylistDetail({ playlistId, onBack }: PlaylistDetailProps) {
 
   const handlePlayAll = useCallback(() => {
     if (tracks.length === 0) return;
-    clearQueue();
-    tracks.slice(1).forEach((t) => addToQueue(t));
-    play(tracks[0]);
-  }, [tracks, clearQueue, addToQueue, play]);
+    playTrackInContext(tracks[0], tracks);
+  }, [tracks, playTrackInContext]);
 
   const handleRemove = async (track: TrackWithRowId) => {
     if (track._rowId) {
@@ -110,7 +107,7 @@ export function PlaylistDetail({ playlistId, onBack }: PlaylistDetailProps) {
             ) : (
               <img src={getThumbUrl(track.thumbnail)} alt="" className="w-10 h-10 rounded object-cover shrink-0" onError={handleImgError} loading="lazy" />
             )}
-            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => play(track)}>
+            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => playTrackInContext(track, tracks)}>
               <p className="text-sm font-medium truncate">{track.title}</p>
               <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
             </div>

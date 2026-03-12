@@ -20,6 +20,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useFavoritesStore } from "@/stores/favorites";
 import { LoginPage } from "@/components/LoginPage";
 import { useTranslation } from "@/i18n";
+import { useConnectionStore } from "@/stores/connection";
+
 
 function MobilePlaylistsView() {
   const [openId, setOpenId] = useState<number | null>(null);
@@ -33,11 +35,14 @@ function App() {
   const { user, isLoading } = useAuth();
   const { t } = useTranslation();
 
+
   if (isLoading) {
     return <div className="h-screen bg-background flex items-center justify-center">
       <p className="text-muted-foreground">{t("common.loading")}</p>
     </div>;
   }
+
+
 
   if (!user) return <LoginPage />;
 
@@ -48,6 +53,7 @@ function AuthenticatedApp() {
   const { syncToServer } = usePlayerSync();
   const [mobileTab, setMobileTab] = useState<MobileTab>("search");
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
+  const isAvailable = useConnectionStore((s) => s.isAvailable);
   const [lastQuery, setLastQuery] = useState(() => {
     // Priority: URL ?q= param > localStorage
     const urlQuery = new URLSearchParams(window.location.search).get("q");
@@ -63,7 +69,6 @@ function AuthenticatedApp() {
   const appendSearchResults = usePlayerStore((s) => s.appendSearchResults);
   const searchResults = usePlayerStore((s) => s.searchResults);
   const nextPageToken = usePlayerStore((s) => s.nextPageToken);
-  const play = usePlayerStore((s) => s.play);
   const addToQueue = usePlayerStore((s) => s.addToQueue);
   const loadFavoriteIds = useFavoritesStore((s) => s.loadFavoriteIds);
   const currentTrack = usePlayerStore((s) => s.currentTrack);
@@ -87,7 +92,7 @@ function AuthenticatedApp() {
       isFirstMountRef.current = false;
       prevTrackIdRef.current = currentTrack.id;
       if (storeIsPlaying) storePause();
-      audio.load(currentTrack.id);
+      audio.load(currentTrack.id, currentTrack.duration);
       const pos = localStorage.getItem("musicplay-position");
       if (pos) {
         audio.restorePosition(parseFloat(pos));
@@ -99,7 +104,7 @@ function AuthenticatedApp() {
     if (currentTrack.id === prevTrackIdRef.current) return;
     prevTrackIdRef.current = currentTrack.id;
 
-    audio.play(currentTrack.id);
+    audio.play(currentTrack.id, currentTrack.duration);
   }, [currentTrack?.id]);
 
   const handlePlayPause = useCallback(() => {
@@ -183,7 +188,7 @@ function AuthenticatedApp() {
               <SearchBar onSearch={handleSearch} initialQuery={lastQuery} />
             </div>
             <div className="flex-1 overflow-auto p-4">
-              <TrackList tracks={searchResults} onPlay={play} onAddToQueue={addToQueue} onLoadMore={handleLoadMore} hasMore={!!nextPageToken} isLoading={isSearching} />
+              <TrackList tracks={searchResults} onAddToQueue={addToQueue} onLoadMore={handleLoadMore} hasMore={!!nextPageToken} isLoading={isSearching} />
             </div>
           </>
         );
@@ -235,6 +240,11 @@ function AuthenticatedApp() {
           </div>
         }
       >
+        {!isAvailable && (
+          <div className="bg-destructive/10 text-destructive text-center py-1 text-xs border-b border-destructive/20 animate-pulse">
+            Нет связи с сервером. Некоторые функции могут быть недоступны.
+          </div>
+        )}
         {/* Desktop: MainContent with tabs */}
         <div className="hidden md:flex md:flex-col md:flex-1 min-h-0">
           <MainContent
@@ -244,7 +254,7 @@ function AuthenticatedApp() {
                   <SearchBar onSearch={handleSearch} initialQuery={lastQuery} />
                 </div>
                 <div className="flex-1 overflow-auto p-4">
-                  <TrackList tracks={searchResults} onPlay={play} onAddToQueue={addToQueue} onLoadMore={handleLoadMore} hasMore={!!nextPageToken} isLoading={isSearching} />
+                  <TrackList tracks={searchResults} onAddToQueue={addToQueue} onLoadMore={handleLoadMore} hasMore={!!nextPageToken} isLoading={isSearching} />
                 </div>
               </>
             }

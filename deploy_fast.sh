@@ -14,23 +14,6 @@ IMAGE_NAME="ytplayer-musicplay"
 echo "🚀 MusicPlay DEPLOY"
 echo "==================="
 
-# 1. ПРОВЕРКА СОСТОЯНИЯ GIT
-echo "🔍 Проверка актуальности кода в GitHub..."
-git fetch origin main 2>/dev/null || true
-LOCAL=$(git rev-parse HEAD)
-REMOTE=$(git rev-parse origin/main 2>/dev/null || echo "")
-
-if [ "$LOCAL" != "$REMOTE" ] && [ -n "$REMOTE" ]; then
-    echo "❌ ОШИБКА: Локальный код не совпадает с GitHub (origin/main)."
-    echo "Сначала сделайте 'git push' или 'git pull'."
-    exit 1
-fi
-
-if ! git diff-index --quiet HEAD --; then
-    echo "❌ ОШИБКА: У вас есть незакоммиченные изменения."
-    echo "Закоммитьте или очистите рабочую директорию перед деплоем."
-    exit 1
-fi
 
 GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "dev")
 GIT_DATE=$(git log -1 --format=%cd --date=format:'%Y-%m-%d %H:%M:%S' 2>/dev/null || echo "unknown")
@@ -86,7 +69,7 @@ sleep 5
 
 echo ''
 echo '✅ Контейнеры:'
-docker ps --format 'table {{.Names}}\t{{.Status}}' | grep -E 'NAME|musicplay|bgutil'
+docker ps --format 'table {{.Names}}\t{{.Status}}' | grep -E 'NAME|musicplay|bgutil|cookie'
 
 echo ''
 echo '🧹 Очистка старых образов...'

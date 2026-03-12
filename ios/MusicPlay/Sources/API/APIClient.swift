@@ -8,9 +8,11 @@ final class APIClient {
     private let encoder: JSONEncoder
     private var isRefreshing = false
     var audioQuality: String = "high"
+    var onConnectionError: ((Error) -> Void)?
+    var onConnectionSuccess: (() -> Void)?
 
     init(baseURL: String, tokenStore: TokenStore) {
-        self.baseURL = URL(string: baseURL) ?? URL(string: "http://192.168.1.235:3001")!
+        self.baseURL = URL(string: baseURL) ?? URL(string: "http://qs-MacBook-Air.local:3001")!
         self.tokenStore = tokenStore
         self.session = URLSession(configuration: .default)
         self.decoder = JSONDecoder()
@@ -91,10 +93,20 @@ final class APIClient {
                 throw URLError(.badServerResponse)
             }
             
+            onConnectionSuccess?()
             return try decoder.decode(T.self, from: data)
         } catch {
             print("❌ [API] Request failed: \(req.url?.absoluteString ?? "unknown") - Error: \(error)")
+            handleNetworkError(error)
             throw error
+        }
+    }
+
+    private func handleNetworkError(_ error: Error) {
+        let nsError = error as NSError
+        // Network-level errors (connection refused, timeout, dns, etc)
+        if nsError.domain == NSURLErrorDomain {
+            onConnectionError?(error)
         }
     }
 

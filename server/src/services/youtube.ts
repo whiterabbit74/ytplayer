@@ -173,12 +173,14 @@ export async function getVideoInfo(videoId: string): Promise<Track> {
 }
 
 function parseDuration(iso8601: string): number {
-  const match = iso8601.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  const match = iso8601.match(/P(?:(\d+)W)?(?:(\d+)D)?T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   if (!match) return 0;
-  const hours = parseInt(match[1] || "0");
-  const minutes = parseInt(match[2] || "0");
-  const seconds = parseInt(match[3] || "0");
-  return hours * 3600 + minutes * 60 + seconds;
+  const weeks = parseInt(match[1] || "0");
+  const days = parseInt(match[2] || "0");
+  const hours = parseInt(match[3] || "0");
+  const minutes = parseInt(match[4] || "0");
+  const seconds = parseInt(match[5] || "0");
+  return weeks * 604800 + days * 86400 + hours * 3600 + minutes * 60 + seconds;
 }
 
 const HTML_ENTITIES: Record<string, string> = {

@@ -25,7 +25,7 @@ echo "🔨 Сборка проекта..."
 xcodebuild build \
     -project "$PROJECT" \
     -scheme "$SCHEME" \
-    -destination "id=$DEVICE_ID" \
+    -destination "platform=iOS,id=$DEVICE_ID" \
     CODE_SIGNING_ALLOWED=NO \
     -quiet
 
@@ -35,7 +35,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # 4. Поиск пути к .app
-APP_PATH=$(xcodebuild -showBuildSettings -project "$PROJECT" -scheme "$SCHEME" -destination "id=$DEVICE_ID" | grep -m 1 "CODESIGNING_FOLDER_PATH" | awk '{print $3}')
+APP_PATH=$(xcodebuild -showBuildSettings -project "$PROJECT" -scheme "$SCHEME" -destination "platform=iOS,id=$DEVICE_ID" | grep -m 1 "CODESIGNING_FOLDER_PATH" | awk '{print $3}')
 
 if [ -z "$APP_PATH" ]; then
     echo "❌ Не удалось найти путь к собранному приложению!"
@@ -46,9 +46,9 @@ echo "📦 Путь к приложению: $APP_PATH"
 
 # 5. Проверка версии
 echo "🔍 Проверка версии в коде..."
-grep -a "MusicPlay_BUILD_VERSION_2.6" "$APP_PATH/MusicPlay" > /dev/null
+grep -a "MusicPlay_BUILD_VERSION_2.9" "$APP_PATH/MusicPlay" > /dev/null
 if [ $? -eq 0 ]; then
-    echo "✅ Код актуален (MusicPlay_BUILD_VERSION_2.6 найдена)."
+    echo "✅ Код актуален (MusicPlay_BUILD_VERSION_2.9 найдена)."
 else
     echo "⚠️ ПРЕДУПРЕЖДЕНИЕ: Маркер версии не найден в бинарнике!"
 fi
@@ -78,4 +78,4 @@ fi
 echo "🏁 Запуск приложения..."
 xcrun devicectl device process launch --device "$DEVICE_ID" "$BUNDLE_ID"
 
-echo "✅ ГОТОВО! Приложение версии v1.2.3 (v2.6) запущено на iPhone."
+echo "✅ ГОТОВО! Приложение версии v1.2.5 (v2.9) запущено на iPhone."

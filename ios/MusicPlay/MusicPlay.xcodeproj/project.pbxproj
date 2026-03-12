@@ -22,6 +22,7 @@
 		6A931ED6151EF95E935A32F9 /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B81CFF640A51677869AC5A95 /* FavoritesView.swift */; };
 		7AACB6FA1374E167EA5A4154 /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48EE71C50921E8AD456EB234 /* ImageCache.swift */; };
 		87733704CDB77D274FBFA3CC /* PlayerSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D202E4BB4B0BA6A242A903 /* PlayerSyncService.swift */; };
+		971C9362218529900858D4CB /* DownloadsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EC2220C21F7A648BE966BA4 /* DownloadsStore.swift */; };
 		98CF6291A6460CCE6B04941F /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE4B5AA565684A40317FDD52 /* TokenStore.swift */; };
 		9D51F425259B296D1A348965 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8830842E003B7EB4DCBA4D15 /* SettingsView.swift */; };
 		A20268E98987FFF9ACCF53C6 /* PlayerFullView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC8AD137C04B4EA838920FA4 /* PlayerFullView.swift */; };
@@ -55,6 +56,7 @@
 		665198F40BF42740811D7E58 /* MusicPlay.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MusicPlay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F875DA92C69E3BDC18466F7 /* PlaylistsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistsStore.swift; sourceTree = "<group>"; };
 		8830842E003B7EB4DCBA4D15 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		8EC2220C21F7A648BE966BA4 /* DownloadsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadsStore.swift; sourceTree = "<group>"; };
 		9DD76F75C2392976A9367B7A /* MusicPlayApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicPlayApp.swift; sourceTree = "<group>"; };
 		A6D202E4BB4B0BA6A242A903 /* PlayerSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSyncService.swift; sourceTree = "<group>"; };
 		AD7C0E0227BFA4776AD05F0D /* TrackRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRow.swift; sourceTree = "<group>"; };
@@ -76,6 +78,7 @@
 		4AA73D2428DD836AED5C6EDC /* Stores */ = {
 			isa = PBXGroup;
 			children = (
+				8EC2220C21F7A648BE966BA4 /* DownloadsStore.swift */,
 				43B665DE3C736E45A1E9F671 /* FavoritesStore.swift */,
 				D579850725E8679EB1D1BE99 /* PlayerStore.swift */,
 				6F875DA92C69E3BDC18466F7 /* PlaylistsStore.swift */,
@@ -245,6 +248,7 @@
 			files = (
 				4AD5DEBC822173DC373387AD /* APIClient.swift in Sources */,
 				EA97F5A01D8CBD7866DF6B5D /* AppState.swift in Sources */,
+				971C9362218529900858D4CB /* DownloadsStore.swift in Sources */,
 				3225AEA1696E2C1C3EB7F57F /* FavoritesStore.swift in Sources */,
 				6A931ED6151EF95E935A32F9 /* FavoritesView.swift in Sources */,
 				7AACB6FA1374E167EA5A4154 /* ImageCache.swift in Sources */,
@@ -311,7 +315,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 6QSB7UUV7B;
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -319,7 +323,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.3;
+				MARKETING_VERSION = 1.2.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.musicplay.app;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.10;
@@ -333,7 +337,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 6QSB7UUV7B;
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -341,7 +345,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.3;
+				MARKETING_VERSION = 1.2.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.musicplay.app;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.10;

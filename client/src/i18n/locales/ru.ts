@@ -32,6 +32,7 @@ const ru = {
   "playlist.title": "Плейлист",
   "playlist.empty": "Плейлист пуст",
   "playlist.playAll": "Воспроизвести всё",
+  "playlist.tracks": "{{count}} треков",
   "playlist.tracks_one": "{{count}} трек",
   "playlist.tracks_few": "{{count}} трека",
   "playlist.tracks_many": "{{count}} треков",

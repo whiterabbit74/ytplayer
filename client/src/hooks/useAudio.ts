@@ -6,8 +6,8 @@ interface UseAudioReturn {
   currentTime: number;
   duration: number;
   volume: number;
-  load: (videoId: string) => void;
-  play: (videoId: string) => void;
+  load: (videoId: string, expectedDuration?: number) => void;
+  play: (videoId: string, expectedDuration?: number) => void;
   pause: () => void;
   resume: () => void;
   seek: (time: number) => void;
@@ -40,6 +40,7 @@ export function useAudio(onEnded?: () => void, repeatOne?: boolean): UseAudioRet
   const [seekingTime, setSeekingTime] = useState<number | null>(null);
   const lastSaveRef = useRef(0);
   const pendingRestoreRef = useRef<number | null>(null);
+  const expectedDurationRef = useRef<number>(0);
 
   useEffect(() => {
     const audio = getAudio();
@@ -62,7 +63,17 @@ export function useAudio(onEnded?: () => void, repeatOne?: boolean): UseAudioRet
       }
     };
     const onLoadedMetadata = () => {
-      setDuration(audio.duration);
+      const playerDur = audio.duration;
+      if (playerDur > 0 && isFinite(playerDur)) {
+        const expected = expectedDurationRef.current;
+        if (expected > 0 && Math.abs(playerDur - expected) > expected * 0.1) {
+          console.warn(`Suspect player duration: ${playerDur}s. Sticking to API: ${expected}s.`);
+          setDuration(expected);
+        } else {
+          setDuration(playerDur);
+        }
+      }
+
       if (pendingRestoreRef.current !== null) {
         audio.currentTime = pendingRestoreRef.current;
         setCurrentTime(pendingRestoreRef.current);
@@ -82,6 +93,22 @@ export function useAudio(onEnded?: () => void, repeatOne?: boolean): UseAudioRet
     };
     const onError = () => {
       console.error("Audio error:", audio.error?.message);
+      setIsPlaying(false);
+      
+      // Не пропускаем автоматически. Пользователь просил пытаться до последнего.
+      // Если надо, он пропустит сам.
+      console.log("Попытка повторного воспроизведения через 3 секунды...");
+      setTimeout(() => {
+        const currentSrc = audio.src;
+        if (currentSrc) {
+          // Перезагружаем источник и пробуем играть снова
+          audio.load();
+          audio.play().catch((err) => {
+            if (err.name !== "AbortError") console.error("Retry failed:", err);
+          });
+          setIsPlaying(true);
+        }
+      }, 3000);
     };
     const onSeeked = () => setSeekingTime(null);
 
@@ -100,13 +127,15 @@ export function useAudio(onEnded?: () => void, repeatOne?: boolean): UseAudioRet
     };
   }, []);
 
-  const load = useCallback((videoId: string) => {
+  const load = useCallback((videoId: string, expectedDuration?: number) => {
     const audio = getAudio();
+    expectedDurationRef.current = expectedDuration ?? 0;
     audio.src = getStreamUrl(videoId);
   }, []);
-
-  const play = useCallback((videoId: string) => {
+  
+  const play = useCallback((videoId: string, expectedDuration?: number) => {
     const audio = getAudio();
+    expectedDurationRef.current = expectedDuration ?? 0;
     audio.src = getStreamUrl(videoId);
     audio.play().catch((err) => {
       // Ignore AbortError from rapid play/pause

@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { X, Shuffle, Trash2, Volume2, Pause, ExternalLink } from "lucide-react";
 import { handleImgError } from "@/lib/img-fallback";
 import { useTranslation } from "@/i18n";
+import { formatDuration } from "@/lib/utils";
 
 export function Queue() {
   const { t } = useTranslation();
@@ -59,7 +60,11 @@ export function Queue() {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className={`text-xs font-medium truncate ${isCurrent ? "text-primary" : ""}`}>{track.title}</p>
-                  <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
+                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground overflow-hidden">
+                    <span className="truncate">{track.artist}</span>
+                    <span className="shrink-0 opacity-50">•</span>
+                    <span className="shrink-0">{formatDuration(track.duration)}</span>
+                  </div>
                 </div>
                 <a
                   href={`https://www.youtube.com/watch?v=${track.id}`}

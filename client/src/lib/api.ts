@@ -1,4 +1,19 @@
+import { useConnectionStore } from "@/stores/connection";
+
 const API_BASE = import.meta.env.BASE_URL + "api";
+
+async function apiFetch(url: string, init?: RequestInit) {
+  try {
+    const res = await fetch(url, init);
+    useConnectionStore.getState().setAvailable(true);
+    return res;
+  } catch (err) {
+    if (err instanceof TypeError && err.message === 'Failed to fetch') {
+      useConnectionStore.getState().setAvailable(false);
+    }
+    throw err;
+  }
+}
 
 export interface Track {
   id: string;
@@ -18,14 +33,14 @@ export interface SearchResult {
 export async function searchTracks(query: string, pageToken?: string): Promise<SearchResult> {
   let url = `${API_BASE}/search?q=${encodeURIComponent(query)}`;
   if (pageToken) url += `&pageToken=${encodeURIComponent(pageToken)}`;
-  const res = await fetch(url, { credentials: "include" });
+  const res = await apiFetch(url, { credentials: "include" });
   if (!res.ok) throw new Error("Search failed");
   return res.json();
 }
 
 export async function fetchSuggestions(query: string): Promise<string[]> {
   if (!query.trim()) return [];
-  const res = await fetch(`${API_BASE}/search/suggest?q=${encodeURIComponent(query)}`, {
+  const res = await apiFetch(`${API_BASE}/search/suggest?q=${encodeURIComponent(query)}`, {
     credentials: "include",
   });
   if (!res.ok) return [];

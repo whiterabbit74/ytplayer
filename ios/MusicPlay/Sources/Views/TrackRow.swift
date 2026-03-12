@@ -43,19 +43,29 @@ struct TrackRow: View {
                             .stroke(Color.white.opacity(0.3), lineWidth: 3)
                             .frame(width: 24, height: 24)
                         
-                        Circle()
-                            .trim(from: 0, to: CGFloat(progress))
-                            .stroke(Color.white, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                            .frame(width: 24, height: 24)
-                            .rotationEffect(.degrees(-90))
+                            Circle()
+                                .trim(from: 0, to: CGFloat(max(0.05, progress)))
+                                .stroke(Color.white, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                                .frame(width: 24, height: 24)
+                                .rotationEffect(.degrees(-90))
+                                // Add a spinning effect if progress is very low (starting up)
+                                .rotationEffect(.degrees(progress < 0.05 ? 360 : 0))
+                                .animation(progress < 0.05 ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: progress)
+                        }
+                        .frame(width: 48, height: 48)
                     }
-                    .frame(width: 48, height: 48)
                 }
-            }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(track.title).font(.headline).lineLimit(1)
-                Text(track.artist).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                HStack(spacing: 4) {
+                    Text(track.artist)
+                    Text("•")
+                    Text(track.formattedDuration)
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
             }
 
             Spacer()
@@ -82,7 +92,6 @@ struct TrackRow: View {
                             appState.downloadsStore.removeTrack(track.id)
                             AudioCacheService.shared.removeTrack(id: track.id)
                         } else {
-                            appState.downloadsStore.saveTrack(track)
                             appState.playerService.downloadTrack(track)
                         }
                     } label: {

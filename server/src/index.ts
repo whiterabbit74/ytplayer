@@ -19,7 +19,7 @@ import { cleanExpiredCache } from "./services/search-cache";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
-const HOST = "0.0.0.0";
+const HOST = "::";
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
@@ -58,15 +58,38 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// Serve client static files in production
+// Serve client static files if directory exists (production build)
 const publicDir = path.join(__dirname, "../public");
-app.use(express.static(publicDir));
-app.get("{*path}", (_req, res) => {
-  res.sendFile(path.join(publicDir, "index.html"));
-});
+if (require("fs").existsSync(publicDir)) {
+  app.use(express.static(publicDir));
+  app.get("*", (req, res, next) => {
+    // Don't intercept API calls
+    if (req.path.startsWith("/api")) {
+      return next();
+    }
+    res.sendFile(path.join(publicDir, "index.html"));
+  });
+}
 
 app.listen(PORT, HOST, () => {
   logger.info({ port: PORT, host: HOST }, "Server started");
+});
+
+// Catch unhandled errors that make the server "fall"
+process.on("uncaughtException", (err) => {
+  // Если это сетевая ошибка undici (fetch), не роняем сервер целиком
+  if (err.message?.includes("terminated") || (err as any).code === "ECONNRESET") {
+    logger.error({ err }, "Caught network-related Uncaught Exception. Keeping server alive.");
+    return;
+  }
+
+  logger.fatal({ err }, "Uncaught Exception! Server is falling...");
+  // Give pino time to flush
+  setTimeout(() => process.exit(1), 5000);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  logger.error({ reason, promise }, "Unhandled Rejection at Promise");
 });
 
 export default app;

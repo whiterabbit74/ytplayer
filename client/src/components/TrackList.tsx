@@ -14,10 +14,10 @@ import { Eye, ThumbsUp, Clock, ArrowUpDown, Loader2, ListPlus, ListMinus, Plus, 
 import { usePlayerStore } from "@/stores/player";
 import { handleImgError } from "@/lib/img-fallback";
 import { useTranslation } from "@/i18n";
+import { formatDuration } from "@/lib/utils";
 
 interface TrackListProps {
   tracks: Track[];
-  onPlay: (track: Track) => void;
   onAddToQueue: (track: Track) => void;
   onLoadMore?: () => void;
   hasMore?: boolean;
@@ -26,14 +26,7 @@ interface TrackListProps {
 
 type SortField = "default" | "duration" | "viewCount" | "likeCount";
 
-function formatDuration(seconds: number): string {
-  if (!seconds) return "";
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
+
 
 function formatCount(n: number): string {
   if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
@@ -89,11 +82,12 @@ function TrackPlaylistMenu({ track }: { track: Track }) {
   );
 }
 
-export function TrackList({ tracks, onPlay, onAddToQueue, onLoadMore, hasMore, isLoading }: TrackListProps) {
+export function TrackList({ tracks, onAddToQueue, onLoadMore, hasMore, isLoading }: TrackListProps) {
   const { t } = useTranslation();
   const currentTrackId = usePlayerStore((s) => s.currentTrack?.id);
   const storeIsPlaying = usePlayerStore((s) => s.isPlaying);
   const queue = usePlayerStore((s) => s.queue);
+  const playTrackInContext = usePlayerStore((s) => s.playTrackInContext);
   const removeFromQueue = usePlayerStore((s) => s.removeFromQueue);
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
   const isFavorite = useFavoritesStore((s) => s.isFavorite);
@@ -165,7 +159,7 @@ export function TrackList({ tracks, onPlay, onAddToQueue, onLoadMore, hasMore, i
           <div
             key={track.id}
             className={`flex items-center gap-3 p-2 rounded-md cursor-pointer group ${isCurrent ? "bg-accent" : "hover:bg-muted"}`}
-            onClick={() => onPlay(track)}
+            onClick={() => playTrackInContext(track, sortedTracks)}
           >
             {isCurrent ? (
               <div className="w-12 h-12 rounded flex items-center justify-center bg-primary/10 shrink-0">
@@ -180,8 +174,9 @@ export function TrackList({ tracks, onPlay, onAddToQueue, onLoadMore, hasMore, i
             )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{track.title}</p>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground overflow-hidden">
                 <span className="truncate">{track.artist}</span>
+                <span className="shrink-0 text-[10px] opacity-70">•</span>
                 <span className="shrink-0">{formatDuration(track.duration)}</span>
               </div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground md:hidden">

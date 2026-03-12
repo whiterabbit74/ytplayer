@@ -28,6 +28,16 @@ struct Track: Codable, Identifiable, Hashable {
     let likeCount: Int?
     let rowId: Int?
 
+    var formattedDuration: String {
+        let h = duration / 3600
+        let m = (duration % 3600) / 60
+        let s = duration % 60
+        if h > 0 {
+            return String(format: "%d:%02d:%02d", h, m, s)
+        }
+        return String(format: "%d:%02d", m, s)
+    }
+
     enum CodingKeys: String, CodingKey {
         case id
         case title

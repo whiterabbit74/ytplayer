@@ -18,7 +18,7 @@ export function LoginPage() {
     setError("");
     setIsLoading(true);
     try {
-      await login(email, password);
+      await login(email.trim(), password);
     } catch {
       setError(t("auth.invalidCredentials"));
     } finally {

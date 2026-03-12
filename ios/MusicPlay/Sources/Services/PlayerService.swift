@@ -30,7 +30,7 @@ final class PlayerService: ObservableObject {
     }
 
     func play(track: Track) {
-        guard let api else { return }
+        guard api != nil else { return }
 
         // Don't reload if already playing this track
         if currentTrackId == track.id, player.currentItem != nil {
@@ -62,8 +62,8 @@ final class PlayerService: ObservableObject {
                     self.isBuffering = false
                     let dur = item.duration.seconds
                     if dur.isFinite, dur > 0 {
-                        self.duration = dur
-                        self.updateNowPlaying(track: track, duration: dur)
+                        self.updateDurationIfTrustworthy(dur)
+                        self.updateNowPlaying(track: track, duration: self.duration)
                     }
                 } else if item.status == .failed {
                     self.isBuffering = false
@@ -84,7 +84,7 @@ final class PlayerService: ObservableObject {
 
     /// Load a track and pause at a given position. Used for restoring saved state or retrying.
     func prepareTrack(_ track: Track, at position: Double, autoPlay: Bool = false) {
-        guard let api else { return }
+        guard api != nil else { return }
         currentTrackId = track.id
         let asset = createAsset(for: track)
         let item = AVPlayerItem(asset: asset)
@@ -104,7 +104,7 @@ final class PlayerService: ObservableObject {
                     if autoPlay { self.isBuffering = false }
                     let dur = item.duration.seconds
                     if dur.isFinite, dur > 0 {
-                        self.duration = dur
+                        self.updateDurationIfTrustworthy(dur)
                         // Seek to saved position once ready
                         if position > 0 && position < dur {
                             self.player.seek(to: CMTime(seconds: position, preferredTimescale: 600)) { _ in
@@ -114,7 +114,7 @@ final class PlayerService: ObservableObject {
                         } else {
                             if autoPlay { self.resume() }
                         }
-                        self.updateNowPlaying(track: track, duration: dur)
+                        self.updateNowPlaying(track: track, duration: self.duration)
                     } else {
                         if autoPlay { self.resume() }
                     }
@@ -206,7 +206,7 @@ final class PlayerService: ObservableObject {
             self.currentTime = seconds
             self.playerStore?.position = seconds
             if let dur = self.player.currentItem?.duration.seconds, dur.isFinite, dur > 0 {
-                self.duration = dur
+                self.updateDurationIfTrustworthy(dur)
             }
         }
 
@@ -306,28 +306,34 @@ final class PlayerService: ObservableObject {
     }
 
     private func handleEnded() {
-        guard let store = playerStore else { return }
-        if store.repeatMode == "one" {
-            seek(to: 0)
-            player.play()
-            isPlaying = true
-            store.isPlaying = true
-            return
-        }
-        let hasNext = store.playNext()
-        if hasNext, let next = store.currentTrack {
-            play(track: next)
-        } else {
-            // Queue ended — stop playback
-            isPlaying = false
-            store.isPlaying = false
-            currentTime = 0
-            updateNowPlayingPlaybackState()
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let store = self.playerStore else { return }
+            if store.repeatMode == "one" {
+                self.seek(to: 0)
+                self.player.play()
+                self.isPlaying = true
+                store.isPlaying = true
+                return
+            }
+            let hasNext = store.playNext()
+            if hasNext, let next = store.currentTrack {
+                self.play(track: next)
+            } else {
+                // Queue ended — stop playback
+                self.isPlaying = false
+                store.isPlaying = false
+                self.currentTime = 0
+                self.updateNowPlayingPlaybackState()
+            }
         }
     }
 
+    private var errorCount = 0
     private func handlePlaybackError() {
         guard let store = playerStore, let current = store.currentTrack else { return }
+        
+        errorCount += 1
+        print("Playback error count: \(errorCount). Retrying indefinitely as requested.")
         
         // Retry playing the same track after a brief delay
         let lastPosition = currentTime
@@ -335,7 +341,7 @@ final class PlayerService: ObservableObject {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
             guard let self = self, self.currentTrackId == retryTrackId else { return }
-            print("Retrying playback for \(retryTrackId) at \(lastPosition)")
+            print("Retrying playback for \(retryTrackId) at \(lastPosition) (attempt \(self.errorCount))")
             
             // Set currentTrackId to nil to force recreation of player item
             self.currentTrackId = nil
@@ -427,6 +433,28 @@ final class PlayerService: ObservableObject {
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
 
+    private func updateDurationIfTrustworthy(_ newDuration: Double) {
+        guard newDuration.isFinite, newDuration > 0 else { return }
+        
+        // Use the duration from the track metadata (from YouTube API) as the authoritative source
+        let trackDuration = Double(playerStore?.currentTrack?.duration ?? 0)
+        
+        if trackDuration > 0 {
+            // If the player reports a duration significantly different from the API (e.g. 2x), 
+            // it's likely a sample rate or VBR estimation error. We trust the API "ground truth".
+            let difference = abs(newDuration - trackDuration)
+            if difference > trackDuration * 0.1 { // More than 10% difference
+                if self.duration != trackDuration {
+                    print("⚠️ Player reported duration \(newDuration)s deviates significantly from API \(trackDuration)s. Trusting API.")
+                    self.duration = trackDuration
+                }
+                return
+            }
+        }
+        
+        self.duration = newDuration
+    }
+
     private func createAsset(for track: Track) -> AVURLAsset {
         guard let api else { return AVURLAsset(url: URL(string: "about:blank")!) }
         let url = api.streamURL(for: track.id)
@@ -443,6 +471,7 @@ final class PlayerService: ObservableObject {
     func downloadTrack(_ track: Track) {
         guard let api else { return }
         let url = api.streamURL(for: track.id)
+        NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadStarted"), object: track)
         AudioCacheService.shared.cacheTrack(id: track.id, remoteURL: url, token: apiToken)
     }
 }
