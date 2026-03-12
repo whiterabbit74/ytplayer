@@ -62,7 +62,7 @@ app.get("/api/health", (_req, res) => {
 const publicDir = path.join(__dirname, "../public");
 if (require("fs").existsSync(publicDir)) {
   app.use(express.static(publicDir));
-  app.get("(.*)", (req, res, next) => {
+  app.get(/.*/, (req, res, next) => {
     // Don't intercept API calls
     if (req.path.startsWith("/api")) {
       return next();
