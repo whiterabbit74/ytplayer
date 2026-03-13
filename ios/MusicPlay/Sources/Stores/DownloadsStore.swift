@@ -9,10 +9,17 @@ final class DownloadsStore: ObservableObject {
     // We store tracks being downloaded so we can save them once finished
     private var pendingTracks: [String: Track] = [:]
     
-    private let defaultsKey = "musicplay_downloaded_tracks"
+    private var storageURL: URL {
+        let paths = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+        let dir = paths[0].appendingPathComponent("Metadata")
+        if !FileManager.default.fileExists(atPath: dir.path) {
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+        return dir.appendingPathComponent("downloads.json")
+    }
     
     init() {
-        loadFromDefaults()
+        loadFromDisk()
         
         // Listen for progress updates
         NotificationCenter.default.addObserver(forName: NSNotification.Name("TrackDownloadProgress"), object: nil, queue: .main) { [weak self] note in
@@ -62,7 +69,7 @@ final class DownloadsStore: ObservableObject {
     func clearError(id: String) {
         if failedDownloads.contains(id) {
             failedDownloads.remove(id)
-            saveToDefaults()
+            saveToDisk()
         }
     }
 
@@ -77,15 +84,13 @@ final class DownloadsStore: ObservableObject {
     func handleDownloadError(id: String) {
         failedDownloads.insert(id)
         downloadProgresses.removeValue(forKey: id)
-        // Keep it in pendingTracks so we can easily retry? 
-        // Actually, let's keep it in downloadedTracks so the user sees it failed.
-        saveToDefaults()
+        saveToDisk()
     }
     
     func saveTrackInternal(_ track: Track) {
         if !downloadedTracks.contains(where: { $0.id == track.id }) {
             downloadedTracks.append(track)
-            saveToDefaults()
+            saveToDisk()
         }
     }
     
@@ -94,9 +99,9 @@ final class DownloadsStore: ObservableObject {
         downloadProgresses.removeValue(forKey: id)
         pendingTracks.removeValue(forKey: id)
         failedDownloads.remove(id)
-        saveToDefaults()
+        saveToDisk()
         
-        // Systemic fix: Actually remove the file from disk cache
+        // Actually remove the file from disk cache
         AudioCacheService.shared.removeTrack(id: id)
     }
 
@@ -105,19 +110,22 @@ final class DownloadsStore: ObservableObject {
         downloadProgresses = [:]
         pendingTracks = [:]
         failedDownloads = []
-        saveToDefaults()
+        saveToDisk()
     }
     
     /// Scans cache and adds tracks that exist on disk but aren't in the list
     func syncItemsWithCache(allknownTracks: [Track]) {
-        // This is a bit tricky since we only have IDs in cache filenames.
-        // We'll try to find metadata for them if they aren't already in downloadedTracks.
+        var changed = false
         for track in allknownTracks {
             if !downloadedTracks.contains(where: { $0.id == track.id }) {
                 if AudioCacheService.shared.localURL(for: track.id) != nil {
-                    saveTrackInternal(track)
+                    downloadedTracks.append(track)
+                    changed = true
                 }
             }
+        }
+        if changed {
+            saveToDisk()
         }
     }
     
@@ -136,11 +144,27 @@ final class DownloadsStore: ObservableObject {
     
     func moveTracks(from source: IndexSet, to destination: Int) {
         downloadedTracks.move(fromOffsets: source, toOffset: destination)
-        saveToDefaults()
+        saveToDisk()
+    }
+
+    private struct DownloadMetadata: Codable {
+        let tracks: [Track]
+        let failedIds: [String]
     }
     
-    private func loadFromDefaults() {
-        if let data = UserDefaults.standard.data(forKey: defaultsKey) {
+    private func loadFromDisk() {
+        // Attempt to load from JSON first
+        if let data = try? Data(contentsOf: storageURL),
+           let metadata = try? JSONDecoder().decode(DownloadMetadata.self, from: data) {
+            self.downloadedTracks = metadata.tracks
+            self.failedDownloads = Set(metadata.failedIds)
+            print("💾 Loaded \(downloadedTracks.count) downloads from disk")
+            return
+        }
+        
+        // Migration from UserDefaults
+        print("💾 Attempting migration from UserDefaults...")
+        if let data = UserDefaults.standard.data(forKey: "musicplay_downloaded_tracks") {
             if let decoded = try? JSONDecoder().decode([Track].self, from: data) {
                 downloadedTracks = decoded
             }
@@ -148,12 +172,20 @@ final class DownloadsStore: ObservableObject {
         if let failed = UserDefaults.standard.stringArray(forKey: "musicplay_failed_downloads") {
             failedDownloads = Set(failed)
         }
+        
+        if !downloadedTracks.isEmpty || !failedDownloads.isEmpty {
+            saveToDisk()
+            // Clean up old defaults
+            UserDefaults.standard.removeObject(forKey: "musicplay_downloaded_tracks")
+            UserDefaults.standard.removeObject(forKey: "musicplay_failed_downloads")
+            print("✅ Successfully migrated downloads metadata to disk")
+        }
     }
     
-    private func saveToDefaults() {
-        if let data = try? JSONEncoder().encode(downloadedTracks) {
-            UserDefaults.standard.set(data, forKey: defaultsKey)
+    private func saveToDisk() {
+        let metadata = DownloadMetadata(tracks: downloadedTracks, failedIds: Array(failedDownloads))
+        if let data = try? JSONEncoder().encode(metadata) {
+            try? data.write(to: storageURL)
         }
-        UserDefaults.standard.set(Array(failedDownloads), forKey: "musicplay_failed_downloads")
     }
 }

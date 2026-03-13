@@ -2,20 +2,64 @@ import SwiftUI
 
 final class ImageCache {
     static let shared = ImageCache()
-    private let cache = NSCache<NSURL, UIImage>()
+    private let memoryCache = NSCache<NSURL, UIImage>()
+    private let fileManager = FileManager.default
+    
+    private lazy var diskCacheDirectory: URL = {
+        let paths = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)
+        let dir = paths[0].appendingPathComponent("ImageCache")
+        if !fileManager.fileExists(atPath: dir.path) {
+            try? fileManager.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+        return dir
+    }()
 
     init() {
-        cache.countLimit = 200
-        cache.totalCostLimit = 50 * 1024 * 1024 // 50 MB
+        memoryCache.countLimit = 200
+        memoryCache.totalCostLimit = 50 * 1024 * 1024 // 50 MB
     }
 
     func image(for url: URL) -> UIImage? {
-        cache.object(forKey: url as NSURL)
+        // 1. Memory Cache
+        if let image = memoryCache.object(forKey: url as NSURL) {
+            return image
+        }
+        
+        // 2. Disk Cache
+        let fileName = cacheFileName(for: url)
+        let filePath = diskCacheDirectory.appendingPathComponent(fileName)
+        if let data = try? Data(contentsOf: filePath), let image = UIImage(data: data) {
+            // Put back into memory cache
+            memoryCache.setObject(image, forKey: url as NSURL, cost: data.count)
+            return image
+        }
+        
+        return nil
     }
 
     func insert(_ image: UIImage, for url: URL) {
-        let cost = image.pngData()?.count ?? 0
-        cache.setObject(image, forKey: url as NSURL, cost: cost)
+        let data = image.pngData()
+        let cost = data?.count ?? 0
+        memoryCache.setObject(image, forKey: url as NSURL, cost: cost)
+        
+        // Save to disk asynchronously
+        if let data = data {
+            let fileName = cacheFileName(for: url)
+            let filePath = diskCacheDirectory.appendingPathComponent(fileName)
+            Task.detached(priority: .background) {
+                try? data.write(to: filePath)
+            }
+        }
+    }
+    
+    private func cacheFileName(for url: URL) -> String {
+        // Simple hash or base64 of the URL to make a safe filename
+        let data = url.absoluteString.data(using: .utf8)!
+        let base64 = data.base64EncodedString()
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "=", with: "")
+        return base64.suffix(100) + ".png" // Limit length
     }
 }
 

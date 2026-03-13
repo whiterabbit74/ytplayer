@@ -53,6 +53,7 @@ struct MainTabView: View {
                     playerStore: appState.playerStore,
                     playerService: appState.playerService,
                     downloadsStore: appState.downloadsStore,
+                    progressStore: appState.progressStore,
                     baseURL: appState.baseURL,
                     showPlayer: $showPlayer
                 )
@@ -68,6 +69,7 @@ struct MainTabView: View {
                 downloadsStore: appState.downloadsStore,
                 favoritesStore: appState.favoritesStore,
                 playlistsStore: appState.playlistsStore,
+                progressStore: appState.progressStore,
                 baseURL: appState.baseURL,
                 dynamicBackgroundEnabled: appState.dynamicBackgroundEnabled,
                 coverStyle: appState.coverStyle,

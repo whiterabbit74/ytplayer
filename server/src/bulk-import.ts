@@ -15,30 +15,49 @@ dotenv.config();
  */
 
 const targetEmail = "dimazru@gmail.com";
-const playlistTitle = "Французский вайб"; // Change this for each new import
+const playlistTitle = "Классика"; // Change this for each new import
 
 const songs = [
-  // Paste your songs here
-  "Ego - Willy William",
-  "Je veux tes yeux - Angèle",
-  "Papaoutai - Stromae",
-  "Tous Les Mêmes - Stromae",
-  "Tourner DansAntoine - Indila",
-  "Alors on danse - Stromae",
-  "Balance ton quoi - Angèle",
-  "Djadja - Aya Nakamura",
-  "Le temps est bon - Bon Entendeur, Isabelle Pierre",
-  "Salop(e) - Therapie TAXI",
-  "Soleil - Roméo Elvis",
-  "Formidable - Stromae",
-  "Avenir - Louane",
-  "Quelqu'un m'a dit - Carla Bruni",
-  "La Thune - Angèle",
-  "J'écris - Yseult",
-  "Voyage Voyage - Desireless",
-  "Joe le taxi - Vanessa Paradis",
-  "Mini World - Indila",
-  "Sympathique - Pink Martini"
+  "Crystallize - Lindsey Stirling",
+  "Viva La Vida - David Garrett",
+  "Path - Apocalyptica",
+  "Palladio - Escala",
+  "Carol of the Bells - Lindsey Stirling",
+  "Smooth Criminal - 2CELLOS",
+  "Destiny - Vanessa-Mae",
+  "Sabre Dance - Vanessa-Mae",
+  "Explosive - David Garrett",
+  "Croatian Rhapsody - Maksim Mrvica",
+  "Thunderstruck - 2CELLOS",
+  "Experience - Ludovico Einaudi",
+  "Time - Hans Zimmer",
+  "The Four Seasons, Summer (Presto) - Antonio Vivaldi",
+  "Requiem, Dies Irae - W.A. Mozart",
+  "Hall of the Mountain King - Apocalyptica",
+  "Dance of the Knights - Sergei Prokofiev",
+  "Moonlight Sonata (Epic Version) - Hidden Citizens",
+  "Kashmir - Escala",
+  "Now We Are Free - Hans Zimmer, Lisa Gerrard",
+  "Nocturne N20 - Hip Hop Chopin - Roman Dudchyk",
+  "Concerto No. 2 in G Minor (Hip-Hop version) - Игорь Корнелюк",
+  "Four Seasons - remix - White_Records",
+  "Lacrimosa - W. A. Mozart, Lisa Beckley",
+  "Sarabande - Escala",
+  "Flight of the Bumblebee - Oliver Lewis, Deviations Project",
+  "Red Hot (Symphonic Mix) - Ian Wherry, Vanessa-Mae",
+  "The Blessed Spirits - Vanessa-Mae",
+  "Toccata and Fugue in D Minor - J.S. Bach, Vanessa-Mae",
+  "Requiem For A Tower - Escala",
+  "In This Shirt - The Irrepressibles",
+  "Storm - Vanessa-Mae",
+  "Hocus Pocus - Jan Akkerman, Vanessa-Mae",
+  "Contradanza - Vanessa-Mae",
+  "Vivaldi Storm - 2CELLOS",
+  "Beethoven's 5th - David Garrett",
+  "He's a Pirate - Hans Zimmer",
+  "Shadows - Lindsey Stirling",
+  "Nothing Else Matters - Apocalyptica",
+  "I'm A-Doun For Lack O' Johnny - Vanessa-Mae"
 ];
 
 async function run() {

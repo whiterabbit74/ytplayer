@@ -15,6 +15,7 @@ struct SearchView: View {
     var body: some View {
         NavigationStack {
             List {
+                errorSection
                 resultsList
                 loadMoreButton
             }
@@ -67,6 +68,15 @@ struct SearchView: View {
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ResetSearch"))) { _ in
                 query = ""
                 searchStore.clearResults()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PerformSearch"))) { note in
+                if let artist = note.object as? String {
+                    query = artist
+                    searchStore.addRecentSearch(artist)
+                    Task {
+                        await searchStore.search(query: artist)
+                    }
+                }
             }
         }
     }
@@ -178,6 +188,26 @@ struct SearchView: View {
                     }
                     Spacer()
                 }
+            }
+        }
+    @ViewBuilder
+    private var errorSection: some View {
+        if let error = searchStore.errorMessage {
+            Section {
+                HStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                        .font(.title3)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Search Error")
+                            .font(.headline)
+                        Text(error)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 8)
             }
         }
     }

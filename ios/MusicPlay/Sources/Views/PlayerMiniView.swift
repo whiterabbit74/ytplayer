@@ -4,6 +4,7 @@ struct PlayerMiniView: View {
     @ObservedObject var playerStore: PlayerStore
     @ObservedObject var playerService: PlayerService
     @ObservedObject var downloadsStore: DownloadsStore
+    @ObservedObject var progressStore: PlaybackProgressStore
     let baseURL: String
     @Binding var showPlayer: Bool
 
@@ -12,9 +13,7 @@ struct PlayerMiniView: View {
             VStack(spacing: 0) {
                 // Progress bar at the top of mini-player
                 GeometryReader { geo in
-                    let progress = playerService.duration > 0
-                        ? playerService.currentTime / playerService.duration
-                        : 0
+                    let progress = progressStore.progress
                     Rectangle()
                         .fill(Color.white)
                         .frame(width: geo.size.width * min(max(progress, 0), 1))

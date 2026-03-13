@@ -44,6 +44,7 @@ final class AppState: ObservableObject {
     let searchStore = SearchStore()
     let downloadsStore = DownloadsStore()
     @Published var historyStore = HistoryStore()
+    let progressStore = PlaybackProgressStore()
     @Published var selectedTab: Int = 0
     let playerService = PlayerService()
     let playerSyncService = PlayerSyncService()
@@ -176,7 +177,7 @@ final class AppState: ObservableObject {
         favoritesStore.configure(api: apiClient)
         searchStore.configure(api: apiClient)
         playerStore.configure(api: apiClient)
-        playerService.configure(api: apiClient, playerStore: playerStore, historyStore: historyStore, appState: self)
+        playerService.configure(api: apiClient, playerStore: playerStore, historyStore: historyStore, progressStore: progressStore, appState: self)
         playerSyncService.configure(api: apiClient, playerStore: playerStore, playerService: playerService)
     }
 

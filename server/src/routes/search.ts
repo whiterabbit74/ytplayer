@@ -13,15 +13,35 @@ router.get("/", async (req, res) => {
     const videoId = parseYouTubeUrl(query);
 
     if (videoId) {
-      const track = await getVideoInfo(videoId);
-      return res.json({ tracks: [track] });
+      try {
+        const track = await getVideoInfo(videoId);
+        return res.json({ tracks: [track] });
+      } catch (err: any) {
+        if (err.message.includes("403")) {
+          return res.status(429).json({
+            error: {
+              code: "QUOTA_EXCEEDED",
+              message: "YouTube API quota exceeded. Please try again tomorrow."
+            }
+          });
+        }
+        return res.status(500).json({ error: { code: "SERVER_ERROR", message: err.message } });
+      }
     }
 
     const pageToken = req.query.pageToken as string | undefined;
     const results = await searchYouTube(query, pageToken);
     res.json(results);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    if (err.message.includes("403")) {
+      return res.status(429).json({
+        error: {
+          code: "QUOTA_EXCEEDED",
+          message: "YouTube API quota exceeded. Please try again tomorrow."
+        }
+      });
+    }
+    res.status(500).json({ error: { code: "SERVER_ERROR", message: err.message } });
   }
 });
 

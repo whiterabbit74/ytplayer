@@ -7,6 +7,7 @@ final class SearchStore: ObservableObject {
     @Published var suggestions: [String] = []
     @Published var hasSearched = false  // Track whether a search has been performed
     @Published var recentSearches: [String] = []
+    @Published var errorMessage: String?
 
     private var api: APIClient?
     private var suggestionTask: Task<Void, Never>?
@@ -68,13 +69,22 @@ final class SearchStore: ObservableObject {
         isSearching = true
         hasSearched = true
         do {
+            errorMessage = nil
             let res = try await api.search(query: trimmed)
             // Only apply results if this is still the current query
             if lastQuery == trimmed {
                 results = res.tracks.filter { $0.duration > 0 }
                 nextPageToken = res.nextPageToken
             }
+        } catch let apiError as APIErrorResponse {
+            if lastQuery == trimmed {
+                errorMessage = apiError.error.message
+            }
+            print("search api error", apiError)
         } catch {
+            if lastQuery == trimmed {
+                errorMessage = "Search failed. Please check your connection."
+            }
             print("search error", error)
         }
         if lastQuery == trimmed {
@@ -89,10 +99,15 @@ final class SearchStore: ObservableObject {
         isSearching = true
         defer { isSearching = false }
         do {
+            errorMessage = nil
             let res = try await api.search(query: query, pageToken: token)
             results.append(contentsOf: res.tracks.filter { $0.duration > 0 })
             nextPageToken = res.nextPageToken
+        } catch let apiError as APIErrorResponse {
+            errorMessage = apiError.error.message
+            print("loadMore api error", apiError)
         } catch {
+            errorMessage = "Load more failed."
             print("loadMore error", error)
         }
     }
@@ -104,6 +119,7 @@ final class SearchStore: ObservableObject {
         hasSearched = false
         suggestions = []
         lastQuery = ""
+        errorMessage = nil
     }
 
     func fetchSuggestions(query: String) {

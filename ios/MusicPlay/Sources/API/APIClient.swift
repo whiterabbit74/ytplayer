@@ -194,7 +194,19 @@ final class APIClient {
             tokenStore.refreshToken = resp.refreshToken
             return true
         } catch {
-            tokenStore.clear()
+            // Only clear tokens if the server explicitly rejects the refresh (401/400)
+            // If it's a network error (URLError), we KEEP the tokens so user stays "logged in" offline.
+            if let apiErr = error as? APIErrorResponse {
+                print("🚫 [API] Refresh rejected by server: \(apiErr.error.message)")
+                tokenStore.clear()
+            } else if let urlErr = error as? URLError {
+                print("📡 [API] Refresh failed due to network: \(urlErr.localizedDescription)")
+                // Do NOT clear tokens
+            } else {
+                // For other errors, we might want to be safe or keep them. 
+                // Let's keep them if it's not a clear auth failure.
+                print("⚠️ [API] Refresh failed with unknown error: \(error)")
+            }
             return false
         }
     }

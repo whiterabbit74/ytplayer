@@ -22,7 +22,6 @@ final class PlayerStore: ObservableObject {
     @Published var isPlaying: Bool = false
     @Published var repeatMode: String = "off" // "off", "one", "all"
     @Published var shuffleMode: Bool = false
-    @Published var position: Double = 0
 
     private var api: APIClient?
     private var originalQueue: [QueueItem] = []

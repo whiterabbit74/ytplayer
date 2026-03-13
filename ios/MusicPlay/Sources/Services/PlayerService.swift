@@ -4,11 +4,14 @@ import MediaPlayer
 import Combine
 
 final class PlayerService: ObservableObject {
-    @Published var currentTime: Double = 0
-    @Published var duration: Double = 0
+    var currentTime: Double = 0
+    var duration: Double = 0
     @Published var isPlaying: Bool = false
     @Published var volume: Float = 1.0
     @Published var isBuffering: Bool = false
+    
+    // Dedicated store for high-frequency UI updates
+    private var progressStore: PlaybackProgressStore?
     
     // Crossfade related
     private let playerA = AVPlayer()
@@ -33,10 +36,11 @@ final class PlayerService: ObservableObject {
     private weak var appState: AppState?
     private var currentTrackId: String?
 
-    func configure(api: APIClient, playerStore: PlayerStore, historyStore: HistoryStore, appState: AppState) {
+    func configure(api: APIClient, playerStore: PlayerStore, historyStore: HistoryStore, progressStore: PlaybackProgressStore, appState: AppState) {
         self.api = api
         self.playerStore = playerStore
         self.historyStore = historyStore
+        self.progressStore = progressStore
         self.appState = appState
         setupAudioSession()
         setupGlobalObservers()
@@ -94,6 +98,7 @@ final class PlayerService: ObservableObject {
         if currentTrackId == track.id, player.currentItem != nil, !isCrossfading {
             player.play()
             isPlaying = true
+            progressStore?.isPlaying = true
             playerStore?.isPlaying = true
             updateNowPlayingPlaybackState()
             return
@@ -292,6 +297,7 @@ final class PlayerService: ObservableObject {
         playerA.pause()
         playerB.pause()
         isPlaying = false
+        progressStore?.isPlaying = false
         playerStore?.isPlaying = false
         updateNowPlayingPlaybackState()
     }
@@ -368,7 +374,8 @@ final class PlayerService: ObservableObject {
             // Clamping to avoid "visual continuation" past the intentional end
             let effectiveDuration = self.duration
             self.currentTime = effectiveDuration > 0 ? min(seconds, effectiveDuration) : seconds
-            self.playerStore?.position = self.currentTime
+            self.progressStore?.currentTime = self.currentTime
+            self.progressStore?.isPlaying = true
             
             // Reconcile duration from player if it becomes available/changes
             if let dur = targetPlayer.currentItem?.duration.seconds, dur.isFinite, dur > 0 {
@@ -531,10 +538,13 @@ final class PlayerService: ObservableObject {
         switch status {
         case .playing:
             self.isBuffering = false
+            self.progressStore?.isBuffering = false
         case .waitingToPlayAtSpecifiedRate:
             self.isBuffering = true
+            self.progressStore?.isBuffering = true
         case .paused:
             self.isBuffering = false
+            self.progressStore?.isBuffering = false
         @unknown default:
             break
         }
@@ -687,12 +697,16 @@ final class PlayerService: ObservableObject {
                 if self.duration != trackDuration {
                     print("⚠️ Player reported duration \(newDuration)s deviates significantly from API \(trackDuration)s. Trusting API.")
                     self.duration = trackDuration
+                    self.progressStore?.duration = trackDuration
                 }
                 return
             }
         }
         
-        self.duration = newDuration
+        if self.duration != newDuration {
+            self.duration = newDuration
+            self.progressStore?.duration = newDuration
+        }
     }
 
     private func createAsset(for track: Track) -> AVURLAsset {
@@ -738,13 +752,18 @@ final class AudioCacheService {
     
     private let fileManager = FileManager.default
     private lazy var cacheDirectory: URL = {
-        let paths = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)
+        let paths = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
         let dir = paths[0].appendingPathComponent("AudioCache")
         if !fileManager.fileExists(atPath: dir.path) {
             try? fileManager.createDirectory(at: dir, withIntermediateDirectories: true)
         }
         return dir
     }()
+
+    private var oldCacheDirectory: URL {
+        let paths = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)
+        return paths[0].appendingPathComponent("AudioCache")
+    }
     
     private let maxCacheSize: UInt64 = UInt64.max // Effectively unlimited
     
@@ -753,7 +772,31 @@ final class AudioCacheService {
     private var lastCleanupDate = Date.distantPast
     
     private init() {
+        migrateOldCache()
         cleanUpCacheIfNeeded()
+    }
+
+    private func migrateOldCache() {
+        let oldDir = oldCacheDirectory
+        guard fileManager.fileExists(atPath: oldDir.path) else { return }
+        
+        print("📦 Migrating old audio cache from \(oldDir.path) to \(cacheDirectory.path)")
+        
+        do {
+            let files = try fileManager.contentsOfDirectory(at: oldDir, includingPropertiesForKeys: nil)
+            for file in files {
+                let dest = cacheDirectory.appendingPathComponent(file.lastPathComponent)
+                if fileManager.fileExists(atPath: dest.path) {
+                    try? fileManager.removeItem(at: dest)
+                }
+                try fileManager.moveItem(at: file, to: dest)
+                print("✅ Moved \(file.lastPathComponent) to new cache")
+            }
+            try fileManager.removeItem(at: oldDir)
+            print("✨ Migration complete, removed old cache directory")
+        } catch {
+            print("❌ Migration failed: \(error)")
+        }
     }
     
     func localURL(for trackId: String) -> URL? {

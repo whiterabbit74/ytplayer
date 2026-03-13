@@ -61,7 +61,6 @@ final class PlayerSyncService: ObservableObject {
 
             store.setQueue(state.queue, index: state.currentIndex)
             store.repeatMode = state.repeatMode
-            store.position = state.position
 
             // Determine current track
             let track = state.currentTrack ?? state.queue[safe: state.currentIndex]
@@ -89,7 +88,7 @@ final class PlayerSyncService: ObservableObject {
         }
 
         // Use live position from PlayerService if available
-        let position = playerService?.currentTime ?? store.position
+        let position = playerService?.currentTime ?? 0
 
         let state = PlayerState(
             queue: store.queue.map { $0.track },

@@ -6,11 +6,13 @@ struct PlayerFullView: View {
     @ObservedObject var downloadsStore: DownloadsStore
     @ObservedObject var favoritesStore: FavoritesStore
     @ObservedObject var playlistsStore: PlaylistsStore
+    @ObservedObject var progressStore: PlaybackProgressStore
     let baseURL: String
     let dynamicBackgroundEnabled: Bool
     let coverStyle: AppState.CoverStyle
     let squareCovers: Bool
 
+    @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) var dismiss
     @State private var isSeeking = false
     @State private var seekTime: Double = 0
@@ -89,17 +91,27 @@ struct PlayerFullView: View {
                             .minimumScaleFactor(0.7)
                             .padding(.horizontal, 40)
                         
-                        HStack(spacing: 6) {
-                            if downloadsStore.isDownloaded(id: track.id) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(.blue)
-                                    .font(.caption)
+                        Button {
+                            HapticManager.shared.trigger(.light)
+                            // 1. Switch to Search tab
+                            appState.selectedTab = 0
+                            // 2. Trigger search via notification
+                            NotificationCenter.default.post(name: NSNotification.Name("PerformSearch"), object: track.artist)
+                            // 3. Dismiss player
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 6) {
+                                if downloadsStore.isDownloaded(id: track.id) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.blue)
+                                        .font(.caption)
+                                }
+                                Text(track.artist)
+                                    .font(.body)
+                                    .foregroundStyle(.blue.opacity(0.8)) // Make it look clickable
+                                    .multilineTextAlignment(.center)
+                                    .lineLimit(1)
                             }
-                            Text(track.artist)
-                                .font(.body)
-                                .foregroundStyle(.white.opacity(0.6))
-                                .multilineTextAlignment(.center)
-                                .lineLimit(1)
                         }
                     }
                     .padding(.bottom, 24)
@@ -108,13 +120,13 @@ struct PlayerFullView: View {
                     VStack(spacing: 12) {
                         Slider(
                             value: Binding(
-                                get: { isSeeking ? seekTime : playerService.currentTime },
+                                get: { isSeeking ? seekTime : progressStore.currentTime },
                                 set: { newValue in
                                     isSeeking = true
                                     seekTime = newValue
                                 }
                             ),
-                            in: 0...max(playerService.duration, 1),
+                            in: 0...max(progressStore.duration, 1),
                             onEditingChanged: { editing in
                                 if !editing {
                                     playerService.seek(to: seekTime)
@@ -127,9 +139,9 @@ struct PlayerFullView: View {
                         .accentColor(.white)
 
                         HStack {
-                            Text(formatTime(isSeeking ? seekTime : playerService.currentTime))
+                            Text(formatTime(isSeeking ? seekTime : progressStore.currentTime))
                             Spacer()
-                            Text(formatTime(playerService.duration))
+                            Text(formatTime(progressStore.duration))
                         }
                         .font(.caption2.monospacedDigit())
                         .foregroundStyle(.white.opacity(0.5))
