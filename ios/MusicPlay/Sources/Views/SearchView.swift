@@ -13,6 +13,11 @@ struct SearchView: View {
                 loadMoreButton
             }
             .listStyle(.plain)
+            .safeAreaInset(edge: .bottom) {
+                if appState.playerStore.currentTrack != nil {
+                    Color.clear.frame(height: 70)
+                }
+            }
             .navigationTitle("Search")
             .searchable(text: $query, prompt: "Search songs, artists...")
             .searchSuggestions {
@@ -51,6 +56,10 @@ struct SearchView: View {
                 }
             }
             .onAppear { Task { await appState.playlistsStore.loadPlaylists() } }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ResetSearch"))) { _ in
+                query = ""
+                appState.searchStore.clearResults()
+            }
         }
     }
 
@@ -92,6 +101,12 @@ struct SearchView: View {
                             }
                         }
                     }
+                    .onDelete { indexSet in
+                        for index in indexSet {
+                            let query = store.recentSearches[index]
+                            store.removeRecentSearch(query)
+                        }
+                    }
                 } header: {
                     HStack {
                         Text("Recent Searches")
@@ -120,8 +135,7 @@ struct SearchView: View {
             track: track,
             baseURL: appState.baseURL,
             onPlay: {
-                appState.playerStore.setQueue(appState.searchStore.results, index: appState.searchStore.results.firstIndex(of: track) ?? 0)
-                appState.playerService.play(track: track)
+                appState.playerService.playTrack(track, context: appState.searchStore.results)
                 showPlayer = true
             },
             onAddToQueue: {

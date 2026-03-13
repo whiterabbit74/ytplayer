@@ -59,8 +59,7 @@ final class PlayerSyncService: ObservableObject {
             let state = try await api.fetchPlayerState()
             guard let store = playerStore else { return }
 
-            store.queue = state.queue
-            store.currentIndex = state.currentIndex
+            store.setQueue(state.queue, index: state.currentIndex)
             store.repeatMode = state.repeatMode
             store.position = state.position
 
@@ -93,7 +92,7 @@ final class PlayerSyncService: ObservableObject {
         let position = playerService?.currentTime ?? store.position
 
         let state = PlayerState(
-            queue: store.queue,
+            queue: store.queue.map { $0.track },
             currentIndex: store.currentIndex,
             position: position,
             repeatMode: store.repeatMode,

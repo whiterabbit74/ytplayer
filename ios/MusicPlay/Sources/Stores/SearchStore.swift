@@ -42,6 +42,13 @@ final class SearchStore: ObservableObject {
         UserDefaults.standard.set(current, forKey: recentSearchesKey)
     }
 
+    func removeRecentSearch(_ query: String) {
+        var current = recentSearches
+        current.removeAll { $0 == query }
+        recentSearches = current
+        UserDefaults.standard.set(current, forKey: recentSearchesKey)
+    }
+
     func clearRecentSearches() {
         recentSearches = []
         UserDefaults.standard.removeObject(forKey: recentSearchesKey)
@@ -64,7 +71,7 @@ final class SearchStore: ObservableObject {
             let res = try await api.search(query: trimmed)
             // Only apply results if this is still the current query
             if lastQuery == trimmed {
-                results = res.tracks
+                results = res.tracks.filter { $0.duration > 0 }
                 nextPageToken = res.nextPageToken
             }
         } catch {
@@ -83,7 +90,7 @@ final class SearchStore: ObservableObject {
         defer { isSearching = false }
         do {
             let res = try await api.search(query: query, pageToken: token)
-            results.append(contentsOf: res.tracks)
+            results.append(contentsOf: res.tracks.filter { $0.duration > 0 })
             nextPageToken = res.nextPageToken
         } catch {
             print("loadMore error", error)

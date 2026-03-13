@@ -19,6 +19,7 @@ const ru = {
 
   // Очередь
   "queue.addToQueue": "В очередь",
+  "queue.playNext": "Включить следующим",
   "queue.removeFromQueue": "Убрать из очереди",
   "queue.title": "Очередь ({{count}})",
   "queue.empty": "Очередь пуста",
@@ -57,6 +58,8 @@ const ru = {
   "settings.title": "Настройки",
   "settings.account": "Аккаунт",
   "settings.loggedInAs": "Вы вошли как:",
+  "settings.squareCovers": "Квадратные обложки",
+  "settings.appearance": "Внешний вид",
 } as const;
 
 export default ru;

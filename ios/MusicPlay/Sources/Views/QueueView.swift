@@ -3,16 +3,32 @@ import SwiftUI
 struct QueueView: View {
     @EnvironmentObject var appState: AppState
     @Binding var showPlayer: Bool
-    @Environment(\.editMode) private var editMode
+    @State private var editMode: EditMode = .active
 
     var body: some View {
         NavigationStack {
             List {
-                ForEach(appState.playerStore.queue) { track in
-                    queueRow(track: track)
+                ForEach(appState.playerStore.queue) { item in
+                    queueRow(item: item)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                let index = appState.playerStore.queue.firstIndex(where: { $0.id == item.id })
+                                if let index = index {
+                                    appState.playerStore.removeFromQueue(index: index)
+                                }
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
                 }
                 .onMove(perform: moveItems)
-                .onDelete(perform: deleteItems)
+                .deleteDisabled(true) // Hides the red minus buttons in EditMode
+            }
+            .environment(\.editMode, $editMode)
+            .safeAreaInset(edge: .bottom) {
+                if appState.playerStore.currentTrack != nil {
+                    Color.clear.frame(height: 70)
+                }
             }
             .overlay {
                 if appState.playerStore.queue.isEmpty {
@@ -23,7 +39,7 @@ struct QueueView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     if !appState.playerStore.queue.isEmpty {
-                        EditButton()
+                        // EditButton is not needed since we stay in edit mode
                     }
                 }
                 ToolbarItem(placement: .topBarLeading) {
@@ -49,40 +65,49 @@ struct QueueView: View {
     }
 
     @ViewBuilder
-    private func queueRow(track: Track) -> some View {
-        let index = appState.playerStore.queue.firstIndex(of: track) ?? 0
+    private func queueRow(item: QueueItem) -> some View {
+        let track = item.track
+        let index = appState.playerStore.queue.firstIndex(where: { $0.id == item.id }) ?? 0
         let isCurrent = index == appState.playerStore.currentIndex
 
         HStack(spacing: 12) {
             trackIndicator(index: index, isCurrent: isCurrent)
 
-            CachedAsyncImage(url: thumbURL(track), contentMode: .fill)
-                .frame(width: 44, height: 44)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+            TrackThumbnail(track: track, size: 44, forceSquare: true, cornerRadius: 6)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(track.title)
                     .font(.subheadline.weight(isCurrent ? .semibold : .regular))
                     .lineLimit(1)
-                Text(track.artist)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                HStack(spacing: 4) {
+                    if appState.downloadsStore.isDownloaded(id: track.id) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.blue)
+                            .font(.system(size: 10))
+                    }
+                    Text(track.artist)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
 
             Spacer()
 
-            if editMode?.wrappedValue != .active {
-                Button {
-                    appState.playerStore.playFromQueue(index: index)
-                    appState.playerService.play(track: track)
-                    showPlayer = true
-                } label: {
-                    Image(systemName: "play.fill")
-                        .font(.caption)
-                }
-                .buttonStyle(.plain)
+            Button {
+                HapticManager.shared.trigger(.selection)
+                appState.playerService.playFromQueue(index: index)
+                showPlayer = true
+            } label: {
+                Image(systemName: "play.fill")
+                    .font(.caption)
+                    .frame(width: 32, height: 32)
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(Circle())
             }
+            .buttonStyle(ScaleButtonStyle())
+            .padding(.horizontal, 8)
+            .transition(.scale.combined(with: .opacity))
         }
     }
 

@@ -21,6 +21,7 @@ const en: Translations = {
 
   // Queue
   "queue.addToQueue": "Add to queue",
+  "queue.playNext": "Play next",
   "queue.removeFromQueue": "Remove from queue",
   "queue.title": "Queue ({{count}})",
   "queue.empty": "Queue is empty",
@@ -34,6 +35,7 @@ const en: Translations = {
   "playlist.title": "Playlist",
   "playlist.empty": "Playlist is empty",
   "playlist.playAll": "Play all",
+  "playlist.tracks": "{{count}} tracks",
   "playlist.tracks_one": "{{count}} track",
   "playlist.tracks_few": "{{count}} tracks",
   "playlist.tracks_many": "{{count}} tracks",
@@ -58,6 +60,8 @@ const en: Translations = {
   "settings.title": "Settings",
   "settings.account": "Account",
   "settings.loggedInAs": "Logged in as:",
+  "settings.squareCovers": "Square covers",
+  "settings.appearance": "Appearance",
 };
 
 export default en;

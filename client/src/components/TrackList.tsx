@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { usePlaylistsStore } from "@/stores/playlists";
 import { useFavoritesStore } from "@/stores/favorites";
-import { Eye, ThumbsUp, Clock, ArrowUpDown, Loader2, ListPlus, ListMinus, Plus, Volume2, Pause, ExternalLink, FolderPlus, MoreVertical, Heart } from "lucide-react";
+import { Eye, ThumbsUp, Clock, ArrowUpDown, Loader2, ListPlus, ListMinus, Plus, Volume2, Pause, ExternalLink, FolderPlus, MoreVertical, Heart, Check, CornerRightDown } from "lucide-react";
 import { usePlayerStore } from "@/stores/player";
 import { handleImgError } from "@/lib/img-fallback";
 import { useTranslation } from "@/i18n";
@@ -89,6 +89,7 @@ export function TrackList({ tracks, onAddToQueue, onLoadMore, hasMore, isLoading
   const queue = usePlayerStore((s) => s.queue);
   const playTrackInContext = usePlayerStore((s) => s.playTrackInContext);
   const removeFromQueue = usePlayerStore((s) => s.removeFromQueue);
+  const addToQueueNext = usePlayerStore((s) => s.addToQueueNext);
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
   const isFavorite = useFavoritesStore((s) => s.isFavorite);
   const [sortField, setSortField] = useState<SortField>("default");
@@ -162,15 +163,23 @@ export function TrackList({ tracks, onAddToQueue, onLoadMore, hasMore, isLoading
             onClick={() => playTrackInContext(track, sortedTracks)}
           >
             {isCurrent ? (
-              <div className="w-12 h-12 rounded flex items-center justify-center bg-primary/10 shrink-0">
+              <div className="w-12 h-12 rounded flex items-center justify-center bg-primary/10 shrink-0 relative">
                 {storeIsPlaying ? (
                   <Volume2 className="h-5 w-5 text-primary" />
                 ) : (
                   <Pause className="h-5 w-5 text-primary" />
                 )}
+                {isFav && <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5 shadow-sm border border-border"><Check className="h-2 w-2 text-green-500" strokeWidth={4} /></div>}
               </div>
             ) : (
-              <img src={getThumbUrl(track.thumbnail)} alt={track.title} className="w-12 h-12 rounded object-cover shrink-0" onError={handleImgError} loading="lazy" />
+              <div className="relative shrink-0">
+                <img src={getThumbUrl(track.thumbnail)} alt={track.title} className="w-12 h-12 rounded object-cover" onError={handleImgError} loading="lazy" />
+                {isFav && (
+                  <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5 shadow-sm border border-border">
+                    <Check className="h-2 w-2 text-green-500" strokeWidth={4} />
+                  </div>
+                )}
+              </div>
             )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{track.title}</p>
@@ -237,10 +246,19 @@ export function TrackList({ tracks, onAddToQueue, onLoadMore, hasMore, isLoading
               variant="ghost"
               size="icon"
               className="hidden md:inline-flex opacity-0 group-hover:opacity-100 shrink-0"
+              onClick={(e) => { e.stopPropagation(); addToQueueNext(track); }}
+              title={t("queue.playNext")}
+            >
+              <CornerRightDown className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden md:inline-flex opacity-0 group-hover:opacity-100 shrink-0"
               onClick={(e) => { e.stopPropagation(); toggleFavorite(track); }}
               title={isFav ? t("favorites.removed") : t("favorites.added")}
             >
-              <Heart className={`h-4 w-4 ${isFav ? "fill-red-500 text-red-500" : ""}`} />
+              <Heart className={`h-4 w-4 ${isFav ? "fill-white text-white" : ""}`} />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -279,8 +297,12 @@ export function TrackList({ tracks, onAddToQueue, onLoadMore, hasMore, isLoading
                   )}
                   {isInQueue ? t("queue.removeFromQueue") : t("queue.addToQueue")}
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); addToQueueNext(track); }}>
+                  <CornerRightDown className="h-4 w-4 mr-2" />
+                  {t("queue.playNext")}
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); toggleFavorite(track); }}>
-                  <Heart className={`h-4 w-4 mr-2 ${isFav ? "fill-red-500 text-red-500" : ""}`} />
+                  <Heart className={`h-4 w-4 mr-2 ${isFav ? "fill-white text-white" : ""}`} />
                   {isFav ? t("favorites.removed") : t("favorites.added")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

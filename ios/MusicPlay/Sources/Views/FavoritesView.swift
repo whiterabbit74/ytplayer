@@ -24,10 +24,7 @@ struct FavoritesView: View {
                             track: track,
                             baseURL: appState.baseURL,
                             onPlay: {
-                                // Set all favorites as queue context
-                                let index = tracks.firstIndex(of: track) ?? 0
-                                appState.playerStore.setQueue(tracks, index: index)
-                                appState.playerService.play(track: track)
+                                appState.playerService.playTrack(track, context: tracks)
                                 showPlayer = true
                             },
                             onAddToQueue: {
@@ -44,6 +41,11 @@ struct FavoritesView: View {
                 }
             }
             .listStyle(.plain)
+            .safeAreaInset(edge: .bottom) {
+                if appState.playerStore.currentTrack != nil {
+                    Color.clear.frame(height: 70)
+                }
+            }
             .navigationTitle("Favorites")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

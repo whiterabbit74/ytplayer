@@ -39,6 +39,11 @@ struct PlaylistDetailView: View {
                 Task { await appState.playlistsStore.reorderTracks(playlistId: playlist.id, trackIds: ids) }
             }
         }
+        .safeAreaInset(edge: .bottom) {
+            if appState.playerStore.currentTrack != nil {
+                Color.clear.frame(height: 70)
+            }
+        }
         .navigationTitle(playlist.name)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -75,10 +80,7 @@ struct PlaylistDetailView: View {
             track: track,
             baseURL: appState.baseURL,
             onPlay: {
-                let tracks = appState.playlistsStore.activeTracks
-                let index = tracks.firstIndex(of: track) ?? 0
-                appState.playerStore.setQueue(tracks, index: index)
-                appState.playerService.play(track: track)
+                appState.playerService.playTrack(track, context: appState.playlistsStore.activeTracks)
                 showPlayer = true
             },
             onAddToQueue: {

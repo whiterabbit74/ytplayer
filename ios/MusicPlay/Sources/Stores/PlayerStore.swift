@@ -1,14 +1,31 @@
 import Foundation
 
+/// A wrapper for a track in the playback queue to allow multiple occurrences of the same track.
+struct QueueItem: Identifiable, Equatable, Codable {
+    let id: UUID
+    let track: Track
+    
+    init(track: Track) {
+        self.id = UUID()
+        self.track = track
+    }
+    
+    static func == (lhs: QueueItem, rhs: QueueItem) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
 final class PlayerStore: ObservableObject {
     @Published var currentTrack: Track?
-    @Published var queue: [Track] = []
+    @Published var queue: [QueueItem] = []
     @Published var currentIndex: Int = -1
     @Published var isPlaying: Bool = false
     @Published var repeatMode: String = "off" // "off", "one", "all"
+    @Published var shuffleMode: Bool = false
     @Published var position: Double = 0
 
     private var api: APIClient?
+    private var originalQueue: [QueueItem] = []
 
     func configure(api: APIClient) {
         self.api = api
@@ -16,47 +33,85 @@ final class PlayerStore: ObservableObject {
 
     /// Play a track — adds it to queue if not already there.
     func play(_ track: Track) {
-        if let idx = queue.firstIndex(of: track) {
+        if !queue.isEmpty && currentIndex >= 0 && currentIndex < queue.count && queue[currentIndex].track.id == track.id {
+            // Already playing this track at this position, just sync state
+            currentTrack = track
+            return
+        }
+        
+        if let idx = queue.firstIndex(where: { $0.track.id == track.id }) {
             currentIndex = idx
         } else {
-            // Track not in queue — set entire queue to just this track
-            queue.append(track)
+            let item = QueueItem(track: track)
+            queue.append(item)
+            if shuffleMode {
+                originalQueue.append(item)
+            }
             currentIndex = queue.count - 1
         }
-        currentTrack = track
-        isPlaying = true
+        currentTrack = queue[currentIndex].track
     }
 
     /// Play a track from queue and also set the whole queue context.
-    func playTrackInContext(_ track: Track, queue newQueue: [Track]) {
-        queue = newQueue
-        if let idx = newQueue.firstIndex(of: track) {
+    func playTrackInContext(_ track: Track, queue newTracks: [Track]) {
+        let newQueue = newTracks.map { QueueItem(track: $0) }
+        self.queue = newQueue
+        self.originalQueue = newQueue
+        
+        if let idx = newTracks.firstIndex(of: track) {
             currentIndex = idx
         } else {
             currentIndex = 0
         }
-        currentTrack = track
-        isPlaying = true
+        
+        // If shuffle is on, shuffle the new queue immediately (but keep chosen track at its logical position or top)
+        if shuffleMode {
+            let current = queue.remove(at: currentIndex)
+            queue.shuffle()
+            queue.insert(current, at: 0)
+            currentIndex = 0
+        }
+        
+        currentTrack = queue.indices.contains(currentIndex) ? queue[currentIndex].track : nil
     }
 
     func playFromQueue(index: Int) {
         guard index >= 0 && index < queue.count else { return }
         currentIndex = index
-        currentTrack = queue[index]
-        isPlaying = true
+        currentTrack = queue[index].track
     }
 
     func addToQueue(_ track: Track) {
-        queue.append(track)
+        let item = QueueItem(track: track)
+        queue.append(item)
+        originalQueue.append(item)
+    }
+
+    func addToQueueNext(_ track: Track) {
+        let item = QueueItem(track: track)
+        let insertIndex = currentIndex + 1
+        if insertIndex >= 0 && insertIndex <= queue.count {
+            queue.insert(item, at: insertIndex)
+            // Also insert into original queue at a logical place (e.g. after current track's original position)
+            if let current = currentTrack, let origIdx = originalQueue.firstIndex(where: { $0.track.id == current.id }) {
+                originalQueue.insert(item, at: origIdx + 1)
+            } else {
+                originalQueue.append(item)
+            }
+        } else {
+            queue.append(item)
+            originalQueue.append(item)
+        }
     }
 
     func removeFromQueue(index: Int) {
         guard index >= 0 && index < queue.count else { return }
-        queue.remove(at: index)
+        let removedItem = queue.remove(at: index)
+        originalQueue.removeAll { $0.id == removedItem.id }
+        
         if queue.isEmpty {
             currentIndex = -1
             currentTrack = nil
-            isPlaying = false
             return
         }
         if index < currentIndex {
@@ -66,13 +121,13 @@ final class PlayerStore: ObservableObject {
             if currentIndex >= queue.count {
                 currentIndex = queue.count - 1
             }
-            currentTrack = currentIndex >= 0 ? queue[currentIndex] : nil
+            currentTrack = currentIndex >= 0 ? queue[currentIndex].track : nil
         }
     }
 
     func moveQueue(from: IndexSet, to: Int) {
         queue.move(fromOffsets: from, toOffset: to)
-        if let current = currentTrack, let newIndex = queue.firstIndex(of: current) {
+        if let current = currentTrack, let newIndex = queue.firstIndex(where: { $0.track.id == current.id }) {
             currentIndex = newIndex
             return
         }
@@ -82,35 +137,47 @@ final class PlayerStore: ObservableObject {
     }
 
     func setQueue(_ tracks: [Track], index: Int = 0) {
-        queue = tracks
+        let newQueue = tracks.map { QueueItem(track: $0) }
+        queue = newQueue
+        originalQueue = newQueue
         currentIndex = index
-        currentTrack = tracks.indices.contains(index) ? tracks[index] : nil
+        currentTrack = queue.indices.contains(index) ? queue[index].track : nil
     }
+
+    @Published var isAnticipatingNext: Bool = false
 
     func clearQueue() {
         queue = []
+        originalQueue = []
         currentIndex = -1
         currentTrack = nil
-        isPlaying = false
+        isAnticipatingNext = false
     }
 
     /// Returns true if a next track was found, false if playback should stop.
     @discardableResult
-    func playNext() -> Bool {
-        guard !queue.isEmpty else {
-            isPlaying = false
-            return false
+    func playNext(isAutoTrigger: Bool = false) -> Bool {
+        guard !queue.isEmpty else { return false }
+        
+        // Systemic fix: If this is a manual skip but we already anticipated the next track via crossfade,
+        // we don't need to advance the index again! We just need to sync the state.
+        if !isAutoTrigger && isAnticipatingNext {
+            isAnticipatingNext = false
+            return true
         }
+        
         let next = currentIndex + 1
         if next >= queue.count {
             if repeatMode == "all" {
                 playFromQueue(index: 0)
+                isAnticipatingNext = isAutoTrigger
                 return true
             }
-            isPlaying = false
+            isAnticipatingNext = false
             return false
         }
         playFromQueue(index: next)
+        isAnticipatingNext = isAutoTrigger
         return true
     }
 
@@ -125,5 +192,37 @@ final class PlayerStore: ObservableObject {
             return
         }
         playFromQueue(index: prev)
+    }
+
+    func toggleShuffle() {
+        shuffleMode.toggle()
+        if shuffleMode {
+            if originalQueue.isEmpty && !queue.isEmpty {
+                originalQueue = queue
+            }
+            if currentIndex >= 0 && currentIndex < queue.count {
+                let current = queue.remove(at: currentIndex)
+                queue.shuffle()
+                queue.insert(current, at: 0)
+                currentIndex = 0
+            } else {
+                queue.shuffle()
+            }
+        } else {
+            if !originalQueue.isEmpty {
+                let currentItem = currentIndex >= 0 && currentIndex < queue.count ? queue[currentIndex] : nil
+                queue = originalQueue
+                if let currentItem = currentItem, let newIdx = queue.firstIndex(where: { $0.id == currentItem.id }) {
+                    currentIndex = newIdx
+                }
+            }
+        }
+    }
+
+    func cycleRepeatMode() {
+        let modes = ["off", "one", "all"]
+        if let idx = modes.firstIndex(of: repeatMode) {
+            repeatMode = modes[(idx + 1) % modes.count]
+        }
     }
 }

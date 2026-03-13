@@ -71,9 +71,34 @@ if (require("fs").existsSync(publicDir)) {
   });
 }
 
-app.listen(PORT, HOST, () => {
+const server = app.listen(PORT, HOST, () => {
   logger.info({ port: PORT, host: HOST }, "Server started");
 });
+
+// Port conflict detection
+server.on("error", (err: any) => {
+  if (err.code === "EADDRINUSE") {
+    logger.fatal({ port: PORT }, "Port already in use. Please stop other instances.");
+    process.exit(1);
+  }
+});
+
+// Graceful shutdown
+const shutdown = (signal: string) => {
+  logger.info({ signal }, "Shutdown signal received. Closing server...");
+  server.close(() => {
+    logger.info("Server closed. Exiting process.");
+    process.exit(0);
+  });
+  // Force exit after 10s if graceful closure fails
+  setTimeout(() => {
+    logger.error("Could not close connections in time, forceful shutdown.");
+    process.exit(1);
+  }, 10000);
+};
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 // Catch unhandled errors that make the server "fall"
 process.on("uncaughtException", (err) => {

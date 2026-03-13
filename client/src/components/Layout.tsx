@@ -1,6 +1,17 @@
 import type { ReactNode } from "react";
 import { Queue } from "./Queue";
 import { SettingsMenu } from "./SettingsMenu";
+import { useConnectionStore } from "@/stores/connection";
+
+function ConnectionBanner() {
+  const isAvailable = useConnectionStore((s) => s.isAvailable);
+  if (isAvailable) return null;
+  return (
+    <div className="bg-destructive/10 text-destructive text-center py-1 text-xs border-b border-destructive/20 animate-pulse shrink-0">
+      Нет связи с сервером. Некоторые функции могут быть недоступны.
+    </div>
+  );
+}
 
 interface LayoutProps {
   children: ReactNode;
@@ -20,6 +31,7 @@ export function Layout({ children, desktopPlayer, mobileBottom }: LayoutProps) {
           <SettingsMenu />
         </div>
       </header>
+      <ConnectionBanner />
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <main className="flex-1 min-h-0 flex flex-col overflow-hidden">{children}</main>
         <div className="hidden md:flex h-full">

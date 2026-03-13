@@ -16,6 +16,7 @@ interface PlayerState {
   pause: () => void;
   resume: () => void;
   addToQueue: (track: Track) => void;
+  addToQueueNext: (track: Track) => void;
   removeFromQueue: (index: number) => void;
   playNext: () => void;
   playPrev: () => void;
@@ -78,6 +79,14 @@ export const usePlayerStore = create<PlayerState>()(
 
       addToQueue: (track) =>
         set((state) => ({ queue: [...state.queue, track] })),
+
+      addToQueueNext: (track) =>
+        set((state) => {
+          const newQueue = [...state.queue];
+          const nextIndex = state.currentIndex + 1;
+          newQueue.splice(nextIndex, 0, track);
+          return { queue: newQueue };
+        }),
 
       removeFromQueue: (index) =>
         set((state) => {

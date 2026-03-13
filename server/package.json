@@ -4,11 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "lsof -t -i:3001 | xargs kill -9 2>/dev/null || true && tsx watch src/index.ts",
     "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",
-    "create-user": "tsx src/create-user.ts"
+    "create-user": "tsx src/create-user.ts",
+    "bulk-playlist": "tsx src/bulk-add-playlist.ts",
+    "bulk-rock": "tsx src/bulk-add-rock.ts"
   },
   "keywords": [],
   "author": "",

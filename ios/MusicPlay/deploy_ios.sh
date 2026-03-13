@@ -26,8 +26,7 @@ xcodebuild build \
     -project "$PROJECT" \
     -scheme "$SCHEME" \
     -destination "platform=iOS,id=$DEVICE_ID" \
-    CODE_SIGNING_ALLOWED=NO \
-    -quiet
+    CODE_SIGNING_ALLOWED=NO
 
 if [ $? -ne 0 ]; then
     echo "❌ Ошибка сборки!"

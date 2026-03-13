@@ -139,6 +139,7 @@ final class APIClient {
             }
             
             print("✅ [API] Void Response: \(httpResponse.statusCode) for \(path)")
+            onConnectionSuccess?()
             
             if httpResponse.statusCode == 401 && !isRefreshing && auth {
                 let refreshed = try await refreshToken()

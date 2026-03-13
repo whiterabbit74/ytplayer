@@ -20,7 +20,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useFavoritesStore } from "@/stores/favorites";
 import { LoginPage } from "@/components/LoginPage";
 import { useTranslation } from "@/i18n";
-import { useConnectionStore } from "@/stores/connection";
 
 
 function MobilePlaylistsView() {
@@ -53,7 +52,6 @@ function AuthenticatedApp() {
   const { syncToServer } = usePlayerSync();
   const [mobileTab, setMobileTab] = useState<MobileTab>("search");
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
-  const isAvailable = useConnectionStore((s) => s.isAvailable);
   const [lastQuery, setLastQuery] = useState(() => {
     // Priority: URL ?q= param > localStorage
     const urlQuery = new URLSearchParams(window.location.search).get("q");
@@ -240,11 +238,6 @@ function AuthenticatedApp() {
           </div>
         }
       >
-        {!isAvailable && (
-          <div className="bg-destructive/10 text-destructive text-center py-1 text-xs border-b border-destructive/20 animate-pulse">
-            Нет связи с сервером. Некоторые функции могут быть недоступны.
-          </div>
-        )}
         {/* Desktop: MainContent with tabs */}
         <div className="hidden md:flex md:flex-col md:flex-1 min-h-0">
           <MainContent

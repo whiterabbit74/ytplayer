@@ -20,8 +20,18 @@ function verifyPlaylistOwner(playlistId: string, userId: number): boolean {
 // GET /api/playlists
 router.get("/", (req, res) => {
   const db = getDb();
-  const playlists = db.prepare("SELECT * FROM playlists WHERE user_id = ? ORDER BY created_at DESC").all((req as AuthRequest).userId);
-  res.json(playlists);
+  const userId = (req as AuthRequest).userId;
+  const playlists = db.prepare("SELECT * FROM playlists WHERE user_id = ? ORDER BY created_at DESC").all(userId) as any[];
+  
+  const result = playlists.map(p => {
+    const tracks = db.prepare("SELECT thumbnail FROM playlist_tracks WHERE playlist_id = ? ORDER BY position LIMIT 4").all(p.id) as any[];
+    return {
+      ...p,
+      thumbnails: tracks.map(t => t.thumbnail)
+    };
+  });
+  
+  res.json(result);
 });
 
 // POST /api/playlists

@@ -9,8 +9,17 @@ final class PlayerService: ObservableObject {
     @Published var isPlaying: Bool = false
     @Published var volume: Float = 1.0
     @Published var isBuffering: Bool = false
-
-    private let player = AVPlayer()
+    
+    // Crossfade related
+    private let playerA = AVPlayer()
+    private let playerB = AVPlayer()
+    private var activePlayerA = true
+    private var isCrossfading = false
+    private var isProcessingEnd = false
+    private var currentCrossfadeId: UUID?
+    
+    private var player: AVPlayer { activePlayerA ? playerA : playerB }
+    private var secondaryPlayer: AVPlayer { activePlayerA ? playerB : playerA }
     private var timeObserver: Any?
     private var statusObserver: NSKeyValueObservation?
     private var stallObserver: Any?
@@ -19,41 +28,90 @@ final class PlayerService: ObservableObject {
 
     private var api: APIClient?
     private weak var playerStore: PlayerStore?
+    private weak var historyStore: HistoryStore?
+    private weak var appState: AppState?
     private var currentTrackId: String?
 
-    func configure(api: APIClient, playerStore: PlayerStore) {
+    func configure(api: APIClient, playerStore: PlayerStore, historyStore: HistoryStore, appState: AppState) {
         self.api = api
         self.playerStore = playerStore
+        self.historyStore = historyStore
+        self.appState = appState
         setupAudioSession()
+        setupGlobalObservers()
         setupObservers()
         setupRemoteCommands()
     }
 
     func play(track: Track) {
+        // Internal audio-only play method
+        playInternal(track: track)
+    }
+
+    /// Primary entry point for playing a track with a specific queue context.
+    func playTrack(_ track: Track, context: [Track]? = nil) {
+        if let context = context {
+            playerStore?.setQueue(context, index: context.firstIndex(where: { $0.id == track.id }) ?? 0)
+        } else {
+            playerStore?.play(track)
+        }
+        
+        if let current = playerStore?.currentTrack {
+            playInternal(track: current)
+        }
+    }
+
+    func playFromQueue(index: Int) {
+        playerStore?.playFromQueue(index: index)
+        if let current = playerStore?.currentTrack {
+            playInternal(track: current)
+        }
+    }
+
+    func next() {
+        guard let store = playerStore else { return }
+        let hasNext = store.playNext()
+        if hasNext, let nextTrack = store.currentTrack {
+            playInternal(track: nextTrack)
+        } else {
+            stop()
+        }
+    }
+
+    func previous() {
+        guard let store = playerStore else { return }
+        store.playPrev()
+        if let prevTrack = store.currentTrack {
+            playInternal(track: prevTrack)
+        }
+    }
+
+    private func playInternal(track: Track) {
         guard api != nil else { return }
 
-        // Don't reload if already playing this track
-        if currentTrackId == track.id, player.currentItem != nil {
+        // Don't reload if already playing this track and NOT crossfading to it
+        if currentTrackId == track.id, player.currentItem != nil, !isCrossfading {
             player.play()
             isPlaying = true
             playerStore?.isPlaying = true
             updateNowPlayingPlaybackState()
             return
         }
-
+        
+        // Systematically interrupt any active transitions or playback on both players
+        interruptAnyOngoingTransitions()
+        
         currentTrackId = track.id
+        historyStore?.addTrack(track)
+        
         let asset = createAsset(for: track)
         let item = AVPlayerItem(asset: asset)
-
-        // Set preferred buffer duration for smoother streaming
         item.preferredForwardBufferDuration = 10
 
-        // Reset duration before loading new track
         duration = Double(track.duration)
         currentTime = 0
         isBuffering = true
 
-        // Observe status to get duration when ready
         statusObserver?.invalidate()
         statusObserver = item.observe(\.status, options: [.new]) { [weak self] item, _ in
             guard let self else { return }
@@ -67,19 +125,105 @@ final class PlayerService: ObservableObject {
                     }
                 } else if item.status == .failed {
                     self.isBuffering = false
-                    print("PlayerItem failed: \(item.error?.localizedDescription ?? "unknown")")
                     self.handlePlaybackError()
                 }
             }
         }
 
         try? AVAudioSession.sharedInstance().setActive(true)
-        player.volume = volume
-        player.replaceCurrentItem(with: item)
-        player.play()
+        
+        // If already playing and crossfade is enabled, handle it
+        if isPlaying, appState?.crossfadeEnabled == true, !isCrossfading {
+            performCrossfade(with: item, track: track)
+        } else {
+            // Standard swap/replace
+            isCrossfading = false
+            player.volume = volume
+            player.replaceCurrentItem(with: item)
+            player.play()
+        }
+        
         isPlaying = true
         playerStore?.isPlaying = true
         updateNowPlaying(track: track, duration: 0)
+    }
+    
+    private func performCrossfade(with newItem: AVPlayerItem, track: Track) {
+        let fadeId = UUID()
+        self.currentCrossfadeId = fadeId
+        self.isCrossfading = true
+        
+        let oldPlayer = self.player
+        let newPlayer = self.secondaryPlayer
+        let fadeDuration = appState?.crossfadeDuration ?? 6.0
+        
+        print("Starting crossfade session \(fadeId.uuidString.prefix(8)) for \(track.title)")
+        
+        // 1. Prepare secondary player
+        newPlayer.replaceCurrentItem(with: newItem)
+        newPlayer.volume = 0
+        newPlayer.play()
+        
+        // 2. SWAP active player IMMEDIATELY so UI/Observers track the new track
+        activePlayerA.toggle()
+        
+        // 3. Refresh observers for the NEW active player
+        reattachObservers()
+        updateNowPlaying(track: track, duration: 0)
+        
+        // 4. Fade loop
+        let steps = 20
+        let interval = fadeDuration / Double(steps)
+        let targetVolume = self.volume
+        
+        for i in 0...steps {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * interval) { [weak self] in
+                guard let self = self, self.currentCrossfadeId == fadeId else {
+                    // Abort if session changed
+                    return
+                }
+                
+                let progress = Float(i) / Float(steps)
+                oldPlayer.volume = targetVolume * (1.0 - progress)
+                newPlayer.volume = targetVolume * progress
+                
+                if i == steps {
+                    print("Crossfade session \(fadeId.uuidString.prefix(8)) completed")
+                    oldPlayer.pause()
+                    oldPlayer.replaceCurrentItem(with: nil)
+                    oldPlayer.volume = self.volume // Reset for next use
+                    if self.currentCrossfadeId == fadeId {
+                        self.isCrossfading = false
+                        self.currentCrossfadeId = nil
+                    }
+                }
+            }
+        }
+    }
+    
+    private func interruptAnyOngoingTransitions() {
+        currentCrossfadeId = nil
+        isCrossfading = false
+        
+        // Stop both engines
+        playerA.pause()
+        playerB.pause()
+        
+        // Volume reset to prevent "ghost" audio on next start
+        playerA.volume = volume
+        playerB.volume = volume
+    }
+    
+    private func reattachObservers() {
+        // Remove existing observers from BOTH players to be safe
+        if let observer = timeObserver {
+            playerA.removeTimeObserver(observer)
+            playerB.removeTimeObserver(observer)
+            timeObserver = nil
+        }
+        
+        // Setup observers on the now-active player
+        setupObservers()
     }
 
     /// Load a track and pause at a given position. Used for restoring saved state or retrying.
@@ -194,7 +338,7 @@ final class PlayerService: ObservableObject {
     }
 
     private func setupObservers() {
-        // Periodic time observer
+        // Periodic time observer on active player
         timeObserver = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.5, preferredTimescale: 600), queue: .main) { [weak self] time in
             guard let self else { return }
             
@@ -203,13 +347,53 @@ final class PlayerService: ObservableObject {
             
             let seconds = time.seconds
             guard seconds.isFinite else { return }
-            self.currentTime = seconds
-            self.playerStore?.position = seconds
+            
+            // Clamping to avoid "visual continuation" past the intentional end
+            let effectiveDuration = self.duration
+            self.currentTime = effectiveDuration > 0 ? min(seconds, effectiveDuration) : seconds
+            self.playerStore?.position = self.currentTime
+            
+            // Reconcile duration from player if it becomes available/changes
             if let dur = self.player.currentItem?.duration.seconds, dur.isFinite, dur > 0 {
                 self.updateDurationIfTrustworthy(dur)
             }
+            
+            // Systemic end-of-track check (handles crossfade AND safety-net autoplay)
+            self.checkPlaybackProgress(seconds: seconds)
         }
+    }
 
+    private func checkPlaybackProgress(seconds: Double) {
+        guard let appState = self.appState, let store = self.playerStore, !isCrossfading else { return }
+        
+        let dur = self.duration
+        guard dur > 0 else { return }
+        
+        let remaining = dur - seconds
+        
+        // 1. Crossfade Logic
+        if appState.crossfadeEnabled {
+            if remaining <= appState.crossfadeDuration && remaining > 0 {
+                // Determine if we actually have a logical next track to fade to
+                let hasNext = store.currentIndex + 1 < store.queue.count || store.repeatMode == "all"
+                if hasNext && store.repeatMode != "one" {
+                    self.triggerNextWithCrossfade()
+                    return
+                }
+            }
+        }
+        
+        // 2. Safety Net for Autoplay
+        // If AVPlayer misses the end notification or is confused by corrupt duration info,
+        // we manually move to the next track when we reach the end of our reconciled duration.
+        // We use a small threshold to avoid "jumping" too early, but guarantee transition.
+        if seconds >= dur - 0.2 {
+            print("🏁 Safety net: Track reached logical end at \(seconds)/\(dur)")
+            self.handleEnded()
+        }
+    }
+
+    private func setupGlobalObservers() {
         // Track ended
         NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)
             .sink { [weak self] notification in
@@ -247,22 +431,21 @@ final class PlayerService: ObservableObject {
         }
 
         // Observe player.timeControlStatus for buffering state
-        player.publisher(for: \.timeControlStatus)
+        playerA.publisher(for: \.timeControlStatus)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] status in
-                guard let self else { return }
-                switch status {
-                case .playing:
-                    self.isBuffering = false
-                case .waitingToPlayAtSpecifiedRate:
-                    self.isBuffering = true
-                case .paused:
-                    self.isBuffering = false
-                @unknown default:
-                    break
-                }
+                self?.handleStatusChange(status, isPlayerA: true)
             }
             .store(in: &cancellables)
+            
+        playerB.publisher(for: \.timeControlStatus)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] status in
+                self?.handleStatusChange(status, isPlayerA: false)
+            }
+            .store(in: &cancellables)
+            
+        // Observe audio session interruptions (phone calls, etc.)
 
         // Observe audio session interruptions (phone calls, etc.)
         NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)
@@ -305,25 +488,70 @@ final class PlayerService: ObservableObject {
             .store(in: &cancellables)
     }
 
+    private func triggerNextWithCrossfade() {
+        guard let store = playerStore, !isCrossfading else { return }
+        
+        // If repeat one is on, or no next track (and no wrap), don't crossfade
+        if store.repeatMode == "one" { return }
+        
+        // Peek if there is a next track (including wrap-around)
+        let hasNext = store.currentIndex + 1 < store.queue.count || store.repeatMode == "all"
+        guard hasNext else { return }
+        
+        print("Starting auto-crossfade to next track")
+        let triggered = store.playNext(isAutoTrigger: true)
+        if triggered, let next = store.currentTrack {
+            self.playInternal(track: next)
+        }
+    }
+
+    private func handleStatusChange(_ status: AVPlayer.TimeControlStatus, isPlayerA: Bool) {
+        // Only care about status changes from the ACTIVE player
+        guard isPlayerA == activePlayerA else { return }
+        
+        switch status {
+        case .playing:
+            self.isBuffering = false
+        case .waitingToPlayAtSpecifiedRate:
+            self.isBuffering = true
+        case .paused:
+            self.isBuffering = false
+        @unknown default:
+            break
+        }
+    }
+
     private func handleEnded() {
+        guard !isProcessingEnd else { return }
+        isProcessingEnd = true
+        
         DispatchQueue.main.async { [weak self] in
+            defer { self?.isProcessingEnd = false }
             guard let self, let store = self.playerStore else { return }
+            
+            // If crossfade is in progress, it means this "end" is from the OLD track.
+            // We ALREADY triggered the next track, so we just ignore this notification.
+            if self.isCrossfading {
+                print("Track ended while crossfading - ignoring secondary end notification")
+                return
+            }
+            
             if store.repeatMode == "one" {
+                print("Looping track: Repeat mode is 'one'")
                 self.seek(to: 0)
                 self.player.play()
                 self.isPlaying = true
                 store.isPlaying = true
                 return
             }
+            
             let hasNext = store.playNext()
             if hasNext, let next = store.currentTrack {
-                self.play(track: next)
+                print("Autoplay: Transitioning to next track \(next.title)")
+                self.playInternal(track: next)
             } else {
-                // Queue ended — stop playback
-                self.isPlaying = false
-                store.isPlaying = false
-                self.currentTime = 0
-                self.updateNowPlayingPlaybackState()
+                print("Queue end: Stopping playback")
+                self.stop()
             }
         }
     }
@@ -382,23 +610,13 @@ final class PlayerService: ObservableObject {
 
         commandCenter.nextTrackCommand.isEnabled = true
         commandCenter.nextTrackCommand.addTarget { [weak self] _ in
-            guard let self, let store = self.playerStore else { return .commandFailed }
-            let hasNext = store.playNext()
-            if hasNext, let track = store.currentTrack {
-                self.play(track: track)
-            } else {
-                self.stop()
-            }
+            self?.next()
             return .success
         }
 
         commandCenter.previousTrackCommand.isEnabled = true
         commandCenter.previousTrackCommand.addTarget { [weak self] _ in
-            guard let self, let store = self.playerStore else { return .commandFailed }
-            store.playPrev()
-            if let track = store.currentTrack {
-                self.play(track: track)
-            }
+            self?.previous()
             return .success
         }
 
@@ -460,18 +678,35 @@ final class PlayerService: ObservableObject {
         let url = api.streamURL(for: track.id)
         if let localURL = AudioCacheService.shared.localURL(for: track.id) {
             print("Playing from cache: \(track.id)")
+            // Systemic fix: Ensure it's in downloads store if we play it from cache
+            appState?.downloadsStore.saveTrackInternal(track)
             return AVURLAsset(url: localURL)
         } else {
             print("Streaming and caching: \(track.id)")
             let headers = ["Authorization": "Bearer \(apiToken)"]
+            // Automatically cache while streaming
             AudioCacheService.shared.cacheTrack(id: track.id, remoteURL: url, token: apiToken)
+            
+            // Systemic fix: Tell the store to expect this track as a download
+            // so that once AudioCacheService finishes, it knows WHICH track object to save.
+            appState?.downloadsStore.registerPotentialTrack(track)
+            
             return AVURLAsset(url: url, options: ["AVURLAssetHTTPHeaderFieldsKey": headers])
         }
     }
     func downloadTrack(_ track: Track) {
         guard let api else { return }
+        
+        // Systemic fix: If already cached, just ensure it's in the downloads list
+        if AudioCacheService.shared.localURL(for: track.id) != nil {
+            print("Track \(track.id) already cached. Adding to list.")
+            appState?.downloadsStore.saveTrackInternal(track)
+            return
+        }
+        
         let url = api.streamURL(for: track.id)
-        NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadStarted"), object: track)
+        // Add to pending immediately so it shows up in UI
+        appState?.downloadsStore.startDownload(track)
         AudioCacheService.shared.cacheTrack(id: track.id, remoteURL: url, token: apiToken)
     }
 }
@@ -489,10 +724,10 @@ final class AudioCacheService {
         return dir
     }()
     
-    private let maxCacheSize: UInt64 = 500 * 1024 * 1024 // 500 MB
+    private let maxCacheSize: UInt64 = UInt64.max // Effectively unlimited
     
     private var downloadTasks: [String: Task<Void, Never>] = [:]
-    private let queue = DispatchQueue(label: "com.musicplay.audiocache")
+    private let queue = DispatchQueue(label: "com.musicplay.audiocache", qos: .userInitiated)
     
     private init() {
         cleanUpCacheIfNeeded()
@@ -547,6 +782,9 @@ final class AudioCacheService {
             
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 || httpResponse.statusCode == 206 else {
                 queue.sync { downloadTasks.removeValue(forKey: trackId) }
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFailed"), object: trackId)
+                }
                 return
             }
             
@@ -565,6 +803,9 @@ final class AudioCacheService {
         } catch {
             print("Failed to cache track \(trackId): \(error)")
             try? fileManager.removeItem(at: tempURL)
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFailed"), object: trackId)
+            }
         }
         
         queue.sync {
@@ -581,6 +822,25 @@ final class AudioCacheService {
                 for file in files { try fileManager.removeItem(at: file) }
             } catch { print("Failed to clear audio cache: \(error)") }
         }
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: NSNotification.Name("CacheCleared"), object: nil)
+        }
+    }
+    
+    func getCacheSize() -> UInt64 {
+        var totalSize: UInt64 = 0
+        do {
+            let files = try fileManager.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: [.fileSizeKey])
+            for file in files {
+                let attrs = try file.resourceValues(forKeys: [.fileSizeKey])
+                if let size = attrs.fileSize {
+                    totalSize += UInt64(size)
+                }
+            }
+        } catch {
+            print("Error getting cache size: \(error)")
+        }
+        return totalSize
     }
     
     private func cleanUpCacheIfNeeded() {

@@ -58,6 +58,7 @@ struct SearchResult: Codable {
 struct Playlist: Codable, Identifiable, Hashable {
     let id: Int
     let name: String
+    let thumbnails: [String]?
 }
 
 struct PlayerState: Codable {

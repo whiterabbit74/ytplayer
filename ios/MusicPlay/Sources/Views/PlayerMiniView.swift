@@ -24,18 +24,23 @@ struct PlayerMiniView: View {
                         showPlayer = true
                     } label: {
                         HStack(spacing: 12) {
-                            CachedAsyncImage(url: thumbURL(track), contentMode: .fill)
-                                .frame(width: 44, height: 44)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            TrackThumbnail(track: track, size: 44, forceSquare: true, cornerRadius: 8, showStatus: false)
 
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(track.title)
                                     .font(.subheadline.weight(.medium))
                                     .lineLimit(1)
-                                Text(track.artist)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
+                                HStack(spacing: 4) {
+                                    if appState.downloadsStore.isDownloaded(id: track.id) {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.blue)
+                                            .font(.system(size: 10))
+                                    }
+                                    Text(track.artist)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
                             }
                         }
                         .contentShape(Rectangle())
@@ -47,6 +52,7 @@ struct PlayerMiniView: View {
                     // Playback controls — do NOT open full player
                     HStack(spacing: 16) {
                         Button {
+                            HapticManager.shared.trigger(.light)
                             appState.playerService.togglePlayPause()
                         } label: {
                             Image(systemName: appState.playerService.isPlaying ? "pause.fill" : "play.fill")
@@ -57,10 +63,8 @@ struct PlayerMiniView: View {
                         .buttonStyle(.plain)
 
                         Button {
-                            let hasNext = appState.playerStore.playNext()
-                            if hasNext, let next = appState.playerStore.currentTrack {
-                                appState.playerService.play(track: next)
-                            }
+                            HapticManager.shared.trigger(.medium)
+                            appState.playerService.next()
                         } label: {
                             Image(systemName: "forward.fill")
                                 .font(.title3)
@@ -76,7 +80,7 @@ struct PlayerMiniView: View {
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
             .shadow(color: .black.opacity(0.15), radius: 8, y: -2)
             .padding(.horizontal, 8)
-            .padding(.bottom, 49) // Offset above tab bar — NOT tappable
+            .padding(.bottom, 4) // Small gap from whatever is below
         }
     }
 

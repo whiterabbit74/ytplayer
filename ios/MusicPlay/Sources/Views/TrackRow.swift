@@ -29,36 +29,16 @@ struct TrackRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            ZStack {
-                CachedAsyncImage(url: thumbURL, contentMode: .fill)
-                    .frame(width: 48, height: 48)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-
-                if let progress = appState.downloadsStore.downloadProgresses[track.id] {
-                    ZStack {
-                        Color.black.opacity(0.5)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                        
-                        Circle()
-                            .stroke(Color.white.opacity(0.3), lineWidth: 3)
-                            .frame(width: 24, height: 24)
-                        
-                            Circle()
-                                .trim(from: 0, to: CGFloat(max(0.05, progress)))
-                                .stroke(Color.white, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                                .frame(width: 24, height: 24)
-                                .rotationEffect(.degrees(-90))
-                                // Add a spinning effect if progress is very low (starting up)
-                                .rotationEffect(.degrees(progress < 0.05 ? 360 : 0))
-                                .animation(progress < 0.05 ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: progress)
-                        }
-                        .frame(width: 48, height: 48)
-                    }
-                }
+            TrackThumbnail(track: track, size: 48, forceSquare: true, cornerRadius: 8)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(track.title).font(.headline).lineLimit(1)
                 HStack(spacing: 4) {
+                    if appState.downloadsStore.isDownloaded(id: track.id) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.blue)
+                            .font(.caption2)
+                    }
                     Text(track.artist)
                     Text("•")
                     Text(track.formattedDuration)
@@ -80,6 +60,12 @@ struct TrackRow: View {
                         Label("Add to Queue", systemImage: "text.badge.plus")
                     }
                     
+                    Button {
+                        appState.playerStore.addToQueueNext(track)
+                    } label: {
+                        Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
+                    }
+                    
                     if let onToggleFavorite {
                         Button(action: onToggleFavorite) {
                             Label(isFavorite ? "Remove from Favorites" : "Add to Favorites", systemImage: isFavorite ? "heart.slash" : "heart")
@@ -87,15 +73,40 @@ struct TrackRow: View {
                     }
                     
                     let isDownloaded = appState.downloadsStore.isDownloaded(id: track.id)
-                    Button {
-                        if isDownloaded {
+                    let isFailed = appState.downloadsStore.failedDownloads.contains(track.id)
+                    let isDownloading = appState.downloadsStore.downloadProgresses[track.id] != nil
+                    
+                    if isDownloading {
+                        Button(role: .destructive) {
                             appState.downloadsStore.removeTrack(track.id)
                             AudioCacheService.shared.removeTrack(id: track.id)
-                        } else {
-                            appState.playerService.downloadTrack(track)
+                        } label: {
+                            Label("Cancel Download", systemImage: "xmark.circle")
                         }
-                    } label: {
-                        Label(isDownloaded ? "Remove Download" : "Download", systemImage: isDownloaded ? "trash" : "arrow.down.circle")
+                    } else if isFailed {
+                        Button {
+                            appState.playerService.downloadTrack(track)
+                        } label: {
+                            Label("Retry Download", systemImage: "arrow.clockwise.circle")
+                        }
+                        
+                        Button(role: .destructive) {
+                            appState.downloadsStore.removeTrack(track.id)
+                            AudioCacheService.shared.removeTrack(id: track.id)
+                        } label: {
+                            Label("Remove from Downloads", systemImage: "trash")
+                        }
+                    } else {
+                        Button {
+                            if isDownloaded {
+                                appState.downloadsStore.removeTrack(track.id)
+                                AudioCacheService.shared.removeTrack(id: track.id)
+                            } else {
+                                appState.playerService.downloadTrack(track)
+                            }
+                        } label: {
+                            Label(isDownloaded ? "Remove Download" : "Download", systemImage: isDownloaded ? "trash" : "arrow.down.circle")
+                        }
                     }
                     
                     Menu {
@@ -115,8 +126,10 @@ struct TrackRow: View {
             }
         }
         .contentShape(Rectangle())
+        .buttonStyle(ScaleButtonStyle())
         .onTapGesture {
             if editMode?.wrappedValue != .active {
+                HapticManager.shared.trigger(.selection)
                 onPlay()
             }
         }
