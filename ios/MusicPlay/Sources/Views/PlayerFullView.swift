@@ -1,7 +1,16 @@
 import SwiftUI
 
 struct PlayerFullView: View {
-    @EnvironmentObject var appState: AppState
+    @ObservedObject var playerStore: PlayerStore
+    @ObservedObject var playerService: PlayerService
+    @ObservedObject var downloadsStore: DownloadsStore
+    @ObservedObject var favoritesStore: FavoritesStore
+    @ObservedObject var playlistsStore: PlaylistsStore
+    let baseURL: String
+    let dynamicBackgroundEnabled: Bool
+    let coverStyle: AppState.CoverStyle
+    let squareCovers: Bool
+
     @Environment(\.dismiss) var dismiss
     @State private var isSeeking = false
     @State private var seekTime: Double = 0
@@ -10,7 +19,7 @@ struct PlayerFullView: View {
     var body: some View {
         ZStack {
             // Background
-            if appState.dynamicBackgroundEnabled, let track = appState.playerStore.currentTrack {
+            if dynamicBackgroundEnabled, let track = playerStore.currentTrack {
                 DynamicBackgroundView(thumbnailURL: thumbURL(track))
             } else {
                 LinearGradient(
@@ -37,18 +46,32 @@ struct PlayerFullView: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 12)
 
-                if let track = appState.playerStore.currentTrack {
+                if let track = playerStore.currentTrack {
                     // 1. Artwork Section
                     Spacer(minLength: 20)
                     
                     Group {
-                        if appState.coverStyle == .vinyl {
-                            VinylRecordView(track: track, size: 210)
-                                .transition(.asymmetric(insertion: .scale.combined(with: .opacity), removal: .opacity))
+                        if coverStyle == .vinyl {
+                            VinylRecordView(
+                                track: track,
+                                size: 210,
+                                baseURL: baseURL,
+                                playerService: playerService,
+                                downloadsStore: downloadsStore
+                            )
+                            .transition(.asymmetric(insertion: .scale.combined(with: .opacity), removal: .opacity))
                         } else {
-                            TrackThumbnail(track: track, size: 300, forceSquare: appState.squareCovers, cornerRadius: 12, showStatus: false)
-                                .shadow(color: .black.opacity(0.5), radius: 30, x: 0, y: 15)
-                                .transition(.asymmetric(insertion: .scale(scale: 0.9).combined(with: .opacity), removal: .opacity))
+                            TrackThumbnail(
+                                track: track,
+                                size: 300,
+                                forceSquare: squareCovers,
+                                cornerRadius: 12,
+                                showStatus: false,
+                                baseURL: baseURL,
+                                downloadsStore: downloadsStore
+                            )
+                            .shadow(color: .black.opacity(0.5), radius: 30, x: 0, y: 15)
+                            .transition(.asymmetric(insertion: .scale(scale: 0.9).combined(with: .opacity), removal: .opacity))
                         }
                     }
                     // Apply animation to track changes
@@ -67,7 +90,7 @@ struct PlayerFullView: View {
                             .padding(.horizontal, 40)
                         
                         HStack(spacing: 6) {
-                            if appState.downloadsStore.isDownloaded(id: track.id) {
+                            if downloadsStore.isDownloaded(id: track.id) {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundStyle(.blue)
                                     .font(.caption)
@@ -85,16 +108,16 @@ struct PlayerFullView: View {
                     VStack(spacing: 12) {
                         Slider(
                             value: Binding(
-                                get: { isSeeking ? seekTime : appState.playerService.currentTime },
+                                get: { isSeeking ? seekTime : playerService.currentTime },
                                 set: { newValue in
                                     isSeeking = true
                                     seekTime = newValue
                                 }
                             ),
-                            in: 0...max(appState.playerService.duration, 1),
+                            in: 0...max(playerService.duration, 1),
                             onEditingChanged: { editing in
                                 if !editing {
-                                    appState.playerService.seek(to: seekTime)
+                                    playerService.seek(to: seekTime)
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                         isSeeking = false
                                     }
@@ -104,9 +127,9 @@ struct PlayerFullView: View {
                         .accentColor(.white)
 
                         HStack {
-                            Text(formatTime(isSeeking ? seekTime : appState.playerService.currentTime))
+                            Text(formatTime(isSeeking ? seekTime : playerService.currentTime))
                             Spacer()
-                            Text(formatTime(appState.playerService.duration))
+                            Text(formatTime(playerService.duration))
                         }
                         .font(.caption2.monospacedDigit())
                         .foregroundStyle(.white.opacity(0.5))
@@ -118,7 +141,7 @@ struct PlayerFullView: View {
                     HStack(spacing: 50) {
                         Button {
                             HapticManager.shared.trigger(.medium)
-                            appState.playerService.previous()
+                            playerService.previous()
                         } label: {
                             Image(systemName: "backward.fill").font(.title)
                         }
@@ -126,20 +149,20 @@ struct PlayerFullView: View {
                         Button {
                             HapticManager.shared.trigger(.light)
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                                appState.playerService.togglePlayPause()
+                                playerService.togglePlayPause()
                             }
                         } label: {
-                            Image(systemName: appState.playerService.isPlaying ? "pause.fill" : "play.fill")
+                            Image(systemName: playerService.isPlaying ? "pause.fill" : "play.fill")
                                 .font(.system(size: 48, weight: .bold))
                                 .frame(width: 80, height: 80)
                                 .background(Circle().fill(Color.white.opacity(0.1)))
-                                .scaleEffect(appState.playerService.isPlaying ? 1.0 : 0.9)
-                                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: appState.playerService.isPlaying)
+                                .scaleEffect(playerService.isPlaying ? 1.0 : 0.9)
+                                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: playerService.isPlaying)
                         }
 
                         Button {
                             HapticManager.shared.trigger(.medium)
-                            appState.playerService.next()
+                            playerService.next()
                         } label: {
                             Image(systemName: "forward.fill").font(.title)
                         }
@@ -151,8 +174,8 @@ struct PlayerFullView: View {
                     HStack(spacing: 16) {
                         Image(systemName: "speaker.fill").font(.system(size: 10))
                         Slider(value: Binding(
-                            get: { appState.playerService.volume },
-                            set: { appState.playerService.setVolume($0) }
+                            get: { playerService.volume },
+                            set: { playerService.setVolume($0) }
                         ), in: 0...1)
                         .accentColor(.white.opacity(0.4))
                         Image(systemName: "speaker.wave.3.fill").font(.system(size: 10))
@@ -166,28 +189,28 @@ struct PlayerFullView: View {
                         // Shuffle/Repeat/Heart on the left-ish
                         HStack(spacing: 24) {
                             Button {
-                                appState.playerStore.toggleShuffle()
+                                playerStore.toggleShuffle()
                             } label: {
                                 Image(systemName: "shuffle")
-                                    .foregroundStyle(appState.playerStore.shuffleMode ? .blue : .white.opacity(0.5))
+                                    .foregroundStyle(playerStore.shuffleMode ? .blue : .white.opacity(0.5))
                             }
                             
                             Button {
-                                appState.playerStore.cycleRepeatMode()
+                                playerStore.cycleRepeatMode()
                             } label: {
-                                Image(systemName: appState.playerStore.repeatMode == "one" ? "repeat.1" : "repeat")
-                                    .foregroundStyle(appState.playerStore.repeatMode != "off" ? .blue : .white.opacity(0.5))
+                                Image(systemName: playerStore.repeatMode == "one" ? "repeat.1" : "repeat")
+                                    .foregroundStyle(playerStore.repeatMode != "off" ? .blue : .white.opacity(0.5))
                             }
                             
                             Button {
                                 HapticManager.shared.trigger(.medium)
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
-                                    Task { await appState.favoritesStore.toggleFavorite(track) }
+                                    Task { await favoritesStore.toggleFavorite(track) }
                                 }
                             } label: {
-                                Image(systemName: appState.favoritesStore.isFavorite(track.id) ? "heart.fill" : "heart")
-                                    .foregroundStyle(appState.favoritesStore.isFavorite(track.id) ? .white : .white.opacity(0.5))
-                                    .scaleEffect(appState.favoritesStore.isFavorite(track.id) ? 1.2 : 1.0)
+                                Image(systemName: favoritesStore.isFavorite(track.id) ? "heart.fill" : "heart")
+                                    .foregroundStyle(favoritesStore.isFavorite(track.id) ? .white : .white.opacity(0.5))
+                                    .scaleEffect(favoritesStore.isFavorite(track.id) ? 1.2 : 1.0)
                             }
                         }
                         
@@ -200,12 +223,12 @@ struct PlayerFullView: View {
                                 .foregroundStyle(.white.opacity(0.5))
                             
                             Menu {
-                                Button { appState.playerStore.addToQueueNext(track) } label: {
+                                Button { playerStore.addToQueueNext(track) } label: {
                                     Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
                                 }
                                 Menu("Add to Playlist...") {
-                                    ForEach(appState.playlistsStore.playlists) { pl in
-                                        Button(pl.name) { Task { await appState.playlistsStore.addTrack(playlistId: pl.id, track: track) } }
+                                    ForEach(playlistsStore.playlists) { pl in
+                                        Button(pl.name) { Task { await playlistsStore.addTrack(playlistId: pl.id, track: track) } }
                                     }
                                 }
                             } label: {
@@ -239,12 +262,18 @@ struct PlayerFullView: View {
             }
         }
         .onAppear {
-            Task { await appState.playlistsStore.loadPlaylists() }
+            Task { await playlistsStore.loadPlaylists() }
         }
         .sheet(isPresented: $showQueue) {
-            QueueView(showPlayer: .constant(true))
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
+            QueueView(
+                playerStore: playerStore,
+                playerService: playerService,
+                downloadsStore: downloadsStore,
+                baseURL: baseURL,
+                showPlayer: .constant(true)
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
     }
 
@@ -252,11 +281,10 @@ struct PlayerFullView: View {
         if track.thumbnail.hasPrefix("http") {
             return URL(string: track.thumbnail)
         }
-        let base = appState.baseURL
         if track.thumbnail.hasPrefix("/") {
-            return URL(string: base + track.thumbnail)
+            return URL(string: baseURL + track.thumbnail)
         }
-        return URL(string: base + "/" + track.thumbnail)
+        return URL(string: baseURL + "/" + track.thumbnail)
     }
 
     private func formatTime(_ seconds: Double) -> String {

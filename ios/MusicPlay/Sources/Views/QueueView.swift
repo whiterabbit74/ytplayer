@@ -1,20 +1,23 @@
 import SwiftUI
 
 struct QueueView: View {
-    @EnvironmentObject var appState: AppState
+    @ObservedObject var playerStore: PlayerStore
+    @ObservedObject var playerService: PlayerService
+    @ObservedObject var downloadsStore: DownloadsStore
+    let baseURL: String
     @Binding var showPlayer: Bool
     @State private var editMode: EditMode = .active
 
     var body: some View {
         NavigationStack {
             List {
-                ForEach(appState.playerStore.queue) { item in
+                ForEach(playerStore.queue) { item in
                     queueRow(item: item)
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
-                                let index = appState.playerStore.queue.firstIndex(where: { $0.id == item.id })
+                                let index = playerStore.queue.firstIndex(where: { $0.id == item.id })
                                 if let index = index {
-                                    appState.playerStore.removeFromQueue(index: index)
+                                    playerStore.removeFromQueue(index: index)
                                 }
                             } label: {
                                 Label("Delete", systemImage: "trash")
@@ -26,27 +29,27 @@ struct QueueView: View {
             }
             .environment(\.editMode, $editMode)
             .safeAreaInset(edge: .bottom) {
-                if appState.playerStore.currentTrack != nil {
+                if playerStore.currentTrack != nil {
                     Color.clear.frame(height: 70)
                 }
             }
             .overlay {
-                if appState.playerStore.queue.isEmpty {
+                if playerStore.queue.isEmpty {
                     ContentUnavailableView("Queue is Empty", systemImage: "list.bullet", description: Text("Add tracks from search or playlists"))
                 }
             }
             .navigationTitle("Queue")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    if !appState.playerStore.queue.isEmpty {
+                    if !playerStore.queue.isEmpty {
                         // EditButton is not needed since we stay in edit mode
                     }
                 }
                 ToolbarItem(placement: .topBarLeading) {
-                    if !appState.playerStore.queue.isEmpty {
+                    if !playerStore.queue.isEmpty {
                         Button("Clear") {
-                            appState.playerService.stop()
-                            appState.playerStore.clearQueue()
+                            playerService.stop()
+                            playerStore.clearQueue()
                         }
                     }
                 }
@@ -55,32 +58,39 @@ struct QueueView: View {
     }
 
     private func moveItems(from source: IndexSet, to destination: Int) {
-        appState.playerStore.moveQueue(from: source, to: destination)
+        playerStore.moveQueue(from: source, to: destination)
     }
 
     private func deleteItems(at offsets: IndexSet) {
         for idx in offsets.sorted(by: >) {
-            appState.playerStore.removeFromQueue(index: idx)
+            playerStore.removeFromQueue(index: idx)
         }
     }
 
     @ViewBuilder
     private func queueRow(item: QueueItem) -> some View {
         let track = item.track
-        let index = appState.playerStore.queue.firstIndex(where: { $0.id == item.id }) ?? 0
-        let isCurrent = index == appState.playerStore.currentIndex
+        let index = playerStore.queue.firstIndex(where: { $0.id == item.id }) ?? 0
+        let isCurrent = index == playerStore.currentIndex
 
         HStack(spacing: 12) {
             trackIndicator(index: index, isCurrent: isCurrent)
 
-            TrackThumbnail(track: track, size: 44, forceSquare: true, cornerRadius: 6)
+            TrackThumbnail(
+                track: track,
+                size: 44,
+                forceSquare: true,
+                cornerRadius: 6,
+                baseURL: baseURL,
+                downloadsStore: downloadsStore
+            )
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(track.title)
                     .font(.subheadline.weight(isCurrent ? .semibold : .regular))
                     .lineLimit(1)
                 HStack(spacing: 4) {
-                    if appState.downloadsStore.isDownloaded(id: track.id) {
+                    if downloadsStore.isDownloaded(id: track.id) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.blue)
                             .font(.system(size: 10))
@@ -96,7 +106,7 @@ struct QueueView: View {
 
             Button {
                 HapticManager.shared.trigger(.selection)
-                appState.playerService.playFromQueue(index: index)
+                playerService.playFromQueue(index: index)
                 showPlayer = true
             } label: {
                 Image(systemName: "play.fill")
@@ -114,7 +124,7 @@ struct QueueView: View {
     @ViewBuilder
     private func trackIndicator(index: Int, isCurrent: Bool) -> some View {
         if isCurrent {
-            Image(systemName: appState.playerService.isPlaying ? "speaker.wave.2.fill" : "speaker.fill")
+            Image(systemName: playerService.isPlaying ? "speaker.wave.2.fill" : "speaker.fill")
                 .foregroundStyle(.white)
                 .font(.caption)
                 .frame(width: 20)
@@ -124,16 +134,5 @@ struct QueueView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 20)
         }
-    }
-
-    private func thumbURL(_ track: Track) -> URL? {
-        if track.thumbnail.hasPrefix("http") {
-            return URL(string: track.thumbnail)
-        }
-        let base = appState.baseURL
-        if track.thumbnail.hasPrefix("/") {
-            return URL(string: base + track.thumbnail)
-        }
-        return URL(string: base + "/" + track.thumbnail)
     }
 }

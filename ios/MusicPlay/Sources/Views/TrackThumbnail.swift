@@ -6,7 +6,8 @@ struct TrackThumbnail: View {
     var forceSquare: Bool = true
     let cornerRadius: CGFloat
     var showStatus: Bool = true
-    @EnvironmentObject var appState: AppState
+    let baseURL: String
+    @ObservedObject var downloadsStore: DownloadsStore
 
     var body: some View {
         ZStack {
@@ -16,7 +17,7 @@ struct TrackThumbnail: View {
                 .animation(.spring(), value: forceSquare)
 
             if showStatus {
-                if let progress = appState.downloadsStore.downloadProgresses[track.id] {
+                if let progress = downloadsStore.downloadProgresses[track.id] {
                     // Download progress overlay
                     ZStack {
                         Color.black.opacity(0.5)
@@ -35,7 +36,7 @@ struct TrackThumbnail: View {
                             .shadow(radius: 2)
                     }
                     .frame(width: size, height: size)
-                } else if appState.downloadsStore.failedDownloads.contains(track.id) {
+                } else if downloadsStore.failedDownloads.contains(track.id) {
                     // Failed indicator
                     ZStack {
                         Color.black.opacity(0.4)
@@ -57,7 +58,6 @@ struct TrackThumbnail: View {
         if cleaned.hasPrefix("http") {
             return URL(string: cleaned)
         }
-        let baseURL = appState.baseURL
         if cleaned.hasPrefix("/") {
             return URL(string: baseURL + cleaned)
         }

@@ -7,34 +7,48 @@ struct TrackRow: View {
     let onAddToQueue: () -> Void
     let isFavorite: Bool
     let onToggleFavorite: (() -> Void)?
+    let onRemove: (() -> Void)?
     
     @Environment(\.editMode) private var editMode
-    @EnvironmentObject var appState: AppState
+    @ObservedObject var downloadsStore: DownloadsStore
+    @ObservedObject var playlistsStore: PlaylistsStore
+    let playerStore: PlayerStore
+    let playerService: PlayerService
 
     init(
         track: Track,
         baseURL: String,
+        downloadsStore: DownloadsStore,
+        playlistsStore: PlaylistsStore,
+        playerStore: PlayerStore,
+        playerService: PlayerService,
         onPlay: @escaping () -> Void,
         onAddToQueue: @escaping () -> Void,
         isFavorite: Bool = false,
-        onToggleFavorite: (() -> Void)? = nil
+        onToggleFavorite: (() -> Void)? = nil,
+        onRemove: (() -> Void)? = nil
     ) {
         self.track = track
         self.baseURL = baseURL
+        self.downloadsStore = downloadsStore
+        self.playlistsStore = playlistsStore
+        self.playerStore = playerStore
+        self.playerService = playerService
         self.onPlay = onPlay
         self.onAddToQueue = onAddToQueue
         self.isFavorite = isFavorite
         self.onToggleFavorite = onToggleFavorite
+        self.onRemove = onRemove
     }
 
     var body: some View {
         HStack(spacing: 12) {
-            TrackThumbnail(track: track, size: 48, forceSquare: true, cornerRadius: 8)
+            TrackThumbnail(track: track, size: 48, forceSquare: true, cornerRadius: 8, baseURL: baseURL, downloadsStore: downloadsStore)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(track.title).font(.headline).lineLimit(1)
                 HStack(spacing: 4) {
-                    if appState.downloadsStore.isDownloaded(id: track.id) {
+                    if downloadsStore.isDownloaded(id: track.id) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.blue)
                             .font(.caption2)
@@ -61,7 +75,7 @@ struct TrackRow: View {
                     }
                     
                     Button {
-                        appState.playerStore.addToQueueNext(track)
+                        playerStore.addToQueueNext(track)
                     } label: {
                         Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
                     }
@@ -72,26 +86,26 @@ struct TrackRow: View {
                         }
                     }
                     
-                    let isDownloaded = appState.downloadsStore.isDownloaded(id: track.id)
-                    let isFailed = appState.downloadsStore.failedDownloads.contains(track.id)
-                    let isDownloading = appState.downloadsStore.downloadProgresses[track.id] != nil
+                    let isDownloaded = downloadsStore.isDownloaded(id: track.id)
+                    let isFailed = downloadsStore.failedDownloads.contains(track.id)
+                    let isDownloading = downloadsStore.downloadProgresses[track.id] != nil
                     
                     if isDownloading {
                         Button(role: .destructive) {
-                            appState.downloadsStore.removeTrack(track.id)
+                            downloadsStore.removeTrack(track.id)
                             AudioCacheService.shared.removeTrack(id: track.id)
                         } label: {
                             Label("Cancel Download", systemImage: "xmark.circle")
                         }
                     } else if isFailed {
                         Button {
-                            appState.playerService.downloadTrack(track)
+                            playerService.downloadTrack(track)
                         } label: {
                             Label("Retry Download", systemImage: "arrow.clockwise.circle")
                         }
                         
                         Button(role: .destructive) {
-                            appState.downloadsStore.removeTrack(track.id)
+                            downloadsStore.removeTrack(track.id)
                             AudioCacheService.shared.removeTrack(id: track.id)
                         } label: {
                             Label("Remove from Downloads", systemImage: "trash")
@@ -99,10 +113,10 @@ struct TrackRow: View {
                     } else {
                         Button {
                             if isDownloaded {
-                                appState.downloadsStore.removeTrack(track.id)
+                                downloadsStore.removeTrack(track.id)
                                 AudioCacheService.shared.removeTrack(id: track.id)
                             } else {
-                                appState.playerService.downloadTrack(track)
+                                playerService.downloadTrack(track)
                             }
                         } label: {
                             Label(isDownloaded ? "Remove Download" : "Download", systemImage: isDownloaded ? "trash" : "arrow.down.circle")
@@ -110,13 +124,19 @@ struct TrackRow: View {
                     }
                     
                     Menu {
-                        ForEach(appState.playlistsStore.playlists) { pl in
+                        ForEach(playlistsStore.playlists) { pl in
                             Button(pl.name) {
-                                Task { await appState.playlistsStore.addTrack(playlistId: pl.id, track: track) }
+                                Task { await playlistsStore.addTrack(playlistId: pl.id, track: track) }
                             }
                         }
                     } label: {
                         Label("Add to Playlist", systemImage: "folder.badge.plus")
+                    }
+
+                    if let onRemove {
+                        Button(role: .destructive, action: onRemove) {
+                            Label("Remove", systemImage: "trash")
+                        }
                     }
                 } label: {
                     Image(systemName: "ellipsis")

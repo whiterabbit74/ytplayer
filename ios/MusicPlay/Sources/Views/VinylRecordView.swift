@@ -3,11 +3,13 @@ import SwiftUI
 struct VinylRecordView: View {
     let track: Track
     let size: CGFloat // This is the sleeve size
-    @EnvironmentObject var appState: AppState
+    let baseURL: String
+    @ObservedObject var playerService: PlayerService
+    @ObservedObject var downloadsStore: DownloadsStore
     @State private var rotation: Double = 0
     
     var body: some View {
-        let isPlaying = appState.playerService.isPlaying
+        let isPlaying = playerService.isPlaying
         let recordOffset = size * 0.4
         let totalWidth = size + recordOffset
         
@@ -33,9 +35,17 @@ struct VinylRecordView: View {
                         }
                     )
                 
-                TrackThumbnail(track: track, size: size * 0.35, forceSquare: true, cornerRadius: size * 0.175, showStatus: false)
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(Color.black.opacity(0.1), lineWidth: 1))
+                TrackThumbnail(
+                    track: track,
+                    size: size * 0.35,
+                    forceSquare: true,
+                    cornerRadius: size * 0.175,
+                    showStatus: false,
+                    baseURL: baseURL,
+                    downloadsStore: downloadsStore
+                )
+                .clipShape(Circle())
+                .overlay(Circle().stroke(Color.black.opacity(0.1), lineWidth: 1))
                 
                 Circle()
                     .fill(Color.black)
@@ -49,10 +59,18 @@ struct VinylRecordView: View {
             .animation(.spring(response: 0.6, dampingFraction: 0.7), value: isPlaying)
             
             // The Sleeve
-            TrackThumbnail(track: track, size: size, forceSquare: true, cornerRadius: 8, showStatus: false)
-                .offset(x: isPlaying ? -recordOffset / 3 : 0)
-                .shadow(color: .black.opacity(0.3), radius: 15, x: 0, y: 10)
-                .animation(.spring(response: 0.6, dampingFraction: 0.7), value: isPlaying)
+            TrackThumbnail(
+                track: track,
+                size: size,
+                forceSquare: true,
+                cornerRadius: 8,
+                showStatus: false,
+                baseURL: baseURL,
+                downloadsStore: downloadsStore
+            )
+            .offset(x: isPlaying ? -recordOffset / 3 : 0)
+            .shadow(color: .black.opacity(0.3), radius: 15, x: 0, y: 10)
+            .animation(.spring(response: 0.6, dampingFraction: 0.7), value: isPlaying)
         }
         .frame(width: totalWidth, height: size)
         .onChange(of: isPlaying) { _, playing in

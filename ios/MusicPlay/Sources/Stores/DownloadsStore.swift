@@ -51,7 +51,7 @@ final class DownloadsStore: ObservableObject {
     }
     
     func startDownload(_ track: Track) {
-        failedDownloads.remove(track.id)
+        clearError(id: track.id)
         pendingTracks[track.id] = track
         downloadProgresses[track.id] = 0.0
         
@@ -59,8 +59,16 @@ final class DownloadsStore: ObservableObject {
         saveTrackInternal(track)
     }
 
+    func clearError(id: String) {
+        if failedDownloads.contains(id) {
+            failedDownloads.remove(id)
+            saveToDefaults()
+        }
+    }
+
     /// Register a track that MIGHT be cached (e.g. while streaming)
     func registerPotentialTrack(_ track: Track) {
+        clearError(id: track.id)
         if pendingTracks[track.id] == nil && !downloadedTracks.contains(where: { $0.id == track.id }) {
             pendingTracks[track.id] = track
         }

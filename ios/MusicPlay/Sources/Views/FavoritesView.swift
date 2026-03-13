@@ -2,33 +2,46 @@ import SwiftUI
 
 struct FavoritesView: View {
     @EnvironmentObject var appState: AppState
+    @ObservedObject var favoritesStore: FavoritesStore
     @State private var showSettings = false
     @Binding var showPlayer: Bool
+    @State private var editMode: EditMode = .inactive
 
     var body: some View {
         NavigationStack {
             List {
-                if appState.favoritesStore.isLoading && appState.favoritesStore.favorites.isEmpty {
+                if favoritesStore.isLoading && favoritesStore.favorites.isEmpty {
                     HStack {
                         Spacer()
                         ProgressView()
                         Spacer()
                     }
                     .listRowSeparator(.hidden)
-                } else if appState.favoritesStore.favorites.isEmpty && !appState.favoritesStore.isLoading {
+                } else if favoritesStore.favorites.isEmpty && !favoritesStore.isLoading {
                     ContentUnavailableView("No Favorites", systemImage: "heart", description: Text("Tap the heart icon on any track to add it here"))
                 } else {
-                    let tracks = appState.favoritesStore.favorites
+                    let tracks = favoritesStore.favorites
                     ForEach(tracks) { track in
                         TrackRow(
                             track: track,
                             baseURL: appState.baseURL,
+                            downloadsStore: appState.downloadsStore,
+                            playlistsStore: appState.playlistsStore,
+                            playerStore: appState.playerStore,
+                            playerService: appState.playerService,
                             onPlay: {
                                 appState.playerService.playTrack(track, context: tracks)
                                 showPlayer = true
                             },
                             onAddToQueue: {
                                 appState.playerStore.addToQueue(track)
+                            },
+                            isFavorite: true,
+                            onToggleFavorite: {
+                                Task { await favoritesStore.toggleFavorite(track) }
+                            },
+                            onRemove: {
+                                Task { await favoritesStore.toggleFavorite(track) }
                             }
                         )
                     }
@@ -40,6 +53,7 @@ struct FavoritesView: View {
                     }
                 }
             }
+            .environment(\.editMode, $editMode)
             .listStyle(.plain)
             .safeAreaInset(edge: .bottom) {
                 if appState.playerStore.currentTrack != nil {

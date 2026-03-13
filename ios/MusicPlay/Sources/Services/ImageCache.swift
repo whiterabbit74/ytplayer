@@ -90,13 +90,21 @@ struct CachedAsyncImage: View {
     }
 
     private func cacheImage(from url: URL) {
-        Task.detached(priority: .utility) {
+        // Optimization: In a real app we'd use a more robust caching library like Kingfisher
+        // to avoid double downloads. For now, we'll keep this but ensure it doesn't
+        // trample the main thread.
+        Task.detached(priority: .background) {
+            guard ImageCache.shared.image(for: url) == nil else { return }
             guard let (data, _) = try? await URLSession.shared.data(from: url),
                   let uiImage = UIImage(data: data) else { return }
+            
             ImageCache.shared.insert(uiImage, for: url)
+            
             await MainActor.run {
-                cachedImage = uiImage
-                loadedURL = url
+                if self.url == url {
+                    self.cachedImage = uiImage
+                    self.loadedURL = url
+                }
             }
         }
     }

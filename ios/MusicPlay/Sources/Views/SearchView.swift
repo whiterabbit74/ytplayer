@@ -1,10 +1,16 @@
 import SwiftUI
 
 struct SearchView: View {
-    @EnvironmentObject var appState: AppState
+    @ObservedObject var searchStore: SearchStore
+    @ObservedObject var playlistsStore: PlaylistsStore
+    @ObservedObject var playerStore: PlayerStore
+    @ObservedObject var playerService: PlayerService
+    @ObservedObject var downloadsStore: DownloadsStore
+    @ObservedObject var favoritesStore: FavoritesStore
+    let baseURL: String
+    @Binding var showPlayer: Bool
     @State private var query = ""
     @State private var showSettings = false
-    @Binding var showPlayer: Bool
 
     var body: some View {
         NavigationStack {
@@ -14,17 +20,19 @@ struct SearchView: View {
             }
             .listStyle(.plain)
             .safeAreaInset(edge: .bottom) {
-                if appState.playerStore.currentTrack != nil {
+                if playerStore.currentTrack != nil {
                     Color.clear.frame(height: 70)
                 }
             }
             .navigationTitle("Search")
             .searchable(text: $query, prompt: "Search songs, artists...")
             .searchSuggestions {
-                if !appState.searchStore.suggestions.isEmpty {
-                    ForEach(appState.searchStore.suggestions, id: \.self) { suggestion in
-                        Text(suggestion)
-                            .searchCompletion(suggestion)
+                if !searchStore.suggestions.isEmpty {
+                    Section("Suggestions") {
+                        ForEach(searchStore.suggestions, id: \.self) { suggestion in
+                            Text(suggestion)
+                                .searchCompletion(suggestion)
+                        }
                     }
                 }
             }
@@ -40,32 +48,32 @@ struct SearchView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
-                    .environmentObject(appState)
+                    .environmentObject(searchStore) // Pass something if needed, but SettingsView likely still needs AppState
             }
             .onChange(of: query) { _, newValue in
-                appState.searchStore.fetchSuggestions(query: newValue)
+                searchStore.fetchSuggestions(query: newValue)
                 // Clear results when query is emptied
                 if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    appState.searchStore.clearResults()
+                    searchStore.clearResults()
                 }
             }
             .onSubmit(of: .search) {
-                appState.searchStore.addRecentSearch(query)
+                searchStore.addRecentSearch(query)
                 Task {
-                    await appState.searchStore.search(query: query)
+                    await searchStore.search(query: query)
                 }
             }
-            .onAppear { Task { await appState.playlistsStore.loadPlaylists() } }
+            .onAppear { Task { await playlistsStore.loadPlaylists() } }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ResetSearch"))) { _ in
                 query = ""
-                appState.searchStore.clearResults()
+                searchStore.clearResults()
             }
         }
     }
 
     @ViewBuilder
     private var resultsList: some View {
-        let store = appState.searchStore
+        let store = searchStore
 
         if store.isSearching && store.results.isEmpty {
             // First search — show loading
@@ -77,49 +85,44 @@ struct SearchView: View {
                     Spacer()
                 }
             }
-        } else if store.results.isEmpty && store.hasSearched && !store.isSearching {
-            // Search completed but no results
+        } else if store.results.isEmpty && !query.isEmpty && !store.isSearching {
             ContentUnavailableView.search(text: query)
-        } else if store.results.isEmpty && !store.hasSearched {
-            // Initial state — no search yet
-            if !store.recentSearches.isEmpty && query.isEmpty {
-                Section {
-                    ForEach(store.recentSearches, id: \.self) { recent in
-                        Button {
-                            query = recent
-                            store.addRecentSearch(recent)
-                            Task { await store.search(query: recent) }
-                        } label: {
-                            HStack {
-                                Image(systemName: "clock")
-                                    .foregroundStyle(.secondary)
-                                Text(recent)
-                                    .foregroundStyle(.primary)
-                                Spacer()
-                                Image(systemName: "arrow.up.left")
-                                    .foregroundStyle(.secondary)
-                            }
+        } else if store.results.isEmpty {
+            // Show recent searches if idle
+            Section {
+                ForEach(store.recentSearches, id: \.self) { recent in
+                    Button {
+                        query = recent
+                        store.addRecentSearch(recent)
+                        Task { await store.search(query: recent) }
+                    } label: {
+                        HStack {
+                            Image(systemName: "clock")
+                                .foregroundStyle(.secondary)
+                            Text(recent)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Image(systemName: "arrow.up.left")
+                                .foregroundStyle(.secondary)
                         }
-                    }
-                    .onDelete { indexSet in
-                        for index in indexSet {
-                            let query = store.recentSearches[index]
-                            store.removeRecentSearch(query)
-                        }
-                    }
-                } header: {
-                    HStack {
-                        Text("Recent Searches")
-                        Spacer()
-                        Button("Clear") {
-                            store.clearRecentSearches()
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                     }
                 }
-            } else {
-                ContentUnavailableView("Search YouTube", systemImage: "magnifyingglass", description: Text("Find your favorite music"))
+                .onDelete { indexSet in
+                    for index in indexSet {
+                        let q = store.recentSearches[index]
+                        store.removeRecentSearch(q)
+                    }
+                }
+            } header: {
+                HStack {
+                    Text("Recent Searches")
+                    Spacer()
+                    Button("Clear") {
+                        store.clearRecentSearches()
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
             }
         } else {
             // Show results
@@ -133,23 +136,28 @@ struct SearchView: View {
     private func trackRow(_ track: Track) -> some View {
         TrackRow(
             track: track,
-            baseURL: appState.baseURL,
+            baseURL: baseURL,
+            downloadsStore: downloadsStore,
+            playlistsStore: playlistsStore,
+            playerStore: playerStore,
+            playerService: playerService,
             onPlay: {
-                appState.playerService.playTrack(track, context: appState.searchStore.results)
+                playerService.playTrack(track, context: searchStore.results)
                 showPlayer = true
             },
             onAddToQueue: {
-                appState.playerStore.addToQueue(track)
+                playerStore.addToQueue(track)
             },
-            isFavorite: appState.favoritesStore.isFavorite(track.id),
+            isFavorite: favoritesStore.isFavorite(track.id),
             onToggleFavorite: {
-                Task { await appState.favoritesStore.toggleFavorite(track) }
-            }
+                Task { await favoritesStore.toggleFavorite(track) }
+            },
+            onRemove: nil
         )
         .contextMenu {
-            ForEach(appState.playlistsStore.playlists) { pl in
+            ForEach(playlistsStore.playlists) { pl in
                 Button("Add to \(pl.name)") {
-                    Task { await appState.playlistsStore.addTrack(playlistId: pl.id, track: track) }
+                    Task { await playlistsStore.addTrack(playlistId: pl.id, track: track) }
                 }
             }
         }
@@ -157,13 +165,13 @@ struct SearchView: View {
 
     @ViewBuilder
     private var loadMoreButton: some View {
-        if appState.searchStore.nextPageToken != nil && !appState.searchStore.results.isEmpty {
+        if searchStore.nextPageToken != nil && !searchStore.results.isEmpty {
             Button {
-                Task { await appState.searchStore.loadMore(query: query) }
+                Task { await searchStore.loadMore(query: query) }
             } label: {
                 HStack {
                     Spacer()
-                    if appState.searchStore.isSearching {
+                    if searchStore.isSearching {
                         ProgressView()
                     } else {
                         Text("Load More")

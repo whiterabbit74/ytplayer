@@ -1,16 +1,19 @@
 import SwiftUI
 
 struct PlayerMiniView: View {
-    @EnvironmentObject var appState: AppState
+    @ObservedObject var playerStore: PlayerStore
+    @ObservedObject var playerService: PlayerService
+    @ObservedObject var downloadsStore: DownloadsStore
+    let baseURL: String
     @Binding var showPlayer: Bool
 
     var body: some View {
-        if let track = appState.playerStore.currentTrack {
+        if let track = playerStore.currentTrack {
             VStack(spacing: 0) {
                 // Progress bar at the top of mini-player
                 GeometryReader { geo in
-                    let progress = appState.playerService.duration > 0
-                        ? appState.playerService.currentTime / appState.playerService.duration
+                    let progress = playerService.duration > 0
+                        ? playerService.currentTime / playerService.duration
                         : 0
                     Rectangle()
                         .fill(Color.white)
@@ -24,14 +27,22 @@ struct PlayerMiniView: View {
                         showPlayer = true
                     } label: {
                         HStack(spacing: 12) {
-                            TrackThumbnail(track: track, size: 44, forceSquare: true, cornerRadius: 8, showStatus: false)
+                            TrackThumbnail(
+                                track: track,
+                                size: 44,
+                                forceSquare: true,
+                                cornerRadius: 8,
+                                showStatus: false,
+                                baseURL: baseURL,
+                                downloadsStore: downloadsStore
+                            )
 
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(track.title)
                                     .font(.subheadline.weight(.medium))
                                     .lineLimit(1)
                                 HStack(spacing: 4) {
-                                    if appState.downloadsStore.isDownloaded(id: track.id) {
+                                    if downloadsStore.isDownloaded(id: track.id) {
                                         Image(systemName: "checkmark.circle.fill")
                                             .foregroundStyle(.blue)
                                             .font(.system(size: 10))
@@ -53,9 +64,9 @@ struct PlayerMiniView: View {
                     HStack(spacing: 16) {
                         Button {
                             HapticManager.shared.trigger(.light)
-                            appState.playerService.togglePlayPause()
+                            playerService.togglePlayPause()
                         } label: {
-                            Image(systemName: appState.playerService.isPlaying ? "pause.fill" : "play.fill")
+                            Image(systemName: playerService.isPlaying ? "pause.fill" : "play.fill")
                                 .font(.title3)
                                 .frame(width: 36, height: 36)
                                 .contentShape(Rectangle())
@@ -64,12 +75,12 @@ struct PlayerMiniView: View {
 
                         Button {
                             HapticManager.shared.trigger(.medium)
-                            appState.playerService.next()
+                            playerService.next()
                         } label: {
                             Image(systemName: "forward.fill")
-                                .font(.title3)
-                                .frame(width: 36, height: 36)
-                                .contentShape(Rectangle())
+                                    .font(.title3)
+                                    .frame(width: 36, height: 36)
+                                    .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                     }
@@ -82,16 +93,5 @@ struct PlayerMiniView: View {
             .padding(.horizontal, 8)
             .padding(.bottom, 4) // Small gap from whatever is below
         }
-    }
-
-    private func thumbURL(_ track: Track) -> URL? {
-        if track.thumbnail.hasPrefix("http") {
-            return URL(string: track.thumbnail)
-        }
-        let base = appState.baseURL
-        if track.thumbnail.hasPrefix("/") {
-            return URL(string: base + track.thumbnail)
-        }
-        return URL(string: base + "/" + track.thumbnail)
     }
 }

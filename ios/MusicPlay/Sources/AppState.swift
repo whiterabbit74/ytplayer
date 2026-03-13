@@ -74,7 +74,6 @@ final class AppState: ObservableObject {
         
         setupAPIConnectionTracking()
         wireStores()
-        bindNestedStores()
         startHealthCheck()
     }
 
@@ -179,39 +178,6 @@ final class AppState: ObservableObject {
         playerStore.configure(api: apiClient)
         playerService.configure(api: apiClient, playerStore: playerStore, historyStore: historyStore, appState: self)
         playerSyncService.configure(api: apiClient, playerStore: playerStore, playerService: playerService)
-    }
-
-    /// Forward objectWillChange from all nested ObservableObjects to AppState.
-    /// Without this, SwiftUI views observing AppState won't re-render when
-    /// nested stores change their @Published properties.
-    private func bindNestedStores() {
-        playerStore.objectWillChange
-            .sink { [weak self] _ in self?.objectWillChange.send() }
-            .store(in: &cancellables)
-
-        playerService.objectWillChange
-            .sink { [weak self] _ in self?.objectWillChange.send() }
-            .store(in: &cancellables)
-
-        playlistsStore.objectWillChange
-            .sink { [weak self] _ in self?.objectWillChange.send() }
-            .store(in: &cancellables)
-
-        favoritesStore.objectWillChange
-            .sink { [weak self] _ in self?.objectWillChange.send() }
-            .store(in: &cancellables)
-
-        searchStore.objectWillChange
-            .sink { [weak self] _ in self?.objectWillChange.send() }
-            .store(in: &cancellables)
-
-        downloadsStore.objectWillChange
-            .sink { [weak self] _ in self?.objectWillChange.send() }
-            .store(in: &cancellables)
-            
-        historyStore.objectWillChange
-            .sink { [weak self] _ in self?.objectWillChange.send() }
-            .store(in: &cancellables)
     }
 
     func refreshAuthState() {

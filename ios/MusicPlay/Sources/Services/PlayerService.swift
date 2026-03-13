@@ -20,7 +20,8 @@ final class PlayerService: ObservableObject {
     
     private var player: AVPlayer { activePlayerA ? playerA : playerB }
     private var secondaryPlayer: AVPlayer { activePlayerA ? playerB : playerA }
-    private var timeObserver: Any?
+    private var timeObserver: (observer: Any, player: AVPlayer)?
+    private var crossfadeTimer: Timer?
     private var statusObserver: NSKeyValueObservation?
     private var stallObserver: Any?
     private var resumeObserver: Any?
@@ -171,31 +172,34 @@ final class PlayerService: ObservableObject {
         reattachObservers()
         updateNowPlaying(track: track, duration: 0)
         
-        // 4. Fade loop
+        // 4. Optimized and controllable fade loop
         let steps = 20
         let interval = fadeDuration / Double(steps)
-        let targetVolume = self.volume
+        var currentStep = 0
         
-        for i in 0...steps {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * interval) { [weak self] in
-                guard let self = self, self.currentCrossfadeId == fadeId else {
-                    // Abort if session changed
-                    return
-                }
-                
-                let progress = Float(i) / Float(steps)
-                oldPlayer.volume = targetVolume * (1.0 - progress)
-                newPlayer.volume = targetVolume * progress
-                
-                if i == steps {
-                    print("Crossfade session \(fadeId.uuidString.prefix(8)) completed")
-                    oldPlayer.pause()
-                    oldPlayer.replaceCurrentItem(with: nil)
-                    oldPlayer.volume = self.volume // Reset for next use
-                    if self.currentCrossfadeId == fadeId {
-                        self.isCrossfading = false
-                        self.currentCrossfadeId = nil
-                    }
+        crossfadeTimer?.invalidate()
+        crossfadeTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] timer in
+            guard let self = self, self.currentCrossfadeId == fadeId else {
+                timer.invalidate()
+                return
+            }
+            
+            currentStep += 1
+            let progress = Float(currentStep) / Float(steps)
+            let currentSystemVolume = self.volume
+            
+            oldPlayer.volume = currentSystemVolume * (1.0 - progress)
+            newPlayer.volume = currentSystemVolume * progress
+            
+            if currentStep >= steps {
+                timer.invalidate()
+                print("Crossfade session \(fadeId.uuidString.prefix(8)) completed")
+                oldPlayer.pause()
+                oldPlayer.replaceCurrentItem(with: nil)
+                oldPlayer.volume = self.volume // Reset for next use
+                if self.currentCrossfadeId == fadeId {
+                    self.isCrossfading = false
+                    self.currentCrossfadeId = nil
                 }
             }
         }
@@ -204,6 +208,8 @@ final class PlayerService: ObservableObject {
     private func interruptAnyOngoingTransitions() {
         currentCrossfadeId = nil
         isCrossfading = false
+        crossfadeTimer?.invalidate()
+        crossfadeTimer = nil
         
         // Stop both engines
         playerA.pause()
@@ -215,15 +221,18 @@ final class PlayerService: ObservableObject {
     }
     
     private func reattachObservers() {
-        // Remove existing observers from BOTH players to be safe
-        if let observer = timeObserver {
-            playerA.removeTimeObserver(observer)
-            playerB.removeTimeObserver(observer)
-            timeObserver = nil
-        }
+        // Remove existing observers safely
+        removeTimeObserver()
         
         // Setup observers on the now-active player
         setupObservers()
+    }
+    
+    private func removeTimeObserver() {
+        if let pair = timeObserver {
+            pair.player.removeTimeObserver(pair.observer)
+            timeObserver = nil
+        }
     }
 
     /// Load a track and pause at a given position. Used for restoring saved state or retrying.
@@ -280,7 +289,8 @@ final class PlayerService: ObservableObject {
     }
 
     func pause() {
-        player.pause()
+        playerA.pause()
+        playerB.pause()
         isPlaying = false
         playerStore?.isPlaying = false
         updateNowPlayingPlaybackState()
@@ -322,8 +332,10 @@ final class PlayerService: ObservableObject {
     }
 
     func stop() {
-        player.pause()
-        player.replaceCurrentItem(with: nil)
+        playerA.pause()
+        playerB.pause()
+        playerA.replaceCurrentItem(with: nil)
+        playerB.replaceCurrentItem(with: nil)
         currentTrackId = nil
         isPlaying = false
         isBuffering = false
@@ -338,12 +350,17 @@ final class PlayerService: ObservableObject {
     }
 
     private func setupObservers() {
+        // Remove existing observer first to prevent leaks
+        removeTimeObserver()
+        
+        let targetPlayer = self.player
+        
         // Periodic time observer on active player
-        timeObserver = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.5, preferredTimescale: 600), queue: .main) { [weak self] time in
+        let observer = targetPlayer.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.5, preferredTimescale: 600), queue: .main) { [weak self] time in
             guard let self else { return }
             
             // Do not advance the slider if the player is buffering or paused
-            guard self.player.timeControlStatus == .playing else { return }
+            guard targetPlayer.timeControlStatus == .playing else { return }
             
             let seconds = time.seconds
             guard seconds.isFinite else { return }
@@ -354,13 +371,15 @@ final class PlayerService: ObservableObject {
             self.playerStore?.position = self.currentTime
             
             // Reconcile duration from player if it becomes available/changes
-            if let dur = self.player.currentItem?.duration.seconds, dur.isFinite, dur > 0 {
+            if let dur = targetPlayer.currentItem?.duration.seconds, dur.isFinite, dur > 0 {
                 self.updateDurationIfTrustworthy(dur)
             }
             
             // Systemic end-of-track check (handles crossfade AND safety-net autoplay)
             self.checkPlaybackProgress(seconds: seconds)
         }
+        
+        timeObserver = (observer, targetPlayer)
     }
 
     private func checkPlaybackProgress(seconds: Double) {
@@ -571,6 +590,9 @@ final class PlayerService: ObservableObject {
             guard let self = self, self.currentTrackId == retryTrackId else { return }
             print("Retrying playback for \(retryTrackId) at \(lastPosition) (attempt \(self.errorCount))")
             
+            // Systemic fix: Clear error state in DownloadsStore so the red icon disappears on retry
+            self.appState?.downloadsStore.clearError(id: retryTrackId)
+            
             // Set currentTrackId to nil to force recreation of player item
             self.currentTrackId = nil
             self.prepareTrack(current, at: lastPosition, autoPlay: true)
@@ -728,6 +750,7 @@ final class AudioCacheService {
     
     private var downloadTasks: [String: Task<Void, Never>] = [:]
     private let queue = DispatchQueue(label: "com.musicplay.audiocache", qos: .userInitiated)
+    private var lastCleanupDate = Date.distantPast
     
     private init() {
         cleanUpCacheIfNeeded()
@@ -844,6 +867,10 @@ final class AudioCacheService {
     }
     
     private func cleanUpCacheIfNeeded() {
+        let now = Date()
+        guard now.timeIntervalSince(lastCleanupDate) > 60 else { return }
+        lastCleanupDate = now
+        
         queue.async { [weak self] in
             guard let self else { return }
             do {

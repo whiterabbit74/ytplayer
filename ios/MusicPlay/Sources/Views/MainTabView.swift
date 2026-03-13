@@ -16,33 +16,63 @@ struct MainTabView: View {
                     appState.selectedTab = newValue
                 }
             )) {
-                SearchView(showPlayer: $showPlayer)
+                SearchView(
+                    searchStore: appState.searchStore,
+                    playlistsStore: appState.playlistsStore,
+                    playerStore: appState.playerStore,
+                    playerService: appState.playerService,
+                    downloadsStore: appState.downloadsStore,
+                    favoritesStore: appState.favoritesStore,
+                    baseURL: appState.baseURL,
+                    showPlayer: $showPlayer
+                )
                     .tabItem { Label("Search", systemImage: "magnifyingglass") }
                     .tag(0)
 
-                PlaylistsView(showPlayer: $showPlayer)
+                PlaylistsView(playlistsStore: appState.playlistsStore, showPlayer: $showPlayer)
                     .tabItem { Label("Playlists", systemImage: "music.note.list") }
                     .tag(1)
 
-                FavoritesView(showPlayer: $showPlayer)
+                FavoritesView(favoritesStore: appState.favoritesStore, showPlayer: $showPlayer)
                     .tabItem { Label("Favorites", systemImage: "heart.fill") }
                     .tag(2)
 
-                QueueView(showPlayer: $showPlayer)
-                    .tabItem { Label("Queue", systemImage: "list.bullet") }
-                    .tag(3)
+                QueueView(
+                    playerStore: appState.playerStore,
+                    playerService: appState.playerService,
+                    downloadsStore: appState.downloadsStore,
+                    baseURL: appState.baseURL,
+                    showPlayer: $showPlayer
+                )
+                .tabItem { Label("Queue", systemImage: "list.bullet") }
+                .tag(3)
             }
 
             if appState.playerStore.currentTrack != nil {
-                PlayerMiniView(showPlayer: $showPlayer)
-                    .padding(.bottom, keyboard.isVisible ? 0 : 60) // Align above standard TabBar, but sit on keyboard when visible
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                PlayerMiniView(
+                    playerStore: appState.playerStore,
+                    playerService: appState.playerService,
+                    downloadsStore: appState.downloadsStore,
+                    baseURL: appState.baseURL,
+                    showPlayer: $showPlayer
+                )
+                .padding(.bottom, keyboard.isVisible ? 0 : 60) // Align above standard TabBar, but sit on keyboard when visible
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: appState.playerStore.currentTrack != nil)
         .sheet(isPresented: $showPlayer) {
-            PlayerFullView()
-                .environmentObject(appState)
+            PlayerFullView(
+                playerStore: appState.playerStore,
+                playerService: appState.playerService,
+                downloadsStore: appState.downloadsStore,
+                favoritesStore: appState.favoritesStore,
+                playlistsStore: appState.playlistsStore,
+                baseURL: appState.baseURL,
+                dynamicBackgroundEnabled: appState.dynamicBackgroundEnabled,
+                coverStyle: appState.coverStyle,
+                squareCovers: appState.squareCovers
+            )
         }
         .onAppear {
             // Load initial player state from server
