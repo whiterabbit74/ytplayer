@@ -171,22 +171,9 @@ struct PlayerFullView: View {
 
                     // 6. Action Bar (Bottom Tools)
                     HStack {
-                        // Shuffle/Repeat/Heart on the left-ish
+                        // Left-side: Like and More Menu
                         HStack(spacing: 24) {
-                            Button {
-                                playerStore.toggleShuffle()
-                            } label: {
-                                Image(systemName: "shuffle")
-                                    .foregroundStyle(playerStore.shuffleMode ? .blue : .white.opacity(0.5))
-                            }
-                            
-                            Button {
-                                playerStore.cycleRepeatMode()
-                            } label: {
-                                Image(systemName: playerStore.repeatMode == "one" ? "repeat.1" : "repeat")
-                                    .foregroundStyle(playerStore.repeatMode != "off" ? .blue : .white.opacity(0.5))
-                            }
-                            
+                            // Like
                             Button {
                                 HapticManager.shared.trigger(.medium)
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
@@ -197,29 +184,53 @@ struct PlayerFullView: View {
                                     .foregroundStyle(favoritesStore.isFavorite(track.id) ? .white : .white.opacity(0.5))
                                     .scaleEffect(favoritesStore.isFavorite(track.id) ? 1.2 : 1.0)
                             }
-                        }
-                        
-                        Spacer()
-                        
-                        // System tools on the right
-                        HStack(spacing: 24) {
-                            AirPlayButton()
-                                .frame(width: 24, height: 24)
-                                .foregroundStyle(.white.opacity(0.5))
                             
+                            // More Menu (Ellipsis)
                             Menu {
-                                Button { playerStore.addToQueueNext(track) } label: {
-                                    Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
+                                Section {
+                                    Button {
+                                        playerStore.toggleShuffle()
+                                    } label: {
+                                        Label(
+                                            playerStore.shuffleMode ? "Shuffle: On" : "Shuffle: Off",
+                                            systemImage: "shuffle"
+                                        )
+                                    }
+                                    
+                                    Button {
+                                        playerStore.cycleRepeatMode()
+                                    } label: {
+                                        let modeText = playerStore.repeatMode == "one" ? "Repeat: One" : (playerStore.repeatMode == "all" ? "Repeat: All" : "Repeat: Off")
+                                        Label(
+                                            modeText,
+                                            systemImage: playerStore.repeatMode == "one" ? "repeat.1" : "repeat"
+                                        )
+                                    }
                                 }
-                                Menu("Add to Playlist...") {
-                                    ForEach(playlistsStore.playlists) { pl in
-                                        Button(pl.name) { Task { await playlistsStore.addTrack(playlistId: pl.id, track: track) } }
+                                
+                                Section {
+                                    Button { playerStore.addToQueueNext(track) } label: {
+                                        Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
+                                    }
+                                    Menu("Add to Playlist...") {
+                                        ForEach(playlistsStore.playlists) { pl in
+                                            Button(pl.name) { Task { await playlistsStore.addTrack(playlistId: pl.id, track: track) } }
+                                        }
                                     }
                                 }
                             } label: {
                                 Image(systemName: "ellipsis.circle")
                                     .foregroundStyle(.white.opacity(0.5))
                             }
+                        }
+                        
+                        Spacer()
+                        
+                        // Right-side: AirPlay and Queue
+                        HStack(spacing: 24) {
+                            AirPlayButton()
+                                .frame(width: 24, height: 24)
+                                .foregroundStyle(.white.opacity(0.5))
                             
                             Button {
                                 showQueue.toggle()
