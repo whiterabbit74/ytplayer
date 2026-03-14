@@ -126,6 +126,11 @@ struct AudioRouteLabel: View {
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     var body: some View {
         ZStack {
+            // Слой-приемник касаний (AirPlayButton/AVRoutePickerView)
+            // Должен быть внизу и занимать все пространство, чтобы ловить тапы.
+            AirPlayButton()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            
             // Визуальный слой
             HStack(spacing: 8) {
                 Image(systemName: "airplayaudio")
@@ -137,13 +142,9 @@ struct AudioRouteLabel: View {
             .background(Color.white.opacity(0.1))
             .clipShape(Capsule())
             .foregroundStyle(.white.opacity(0.8))
-            .allowsHitTesting(false)
-            
-            // Слой-приемник касаний
-            AirPlayButton()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .opacity(0.01)
+            .allowsHitTesting(false) // Пропускаем касания к нижнему слою
         }
+        .fixedSize() // Важно: ZStack должен сжаться до размеров визуального слоя
         .onAppear(perform: updateRoute)
         .onReceive(timer) { _ in updateRoute() }
     }

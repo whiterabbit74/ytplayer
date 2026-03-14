@@ -60,6 +60,7 @@ final class AppState: ObservableObject {
         let savedCoverStyle = CoverStyle(rawValue: UserDefaults.standard.string(forKey: "musicplay_cover_style") ?? "") ?? .standard
         let savedCrossfadeEnabled = UserDefaults.standard.bool(forKey: "musicplay_crossfade_enabled")
         let savedCrossfadeDuration = UserDefaults.standard.double(forKey: "musicplay_crossfade_duration")
+        let savedDynamicBackground = UserDefaults.standard.bool(forKey: "musicplay_dynamic_background")
         let savedShowVolume = UserDefaults.standard.bool(forKey: "musicplay_show_volume_slider")
         
         self.baseURL = savedURL
