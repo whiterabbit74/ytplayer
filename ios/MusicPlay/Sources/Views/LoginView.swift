@@ -2,7 +2,6 @@ import SwiftUI
 
 struct LoginView: View {
     @EnvironmentObject var appState: AppState
-    @EnvironmentObject var i18n: I18nManager
     @State private var email = ""
     @State private var password = ""
     @State private var isLoading = false
@@ -46,7 +45,7 @@ struct LoginView: View {
                         .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
                         .scaleEffect(animateItems ? 1.0 : 0.8)
                     
-                    Text(i18n.t("login_title"))
+                    Text("login_title")
                         .font(.system(size: 34, weight: .bold, design: .rounded))
                         .tracking(1)
                         .scaleEffect(animateItems ? 1.0 : 0.9)
@@ -59,7 +58,7 @@ struct LoginView: View {
                     VStack(spacing: 16) {
                         CustomTextField(
                             icon: "envelope.fill",
-                            placeholder: i18n.t("email_placeholder"),
+                            placeholder: NSLocalizedString("email_placeholder", comment: ""),
                             text: $email
                         )
                         .keyboardType(.emailAddress)
@@ -68,7 +67,7 @@ struct LoginView: View {
                         
                         CustomSecureField(
                             icon: "lock.fill",
-                            placeholder: i18n.t("password_placeholder"),
+                            placeholder: NSLocalizedString("password_placeholder", comment: ""),
                             text: $password
                         )
                     }
@@ -89,7 +88,7 @@ struct LoginView: View {
                                 ProgressView()
                                     .tint(.white)
                             } else {
-                                Text(i18n.t("sign_in_button"))
+                                Text("login_button")
                                     .fontWeight(.bold)
                                 Image(systemName: "arrow.right")
                                     .font(.system(size: 14, weight: .bold))
@@ -122,8 +121,6 @@ struct LoginView: View {
                 
                 // Bottom Tools
                 HStack(spacing: 20) {
-                    LanguageSwitcher()
-                    
                     Button {
                         showingSettings = true
                     } label: {
@@ -162,10 +159,8 @@ struct LoginView: View {
                 password: password
             )
             appState.refreshAuthState()
-        } catch let apiError as APIErrorResponse {
-            errorMessage = apiError.error.message
         } catch {
-            errorMessage = i18n.t("login_failed")
+            errorMessage = NSLocalizedString("error_login_failed", comment: "")
         }
         isLoading = false
     }

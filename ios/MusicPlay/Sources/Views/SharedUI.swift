@@ -125,28 +125,19 @@ struct AudioRouteLabel: View {
     @State private var routeName: String = "iPhone"
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     var body: some View {
-        Button {
-            // AVRoutePickerView's button is invisible but handles the tap
-            // We use a ZStack to make the whole area trigger it
-        } label: {
-            HStack(spacing: 8) {
-                ZStack {
-                    AirPlayButton()
-                        .frame(width: 18, height: 18)
-                    
-                    // To make it fully overlay the HStack, we can actually put the picker 
-                    // as a background or overlay with 0.01 opacity
-                    AirPlayButton()
-                        .opacity(0.01)
-                }
-                Text(routeName).font(.caption.weight(.medium))
-            }
-            .contentShape(Rectangle()) // Make the whole area tappable
-            .foregroundStyle(.white.opacity(0.8))
+        HStack(spacing: 8) {
+            AirPlayButton()
+                .frame(width: 18, height: 18)
+            Text(routeName).font(.caption.weight(.medium))
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color.white.opacity(0.1))
+        .clipShape(Capsule())
+        .foregroundStyle(.white.opacity(0.8))
         .overlay {
-            // This is a trick: place an invisible picker over the whole area
+            // Ключевой момент: AirPlayButton (AVRoutePickerView) перекрывает весь HStack
+            // и ловит нажатие в любой его точке, при этом сам он прозрачный.
             AirPlayButton()
                 .opacity(0.01)
         }

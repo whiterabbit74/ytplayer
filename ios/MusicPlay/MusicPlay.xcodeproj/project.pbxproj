@@ -13,7 +13,6 @@
 		0B7A8E14761B60DA5F0EC8EA /* PlaylistsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F875DA92C69E3BDC18466F7 /* PlaylistsStore.swift */; };
 		0E6B4BB24DB032E74B09F031 /* MusicPlayApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DD76F75C2392976A9367B7A /* MusicPlayApp.swift */; };
 		1D9AAEF8025A0ABBB323AEA4 /* HistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6C42B4B75EAA2B88C58DB3 /* HistoryStore.swift */; };
-		24D50B787BBFD0EE5653BC2C /* MusicPlayUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ED9768DCC2D0C2CE097A6D2 /* MusicPlayUITests.swift */; };
 		2878136CD6BBE67E0F41CC1E /* PlayerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EA64227D83AA89F3CFFEFDE /* PlayerService.swift */; };
 		29CEADCD1127F9F4AB366D1C /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443BE5334278C77313EFB28C /* HapticManager.swift */; };
 		2D25845666DFD671B6DFE227 /* SearchStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BFD5250E3743277F11C6EAF /* SearchStore.swift */; };
@@ -39,13 +38,14 @@
 		B27D4902B0852CB7A50BF9DE /* PlayerStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D579850725E8679EB1D1BE99 /* PlayerStore.swift */; };
 		B32C93531CF43DE7F65781A4 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B76BF68FA92E011B1DFE501D /* SearchView.swift */; };
 		B51FA0042E392337DE6D4046 /* VinylRecordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA13EDB5F33B81C88EE09C40 /* VinylRecordView.swift */; };
+		B79F27C5B117838DE88B3F65 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 70AEC787FB5C4AF3A7134A61 /* Localizable.strings */; };
 		B89009E68BE8A3FDB609176E /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E42C7FA08718553C90F5D9BD /* MainTabView.swift */; };
 		D72FC2BC8AF69878E85BBAEA /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3AC0863ED3E581D350EB205 /* Models.swift */; };
 		DBE259631143C523DEFF6ED6 /* MiniPlayerProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE2FFF50D0A3ECDFC18470CA /* MiniPlayerProgressBar.swift */; };
+		EA270CBDF2F927D23BBD2229 /* MusicPlayUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52271E624F904C9830DA489D /* MusicPlayUITests.swift */; };
 		EA97F5A01D8CBD7866DF6B5D /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5583C6CF69C4FA0EA13629F /* AppState.swift */; };
 		F148FEEE9BA6884CDFC32595 /* EqualizerIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EC1D31AAEFA4163DC48A8C7 /* EqualizerIndicator.swift */; };
 		F598C214DF1DEDEFDF6D8BA2 /* TrackThumbnail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE719D2AE924568E2D4C3AF /* TrackThumbnail.swift */; };
-		FEEF74ED4DD4F8CAFC798C22 /* I18n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F329FBF5BCCF3136E553734 /* I18n.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,7 +59,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		0ED9768DCC2D0C2CE097A6D2 /* MusicPlayUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicPlayUITests.swift; sourceTree = "<group>"; };
 		1EA64227D83AA89F3CFFEFDE /* PlayerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerService.swift; sourceTree = "<group>"; };
 		21078AEB0BF9BD0F2DB41C58 /* MarqueeText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarqueeText.swift; sourceTree = "<group>"; };
 		2D886F7B95981E3AF17E8594 /* Styles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Styles.swift; sourceTree = "<group>"; };
@@ -73,13 +72,14 @@
 		4846F40036D261817DDAF134 /* PlaybackProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackProgressStore.swift; sourceTree = "<group>"; };
 		48EE71C50921E8AD456EB234 /* ImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
 		4DFDA1DD85CF635777192AE7 /* QueueView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueView.swift; sourceTree = "<group>"; };
+		52271E624F904C9830DA489D /* MusicPlayUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicPlayUITests.swift; sourceTree = "<group>"; };
 		665198F40BF42740811D7E58 /* MusicPlay.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MusicPlay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F875DA92C69E3BDC18466F7 /* PlaylistsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistsStore.swift; sourceTree = "<group>"; };
+		723B813D9DA8CEF315DECE36 /* kk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = kk; path = kk.lproj/Localizable.strings; sourceTree = "<group>"; };
 		7EC1D31AAEFA4163DC48A8C7 /* EqualizerIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EqualizerIndicator.swift; sourceTree = "<group>"; };
 		8830842E003B7EB4DCBA4D15 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		8CE719D2AE924568E2D4C3AF /* TrackThumbnail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackThumbnail.swift; sourceTree = "<group>"; };
 		8EC2220C21F7A648BE966BA4 /* DownloadsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadsStore.swift; sourceTree = "<group>"; };
-		8F329FBF5BCCF3136E553734 /* I18n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = I18n.swift; sourceTree = "<group>"; };
 		9DD76F75C2392976A9367B7A /* MusicPlayApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicPlayApp.swift; sourceTree = "<group>"; };
 		9E27D42025EDF57967008674 /* SharedUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedUI.swift; sourceTree = "<group>"; };
 		A51EC6C789C7B16580CA9DE4 /* DynamicBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicBackgroundView.swift; sourceTree = "<group>"; };
@@ -88,7 +88,9 @@
 		AD7C0E0227BFA4776AD05F0D /* TrackRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRow.swift; sourceTree = "<group>"; };
 		B76BF68FA92E011B1DFE501D /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
 		B81CFF640A51677869AC5A95 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
+		C15D4548C39AE5DC3ABDA3F4 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C6C234031C757BE6F658F3FD /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		C996B7E7A32A2B9676199B4F /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		CA13EDB5F33B81C88EE09C40 /* VinylRecordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VinylRecordView.swift; sourceTree = "<group>"; };
 		CC8AD137C04B4EA838920FA4 /* PlayerFullView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerFullView.swift; sourceTree = "<group>"; };
 		D5583C6CF69C4FA0EA13629F /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -103,6 +105,23 @@
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		051B19D1CA82079F18F1AF85 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				70AEC787FB5C4AF3A7134A61 /* Localizable.strings */,
+			);
+			name = Resources;
+			path = ../Sources/Resources;
+			sourceTree = "<group>";
+		};
+		1CFF44662084B6482D9F7DF0 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				051B19D1CA82079F18F1AF85 /* Resources */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		4AA73D2428DD836AED5C6EDC /* Stores */ = {
 			isa = PBXGroup;
 			children = (
@@ -117,20 +136,18 @@
 			path = Stores;
 			sourceTree = "<group>";
 		};
-		97A235CA9B7F511253BD53FB /* UITests */ = {
+		631017FF3588A2EA8F1706F2 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				0ED9768DCC2D0C2CE097A6D2 /* MusicPlayUITests.swift */,
+				BADB7EE495797A2DF4B2F237 /* UITests */,
 			);
-			name = UITests;
-			path = Tests/UITests;
+			path = Tests;
 			sourceTree = "<group>";
 		};
 		AC8CA1CF6E37005331E03970 /* Services */ = {
 			isa = PBXGroup;
 			children = (
 				443BE5334278C77313EFB28C /* HapticManager.swift */,
-				8F329FBF5BCCF3136E553734 /* I18n.swift */,
 				48EE71C50921E8AD456EB234 /* ImageCache.swift */,
 				1EA64227D83AA89F3CFFEFDE /* PlayerService.swift */,
 				A6D202E4BB4B0BA6A242A903 /* PlayerSyncService.swift */,
@@ -156,12 +173,21 @@
 			path = Utils;
 			sourceTree = "<group>";
 		};
+		BADB7EE495797A2DF4B2F237 /* UITests */ = {
+			isa = PBXGroup;
+			children = (
+				52271E624F904C9830DA489D /* MusicPlayUITests.swift */,
+			);
+			path = UITests;
+			sourceTree = "<group>";
+		};
 		BEA2E0B2800DFCCB429F149B /* Sources */ = {
 			isa = PBXGroup;
 			children = (
 				D5583C6CF69C4FA0EA13629F /* AppState.swift */,
 				9DD76F75C2392976A9367B7A /* MusicPlayApp.swift */,
 				F7D4823452F2A6ADA1D8C5C6 /* API */,
+				051B19D1CA82079F18F1AF85 /* Resources */,
 				AC8CA1CF6E37005331E03970 /* Services */,
 				4AA73D2428DD836AED5C6EDC /* Stores */,
 				BA255D8360AD65C4CB33393D /* Utils */,
@@ -173,8 +199,9 @@
 		DA147A3226598DA4027760F2 = {
 			isa = PBXGroup;
 			children = (
+				1CFF44662084B6482D9F7DF0 /* Resources */,
 				BEA2E0B2800DFCCB429F149B /* Sources */,
-				97A235CA9B7F511253BD53FB /* UITests */,
+				631017FF3588A2EA8F1706F2 /* Tests */,
 				B6EDE4D2FEB288B9ACEF4CFE /* Products */,
 			);
 			sourceTree = "<group>";
@@ -223,6 +250,7 @@
 			buildConfigurationList = 3ADBAD739AA8BE4278EA72BF /* Build configuration list for PBXNativeTarget "MusicPlay" */;
 			buildPhases = (
 				584335BFA7CD9FE168CB0CF5 /* Sources */,
+				1D837AC04E8A98CE33CF13CF /* Resources */,
 			);
 			buildRules = (
 			);
@@ -278,6 +306,8 @@
 			knownRegions = (
 				Base,
 				en,
+				kk,
+				ru,
 			);
 			mainGroup = DA147A3226598DA4027760F2;
 			minimizedProjectReferenceProxies = 1;
@@ -290,6 +320,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1D837AC04E8A98CE33CF13CF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B79F27C5B117838DE88B3F65 /* Localizable.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		584335BFA7CD9FE168CB0CF5 /* Sources */ = {
@@ -305,7 +346,6 @@
 				6A931ED6151EF95E935A32F9 /* FavoritesView.swift in Sources */,
 				29CEADCD1127F9F4AB366D1C /* HapticManager.swift in Sources */,
 				1D9AAEF8025A0ABBB323AEA4 /* HistoryStore.swift in Sources */,
-				FEEF74ED4DD4F8CAFC798C22 /* I18n.swift in Sources */,
 				7AACB6FA1374E167EA5A4154 /* ImageCache.swift in Sources */,
 				0369315C46CA82ECEEE2A6E7 /* KeyboardObserver.swift in Sources */,
 				45352226436BDEE5F2D003D8 /* LoginView.swift in Sources */,
@@ -341,7 +381,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				24D50B787BBFD0EE5653BC2C /* MusicPlayUITests.swift in Sources */,
+				EA270CBDF2F927D23BBD2229 /* MusicPlayUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -354,6 +394,19 @@
 			targetProxy = A4C05C78E4EF0ED0614E6B27 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		70AEC787FB5C4AF3A7134A61 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C996B7E7A32A2B9676199B4F /* en */,
+				723B813D9DA8CEF315DECE36 /* kk */,
+				C15D4548C39AE5DC3ABDA3F4 /* ru */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		2506A80A51EEB5F1EFD0718D /* Debug */ = {
