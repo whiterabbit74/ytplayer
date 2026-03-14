@@ -193,6 +193,8 @@ struct SearchView: View {
                 }
             }
         }
+    }
+
     @ViewBuilder
     private var errorSection: some View {
         if let error = searchStore.errorMessage {
