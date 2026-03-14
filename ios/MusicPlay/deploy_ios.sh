@@ -45,9 +45,9 @@ echo "📦 Путь к приложению: $APP_PATH"
 
 # 5. Проверка версии
 echo "🔍 Проверка версии в коде..."
-grep -a "MusicPlay_BUILD_VERSION_2.4.1" "$APP_PATH/MusicPlay" > /dev/null
+grep -a "MusicPlay_BUILD_VERSION_2.4.2" "$APP_PATH/MusicPlay" > /dev/null
 if [ $? -eq 0 ]; then
-    echo "✅ Код актуален (MusicPlay_BUILD_VERSION_2.4.1 найдена)."
+    echo "✅ Код актуален (MusicPlay_BUILD_VERSION_2.4.2 найдена)."
 else
     echo "⚠️ ПРЕДУПРЕЖДЕНИЕ: Маркер версии не найден в бинарнике!"
 fi

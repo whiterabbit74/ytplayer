@@ -8,8 +8,8 @@ struct AirPlayButton: UIViewRepresentable {
     func makeUIView(context: Context) -> AVRoutePickerView {
         let picker = AVRoutePickerView()
         picker.backgroundColor = .clear
-        picker.tintColor = .white
-        picker.activeTintColor = .white
+        picker.tintColor = .clear
+        picker.activeTintColor = .clear
         return picker
     }
     func updateUIView(_ uiView: AVRoutePickerView, context: Context) {}
@@ -130,6 +130,7 @@ struct AudioRouteLabel: View {
             // Должен быть внизу и занимать все пространство, чтобы ловить тапы.
             AirPlayButton()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .opacity(0.01)
             
             // Визуальный слой
             HStack(spacing: 8) {
