@@ -108,11 +108,12 @@ struct PlayerFullView: View {
                                 }
                                 Text(track.artist)
                                     .font(.body)
-                                    .foregroundStyle(.blue.opacity(0.8)) // Make it look clickable
+                                    .foregroundStyle(.secondary)
                                     .multilineTextAlignment(.center)
                                     .lineLimit(1)
                             }
                         }
+                        .buttonStyle(.plain)
                     }
                     .padding(.bottom, 24)
 
