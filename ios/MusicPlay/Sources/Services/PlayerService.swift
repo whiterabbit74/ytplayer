@@ -327,7 +327,7 @@ final class PlayerService: ObservableObject {
         let clampedTime = max(0, min(time, duration > 0 ? duration : time))
         player.seek(to: CMTime(seconds: clampedTime, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
             self?.currentTime = clampedTime
-            self?.playerStore?.position = clampedTime
+            self?.progressStore?.currentTime = clampedTime
             self?.updateNowPlayingPlaybackState()
         }
     }
@@ -847,7 +847,7 @@ final class AudioCacheService {
             let (downloadURL, response) = try await URLSession.shared.download(for: request, delegate: delegate)
             
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 || httpResponse.statusCode == 206 else {
-                queue.sync { downloadTasks.removeValue(forKey: trackId) }
+                _ = queue.sync { downloadTasks.removeValue(forKey: trackId) }
                 DispatchQueue.main.async {
                     NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFailed"), object: trackId)
                 }
