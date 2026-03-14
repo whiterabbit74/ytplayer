@@ -12,60 +12,82 @@ struct MarqueeText: View {
     @State private var scrollTask: Task<Void, Never>?
 
     var body: some View {
-        GeometryReader { geometry in
-            ScrollView(.horizontal, showsIndicators: false) {
-                Text(text)
-                    .font(font)
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-                    .background(
-                        GeometryReader { textGeo in
-                            Color.clear.onAppear {
-                                textSize = textGeo.size
-                            }
-                            .onChange(of: textGeo.size) { _, newSize in
-                                textSize = newSize
-                            }
-                        }
-                    )
-                    .offset(x: offset)
-                    .onAppear {
-                        containerSize = geometry.size
-                        startAnimation()
-                    }
-                    .onChange(of: geometry.size) { _, newSize in
-                        containerSize = newSize
-                        startAnimation()
-                    }
-                    .onChange(of: text) { _, _ in
-                        offset = 0
-                        startAnimation()
-                    }
-            }
-            .disabled(true)
-            .mask(
-                HStack(spacing: 0) {
-                    if needsScroll {
+        ZStack {
+            if needsScroll {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    Text(text)
+                        .font(font)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                        .offset(x: offset)
+                        .padding(.trailing, padding)
+                }
+                .disabled(true)
+                .mask(
+                    HStack(spacing: 0) {
                         LinearGradient(
                             gradient: Gradient(colors: [Color.black.opacity(0), Color.black]),
                             startPoint: .leading, endPoint: .trailing
                         )
                         .frame(width: 15)
-                    }
 
-                    Color.black
+                        Color.black
 
-                    if needsScroll {
                         LinearGradient(
                             gradient: Gradient(colors: [Color.black, Color.black.opacity(0)]),
                             startPoint: .leading, endPoint: .trailing
                         )
                         .frame(width: 15)
                     }
-                }
-            )
+                )
+            } else {
+                Text(text)
+                    .font(font)
+                    .lineLimit(1)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
         }
+        .background(
+            GeometryReader { geometry in
+                Color.clear.onAppear {
+                    containerSize = geometry.size
+                    startAnimation()
+                }
+                .onChange(of: geometry.size) { _, newSize in
+                    containerSize = newSize
+                    startAnimation()
+                }
+            }
+        )
+        .overlay(
+            Text(text)
+                .font(font)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .opacity(0)
+                .background(
+                    GeometryReader { textGeo in
+                        Color.clear.onAppear {
+                            textSize = textGeo.size
+                            startAnimation()
+                        }
+                        .onChange(of: textGeo.size) { _, newSize in
+                            textSize = newSize
+                            startAnimation()
+                        }
+                    }
+                ),
+            alignment: .center
+        )
         .frame(height: textSize.height > 0 ? textSize.height : nil)
+        .onAppear {
+            startAnimation()
+        }
+        .onChange(of: text) { _, _ in
+            offset = 0
+            startAnimation()
+        }
     }
 
     private var needsScroll: Bool {

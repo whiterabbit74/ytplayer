@@ -212,6 +212,7 @@ struct PlayerFullView: View {
                 downloadsStore: downloadsStore,
                 showPlayer: .constant(true)
             )
+            .injectEnvironment(appState: appState)
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
         }

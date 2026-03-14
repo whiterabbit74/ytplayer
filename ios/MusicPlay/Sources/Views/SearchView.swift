@@ -52,7 +52,7 @@ struct SearchView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
-                    .environmentObject(appState)
+                    .injectEnvironment(appState: appState)
             }
             .onChange(of: query) { _, newValue in
                 searchStore.fetchSuggestions(query: newValue)

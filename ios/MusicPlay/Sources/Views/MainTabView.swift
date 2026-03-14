@@ -85,11 +85,11 @@ struct MainTabView: View {
                 playerStore: appState.playerStore,
                 playerService: appState.playerService,
                 downloadsStore: appState.downloadsStore,
-                favoritesStore: favoritesStoreSafe, // Use computed property if direct access is complex
+                favoritesStore: favoritesStoreSafe,
                 playlistsStore: appState.playlistsStore,
                 progressStore: appState.progressStore
             )
-            .environment(\.baseURL, appState.baseURL)
+            .injectEnvironment(appState: appState)
         }
         .onAppear {
             Task { await appState.playerSyncService.loadInitialState() }

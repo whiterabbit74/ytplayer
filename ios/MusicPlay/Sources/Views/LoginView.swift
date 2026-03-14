@@ -143,6 +143,7 @@ struct LoginView: View {
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
+                .injectEnvironment(appState: appState)
         }
     }
 

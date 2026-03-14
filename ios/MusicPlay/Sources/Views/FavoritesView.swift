@@ -69,7 +69,7 @@ struct FavoritesView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
-                    .environmentObject(appState)
+                    .injectEnvironment(appState: appState)
             }
             .onAppear { Task { await appState.favoritesStore.loadFavorites() } }
         }

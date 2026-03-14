@@ -4,19 +4,158 @@ import AVKit
 
 // MARK: - Shared Views
 
-struct AirPlayButton: UIViewRepresentable {
-    func makeUIView(context: Context) -> AVRoutePickerView {
-        let picker = AVRoutePickerView()
-        picker.backgroundColor = .clear
-        picker.tintColor = .white
-        picker.activeTintColor = .white
-        return picker
-    }
-    func updateUIView(_ uiView: AVRoutePickerView, context: Context) {
-        // Принудительно заставляем внутренние вьюхи растягиваться на весь размер
-        uiView.subviews.forEach { $0.frame = uiView.bounds }
+// MARK: - AirPlay Control (Robust Implementation)
+
+struct AudioRouteLabel: View {
+    @State private var routeName: String = "iPhone"
+    
+    var body: some View {
+        AudioRoutePickerRepresentable(routeName: $routeName)
+            .frame(minWidth: 80)
+            .frame(height: 26)
     }
 }
+
+private struct AudioRoutePickerRepresentable: UIViewRepresentable {
+    @Binding var routeName: String
+    
+    func makeUIView(context: Context) -> AudioRoutePickerContainerView {
+        let view = AudioRoutePickerContainerView()
+        return view
+    }
+    
+    func updateUIView(_ uiView: AudioRoutePickerContainerView, context: Context) {
+        uiView.onRouteChanged = { newName in
+            if routeName != newName {
+                routeName = newName
+            }
+        }
+    }
+}
+
+private final class AudioRoutePickerContainerView: UIControl {
+    private let routePickerView = AVRoutePickerView(frame: .zero)
+    private let stackView = UIStackView()
+    private let iconView = UIImageView(image: UIImage(systemName: "airplayaudio"))
+    private let titleLabel = UILabel()
+    private let backgroundView = UIView()
+    
+    var onRouteChanged: ((String) -> Void)?
+    private var timer: Timer?
+
+    override var isHighlighted: Bool {
+        didSet {
+            UIView.animate(withDuration: 0.2) {
+                self.alpha = self.isHighlighted ? 0.7 : 1.0
+                self.transform = self.isHighlighted ? CGAffineTransform(scaleX: 0.96, y: 0.96) : .identity
+            }
+        }
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setup()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setup()
+    }
+
+    private func setup() {
+        backgroundView.backgroundColor = UIColor.white.withAlphaComponent(0.1)
+        backgroundView.layer.cornerRadius = 13 // for height 26
+        backgroundView.isUserInteractionEnabled = false
+        addSubview(backgroundView)
+        
+        stackView.axis = .horizontal
+        stackView.alignment = .center
+        stackView.spacing = 8
+        stackView.isUserInteractionEnabled = false
+        addSubview(stackView)
+        
+        iconView.tintColor = .white.withAlphaComponent(0.8)
+        iconView.contentMode = .scaleAspectFit
+        let config = UIImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+        iconView.image = UIImage(systemName: "airplayaudio", withConfiguration: config)
+        
+        titleLabel.font = .systemFont(ofSize: 12, weight: .medium)
+        titleLabel.textColor = .white.withAlphaComponent(0.8)
+        titleLabel.text = "iPhone"
+        
+        stackView.addArrangedSubview(iconView)
+        stackView.addArrangedSubview(titleLabel)
+        
+        // Picker hidden but reachable
+        routePickerView.tintColor = .clear
+        routePickerView.activeTintColor = .clear
+        routePickerView.backgroundColor = .clear
+        routePickerView.isUserInteractionEnabled = true
+        routePickerView.alpha = 0.01 
+        addSubview(routePickerView)
+        
+        backgroundView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        routePickerView.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            backgroundView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            backgroundView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            backgroundView.topAnchor.constraint(equalTo: topAnchor),
+            backgroundView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            
+            stackView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            stackView.centerYAnchor.constraint(equalTo: centerYAnchor),
+            stackView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 10),
+            stackView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -10),
+            
+            routePickerView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            routePickerView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            routePickerView.topAnchor.constraint(equalTo: topAnchor),
+            routePickerView.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
+        
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.updateRouteName()
+        }
+        updateRouteName()
+    }
+    
+    @objc private func openPicker() {
+        HapticManager.shared.trigger(.light)
+        routePickerView.layoutIfNeeded()
+        if let button = routePickerView.firstDescendant(of: UIControl.self) {
+            button.sendActions(for: .touchUpInside)
+        }
+    }
+    
+    private func updateRouteName() {
+        if let output = AVAudioSession.sharedInstance().currentRoute.outputs.first {
+            let name = output.portName
+            if titleLabel.text != name {
+                titleLabel.text = name
+                onRouteChanged?(name)
+                // invalidateIntrinsicContentSize()
+            }
+        }
+    }
+
+    deinit {
+        timer?.invalidate()
+    }
+}
+
+private extension UIView {
+    func firstDescendant<T: UIView>(of type: T.Type) -> T? {
+        for subview in subviews {
+            if let match = subview as? T { return match }
+            if let nested = subview.firstDescendant(of: type) { return nested }
+        }
+        return nil
+    }
+}
+
+// MARK: - MiniPlayerSpacer
 
 struct MiniPlayerSpacer: View {
     @EnvironmentObject var appState: AppState
@@ -124,35 +263,7 @@ struct PlayPauseButton: View {
     }
 }
 
-struct AudioRouteLabel: View {
-    @State private var routeName: String = "iPhone"
-    @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "airplayaudio")
-                .font(.system(size: 14))
-            Text(routeName).font(.caption.weight(.medium))
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(
-            // Используем AirPlayButton как подложку (background),
-            // чтобы он ВСЕГДА имел в точности такой же размер, как основной блок.
-            AirPlayButton()
-                .opacity(0.015) // Почти невидимый, но кликабельный
-        )
-        .background(Color.white.opacity(0.1))
-        .clipShape(Capsule())
-        .foregroundStyle(.white.opacity(0.8))
-        .onAppear(perform: updateRoute)
-        .onReceive(timer) { _ in updateRoute() }
-    }
-    private func updateRoute() {
-        if let output = AVAudioSession.sharedInstance().currentRoute.outputs.first {
-            routeName = output.portName
-        }
-    }
-}
+
 
 // MARK: - Playback Controls
 

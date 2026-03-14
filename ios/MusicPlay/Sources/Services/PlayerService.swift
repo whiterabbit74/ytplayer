@@ -279,8 +279,11 @@ final class PlayerService: ObservableObject {
         let asset: AVURLAsset
         if !autoPlay && AudioCacheService.shared.localURL(for: track.id) == nil {
             print("Preparing track (launch/restore) without auto-caching: \(track.id)")
-            let url = api!.streamURL(for: track.id)
-            asset = AVURLAsset(url: url) // Bypass ResourceLoader to avoid parasitic download
+            if let streamURL = api?.streamURL(for: track.id) {
+                asset = AVURLAsset(url: streamURL)
+            } else {
+                asset = AVURLAsset(url: URL(string: "about:blank")!)
+            }
         } else {
             asset = createAsset(for: track)
         }

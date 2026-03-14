@@ -109,7 +109,7 @@ struct PlaylistsView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
-                    .environmentObject(appState)
+                    .injectEnvironment(appState: appState)
             }
             .onAppear { Task { await playlistsStore.loadPlaylists() } }
         }
