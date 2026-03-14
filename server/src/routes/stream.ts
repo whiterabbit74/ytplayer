@@ -286,7 +286,7 @@ router.get("/:videoId", async (req, res) => {
     return res.status(502).json({ error: "Failed to resolve audio" });
   }
 
-  let { audioUrl, contentLength, contentType, httpHeaders } = audioInfo;
+  let { audioUrl, contentLength, contentType, httpHeaders, duration } = audioInfo;
 
   // Update buffer with current upstream info
   const bufferKey = `${videoId}_${quality}`;
@@ -304,13 +304,45 @@ router.get("/:videoId", async (req, res) => {
 
   // ---- Full Download ----
   if (req.headers["x-full-download"] === "true") {
-    const upstream = await fetch(audioUrl, { headers: httpHeaders }).catch(() => null);
-    if (!upstream || !upstream.ok) {
-      return res.status(502).json({ error: "Upstream fetch failed" });
+    let upstream: Response | null = null;
+    const MAX_ATTEMPTS = 2;
+    
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      try {
+        upstream = await fetch(audioUrl, { headers: httpHeaders });
+      } catch (err) {
+        log.error({ err, videoId }, "Upstream fetch failed for full download");
+        return res.status(502).json({ error: "Upstream fetch failed" });
+      }
+
+      if (upstream.status === 403 && attempt === 0) {
+        log.warn({ videoId }, "Full download got 403, re-resolving URL...");
+        invalidateCache(`${videoId}_${quality}`);
+        try {
+          const fresh = await resolveAudioUrl(videoId, quality);
+          audioUrl = fresh.audioUrl;
+          contentLength = fresh.contentLength;
+          contentType = fresh.contentType;
+          httpHeaders = fresh.httpHeaders;
+          duration = fresh.duration;
+        } catch (err) {
+          log.error({ err, videoId }, "Failed to re-resolve for full download");
+          return res.status(502).json({ error: "Failed to resolve audio" });
+        }
+        continue;
+      }
+      break;
     }
+
+    if (!upstream || !upstream.ok) {
+      return res.status(502).json({ error: `Upstream fetch failed with status ${upstream?.status}` });
+    }
+
     res.status(200);
     res.setHeader("Content-Type", contentType);
     res.setHeader("Content-Length", contentLength);
+    if (duration) res.setHeader("X-Audio-Duration", duration.toString());
+    
     if (!upstream.body) return res.end();
     const { Readable } = require("stream");
     const stream = Readable.fromWeb(upstream.body as any);
@@ -341,6 +373,7 @@ router.get("/:videoId", async (req, res) => {
     res.setHeader("Accept-Ranges", "bytes");
     res.setHeader("Content-Range", `bytes 0-${browserEnd}/${contentLength}`);
     res.setHeader("Content-Length", browserEnd + 1);
+    if (duration) res.setHeader("X-Audio-Duration", duration.toString());
 
     if (!upstream.body) {
       return res.end();
@@ -374,6 +407,7 @@ router.get("/:videoId", async (req, res) => {
     res.setHeader("Accept-Ranges", "bytes");
     res.setHeader("Content-Range", `bytes ${start}-${end}/${contentLength}`);
     res.setHeader("Content-Length", data.length);
+    if (duration) res.setHeader("X-Audio-Duration", duration.toString());
     res.end(data);
 
     // Trigger proactive read-ahead if buffer running low
@@ -436,6 +470,7 @@ router.get("/:videoId", async (req, res) => {
     res.setHeader("Accept-Ranges", "bytes");
     res.setHeader("Content-Range", `bytes ${start}-${actualEnd}/${contentLength}`);
     res.setHeader("Content-Length", browserBytes);
+    if (duration) res.setHeader("X-Audio-Duration", duration.toString());
 
     if (!upstream.body) {
       return res.end();

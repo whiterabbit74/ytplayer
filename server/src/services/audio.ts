@@ -12,6 +12,7 @@ export interface AudioInfo {
   contentLength: number;
   contentType: string;
   httpHeaders: Record<string, string>;
+  duration?: number;
 }
 
 interface CacheEntry extends AudioInfo {
@@ -137,7 +138,13 @@ export async function resolveAudioUrl(videoId: string, quality: string = "high")
   const cacheKey = `${videoId}_${quality}`;
   const cached = cache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
-    return { audioUrl: cached.audioUrl, contentLength: cached.contentLength, contentType: cached.contentType, httpHeaders: cached.httpHeaders };
+    return {
+      audioUrl: cached.audioUrl,
+      contentLength: cached.contentLength,
+      contentType: cached.contentType,
+      httpHeaders: cached.httpHeaders,
+      duration: cached.duration
+    };
   }
 
   cache.delete(cacheKey);
@@ -155,20 +162,28 @@ export async function resolveAudioUrl(videoId: string, quality: string = "high")
     mimeType = json.ext === "m4a" ? "audio/mp4" : "audio/webm";
   }
 
-  const contentLength = json.content_length || json.filesize || json.filesize_approx || 0;
+  const contentLength = json.filesize || json.content_length || json.filesize_approx || 0;
+  const duration = json.duration || 0;
   const httpHeaders = json.http_headers || {};
 
-  log.info({ videoId, quality, ext: json.ext, mimeType, abr: json.abr }, "Selected format directly from yt-dlp");
+  log.info({ videoId, quality, ext: json.ext, mimeType, abr: json.abr, duration }, "Selected format directly from yt-dlp");
 
   const entry: CacheEntry = {
     audioUrl,
     contentLength,
     contentType: mimeType,
     httpHeaders,
+    duration,
     expiresAt: Date.now() + CACHE_TTL,
   };
 
   cache.set(cacheKey, entry);
 
-  return { audioUrl: entry.audioUrl, contentLength: entry.contentLength, contentType: entry.contentType, httpHeaders: entry.httpHeaders };
+  return {
+    audioUrl: entry.audioUrl,
+    contentLength: entry.contentLength,
+    contentType: entry.contentType,
+    httpHeaders: entry.httpHeaders,
+    duration: entry.duration
+  };
 }

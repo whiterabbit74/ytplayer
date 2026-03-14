@@ -10,6 +10,11 @@ struct QueueItem: Identifiable, Equatable, Codable {
         self.track = track
     }
     
+    init(id: UUID, track: Track) {
+        self.id = id
+        self.track = track
+    }
+    
     static func == (lhs: QueueItem, rhs: QueueItem) -> Bool {
         lhs.id == rhs.id
     }
@@ -214,6 +219,63 @@ final class PlayerStore: ObservableObject {
                 if let currentItem = currentItem, let newIdx = queue.firstIndex(where: { $0.id == currentItem.id }) {
                     currentIndex = newIdx
                 }
+            }
+        }
+    }
+
+    func updateTrackDuration(id: String, duration: Int) {
+        // Update in currentTrack
+        if currentTrack?.id == id && currentTrack?.duration != duration {
+            var updated = currentTrack!
+            // We need a way to mutate Track, but it's a struct with let properties.
+            // Let's create a copy with new duration.
+            currentTrack = Track(
+                id: updated.id,
+                title: updated.title,
+                artist: updated.artist,
+                thumbnail: updated.thumbnail,
+                duration: duration,
+                viewCount: updated.viewCount,
+                likeCount: updated.likeCount,
+                rowId: updated.rowId
+            )
+        }
+        
+        // Update in queue
+        var changed = false
+        for i in 0..<queue.count {
+            if queue[i].track.id == id && queue[i].track.duration != duration {
+                let updated = queue[i].track
+                let newTrack = Track(
+                    id: updated.id,
+                    title: updated.title,
+                    artist: updated.artist,
+                    thumbnail: updated.thumbnail,
+                    duration: duration,
+                    viewCount: updated.viewCount,
+                    likeCount: updated.likeCount,
+                    rowId: updated.rowId
+                )
+                queue[i] = QueueItem(id: queue[i].id, track: newTrack)
+                changed = true
+            }
+        }
+        
+        // For originalQueue too
+        for i in 0..<originalQueue.count {
+            if originalQueue[i].track.id == id && originalQueue[i].track.duration != duration {
+                let updated = originalQueue[i].track
+                let newTrack = Track(
+                    id: updated.id,
+                    title: updated.title,
+                    artist: updated.artist,
+                    thumbnail: updated.thumbnail,
+                    duration: duration,
+                    viewCount: updated.viewCount,
+                    likeCount: updated.likeCount,
+                    rowId: updated.rowId
+                )
+                originalQueue[i] = QueueItem(id: originalQueue[i].id, track: newTrack)
             }
         }
     }

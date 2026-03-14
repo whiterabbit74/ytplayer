@@ -62,6 +62,13 @@ final class DownloadsStore: ObservableObject {
                 self?.handleDownloadError(id: id)
             }
         }
+        
+        // Listen for metadata updates discovered during streaming/downloading
+        NotificationCenter.default.addObserver(forName: NSNotification.Name("TrackDurationUpdated"), object: nil, queue: .main) { [weak self] note in
+            if let id = note.object as? String, let duration = note.userInfo?["duration"] as? Int {
+                self?.updateTrackDuration(id: id, duration: duration)
+            }
+        }
     }
     
     func startDownload(_ track: Track) {
@@ -110,6 +117,46 @@ final class DownloadsStore: ObservableObject {
         
         // Actually remove the file from disk cache
         AudioCacheService.shared.removeTrack(id: id)
+    }
+
+    func updateTrackDuration(id: String, duration: Int) {
+        var changed = false
+        // Update in downloadedTracks
+        for i in 0..<downloadedTracks.count {
+            if downloadedTracks[i].id == id && downloadedTracks[i].duration != duration {
+                let updated = downloadedTracks[i]
+                downloadedTracks[i] = Track(
+                    id: updated.id,
+                    title: updated.title,
+                    artist: updated.artist,
+                    thumbnail: updated.thumbnail,
+                    duration: duration,
+                    viewCount: updated.viewCount,
+                    likeCount: updated.likeCount,
+                    rowId: updated.rowId
+                )
+                changed = true
+            }
+        }
+        
+        // Update in pendingTracks
+        if let updated = pendingTracks[id], updated.duration != duration {
+            pendingTracks[id] = Track(
+                id: updated.id,
+                title: updated.title,
+                artist: updated.artist,
+                thumbnail: updated.thumbnail,
+                duration: duration,
+                viewCount: updated.viewCount,
+                likeCount: updated.likeCount,
+                rowId: updated.rowId
+            )
+            changed = true
+        }
+        
+        if changed {
+            saveToDisk()
+        }
     }
 
     func clearAll() {

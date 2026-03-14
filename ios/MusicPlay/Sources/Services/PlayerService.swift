@@ -715,6 +715,16 @@ final class PlayerService: ObservableObject {
                 }
                 return
             }
+            
+            // If the difference is small but exists, update to the most accurate "ground truth"
+            if abs(newDuration - trackDuration) > 0.5 {
+                print("📝 Updating track duration to ground truth: \(newDuration)s (was \(trackDuration)s)")
+                self.duration = newDuration
+                self.progressStore?.duration = newDuration
+                if let trackId = playerStore?.currentTrack?.id {
+                    playerStore?.updateTrackDuration(id: trackId, duration: Int(newDuration))
+                }
+            }
         }
         
         if self.duration != newDuration {
@@ -866,6 +876,15 @@ final class AudioCacheService {
                     NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFailed"), object: trackId)
                 }
                 return
+            }
+            
+            // Check for ground truth duration from server
+            if let durationStr = httpResponse.value(forHTTPHeaderField: "X-Audio-Duration"),
+               let durationSeconds = Double(durationStr) {
+                print("⏱ Server provided ground truth duration for \(trackId): \(durationSeconds)s")
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: NSNotification.Name("TrackDurationUpdated"), object: trackId, userInfo: ["duration": Int(durationSeconds)])
+                }
             }
             
             if fileManager.fileExists(atPath: finalURL.path) {
