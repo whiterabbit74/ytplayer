@@ -27,7 +27,8 @@ struct PlayerMiniView: View {
                                 cornerRadius: 8,
                                 showStatus: false,
                                 baseURL: baseURL,
-                                downloadsStore: downloadsStore
+                                downloadProgress: downloadsStore.downloadProgresses[track.id],
+                                isFailed: downloadsStore.failedDownloads.contains(track.id)
                             )
 
                             VStack(alignment: .leading, spacing: 2) {

@@ -82,7 +82,8 @@ struct QueueView: View {
                 forceSquare: true,
                 cornerRadius: 6,
                 baseURL: baseURL,
-                downloadsStore: downloadsStore
+                downloadProgress: downloadsStore.downloadProgresses[track.id],
+                isFailed: downloadsStore.failedDownloads.contains(track.id)
             )
 
             VStack(alignment: .leading, spacing: 2) {

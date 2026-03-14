@@ -57,7 +57,8 @@ struct PlayerFullView: View {
                                 size: 210,
                                 baseURL: baseURL,
                                 playerService: playerService,
-                                downloadsStore: downloadsStore
+                                downloadProgress: downloadsStore.downloadProgresses[track.id],
+                                isFailed: downloadsStore.failedDownloads.contains(track.id)
                             )
                             .transition(.asymmetric(insertion: .scale.combined(with: .opacity), removal: .opacity))
                         } else {
@@ -68,7 +69,8 @@ struct PlayerFullView: View {
                                 cornerRadius: 12,
                                 showStatus: false,
                                 baseURL: baseURL,
-                                downloadsStore: downloadsStore
+                                downloadProgress: downloadsStore.downloadProgresses[track.id],
+                                isFailed: downloadsStore.failedDownloads.contains(track.id)
                             )
                             .shadow(color: .black.opacity(0.5), radius: 30, x: 0, y: 15)
                             .transition(.asymmetric(insertion: .scale(scale: 0.9).combined(with: .opacity), removal: .opacity))

@@ -5,7 +5,8 @@ struct VinylRecordView: View {
     let size: CGFloat // This is the sleeve size
     let baseURL: String
     @ObservedObject var playerService: PlayerService
-    @ObservedObject var downloadsStore: DownloadsStore
+    let downloadProgress: Double?
+    let isFailed: Bool
     @Environment(\.scenePhase) private var scenePhase
     @State private var rotation: Double = 0
     
@@ -43,7 +44,8 @@ struct VinylRecordView: View {
                     cornerRadius: size * 0.175,
                     showStatus: false,
                     baseURL: baseURL,
-                    downloadsStore: downloadsStore
+                    downloadProgress: downloadProgress,
+                    isFailed: isFailed
                 )
                 .clipShape(Circle())
                 .overlay(Circle().stroke(Color.black.opacity(0.1), lineWidth: 1))
@@ -67,7 +69,8 @@ struct VinylRecordView: View {
                 cornerRadius: 8,
                 showStatus: false,
                 baseURL: baseURL,
-                downloadsStore: downloadsStore
+                downloadProgress: downloadProgress,
+                isFailed: isFailed
             )
             .offset(x: isPlaying ? -recordOffset / 3 : 0)
             .shadow(color: .black.opacity(0.3), radius: 15, x: 0, y: 10)
