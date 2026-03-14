@@ -15,32 +15,42 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                if appState.isAuthenticated {
-                    Section("Account") {
+                Section {
+                    if appState.isAuthenticated {
                         Button(role: .destructive) {
                             logout()
                         } label: {
-                            HStack {
-                                Image(systemName: "rectangle.portrait.and.arrow.right")
-                                Text("Logout")
+                            Label("Выйти", systemImage: "rectangle.portrait.and.arrow.right")
+                        }
+                    } else {
+                        NavigationLink {
+                            LoginView()
+                        } label: {
+                            Label("Войти", systemImage: "person.crop.circle")
+                        }
+                    }
+                } header: {
+                    Text("Аккаунт")
+                } footer: {
+                    Text("Управление вашей учетной записью и доступом к библиотеке.")
+                }
+
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Picker("Тип сервера", selection: Binding(
+                            get: { appState.serverType },
+                            set: { appState.setServerType($0) }
+                        )) {
+                            ForEach(AppState.ServerType.allCases) { type in
+                                Text(type.rawValue).tag(type)
                             }
                         }
+                        .pickerStyle(.segmented)
+                        .padding(.vertical, 4)
                     }
-                }
-                
-                Section("Server") {
-                    Picker("Connection", selection: Binding(
-                        get: { appState.serverType },
-                        set: { appState.setServerType($0) }
-                    )) {
-                        ForEach(AppState.ServerType.allCases) { type in
-                            Text(type.rawValue).tag(type)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    
+
                     if appState.serverType == .custom {
-                        TextField("Server URL", text: Binding(
+                        TextField("URL сервера", text: Binding(
                             get: { appState.baseURL },
                             set: { appState.updateBaseURL($0) }
                         ))
@@ -49,95 +59,120 @@ struct SettingsView: View {
                         .keyboardType(.URL)
                     } else {
                         HStack {
-                            Text("Address")
+                            Label("Адрес", systemImage: "network")
                             Spacer()
                             Text(appState.baseURL)
                                 .foregroundStyle(.secondary)
-                                .font(.caption)
+                                .font(.caption2)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
                         }
                     }
+                } header: {
+                    Text("Соединение")
+                } footer: {
+                    Text("Выберите, как приложение будет подключаться к вашему серверу музыки.")
                 }
-                
-                Section("Playback") {
-                    Picker("Audio Quality", selection: Binding(
+
+                Section {
+                    Picker(selection: Binding(
                         get: { appState.audioQuality },
                         set: { appState.updateAudioQuality($0) }
                     )) {
-                        Text("High (Best m4a)").tag("high")
-                        Text("Low (Data saver)").tag("low")
+                        Label("Высокое (m4a)", systemImage: "waveform.circle.fill").tag("high")
+                        Label("Низкое (WebM)", systemImage: "waveform.circle").tag("low")
+                    } label: {
+                        Label("Качество звука", systemImage: "music.note.list")
                     }
-                    
-                    Toggle("Crossfade", isOn: Binding(
-                        get: { appState.crossfadeEnabled },
-                        set: { appState.updateCrossfade(enabled: $0, duration: appState.crossfadeDuration) }
-                    ))
-                    
-                    if appState.crossfadeEnabled {
-                        VStack(alignment: .leading) {
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Toggle(isOn: Binding(
+                            get: { appState.crossfadeEnabled },
+                            set: { appState.updateCrossfade(enabled: $0, duration: appState.crossfadeDuration) }
+                        )) {
+                            Label("Кроссфейд", systemImage: "arrow.triangle.merge")
+                        }
+                        
+                        if appState.crossfadeEnabled {
                             HStack {
-                                Text("Duration")
-                                Spacer()
-                                Text("\(Int(appState.crossfadeDuration))s")
+                                Text("\(Int(appState.crossfadeDuration)) сек")
+                                    .font(.caption2)
                                     .foregroundStyle(.secondary)
+                                Slider(value: Binding(
+                                    get: { appState.crossfadeDuration },
+                                    set: { appState.updateCrossfade(enabled: appState.crossfadeEnabled, duration: $0) }
+                                ), in: 2...12, step: 1)
                             }
-                            Slider(value: Binding(
-                                get: { appState.crossfadeDuration },
-                                set: { appState.updateCrossfade(enabled: appState.crossfadeEnabled, duration: $0) }
-                            ), in: 2...12, step: 1)
+                            .padding(.leading, 32)
                         }
                     }
+                } header: {
+                    Text("Воспроизведение")
+                } footer: {
+                    Text("Настройте качество звука и плавность переходов между треками.")
                 }
-                
-                Section("Display") {
-                    Picker("Cover Style", selection: Binding(
+
+                Section {
+                    Picker(selection: Binding(
                         get: { appState.coverStyle },
                         set: { appState.updateCoverStyle($0) }
                     )) {
                         ForEach(AppState.CoverStyle.allCases) { style in
                             Text(style.rawValue).tag(style)
                         }
+                    } label: {
+                        Label("Стиль обложки", systemImage: "photo.on.rectangle")
                     }
-                    .pickerStyle(.segmented)
-                    
-                    Toggle("Dynamic Background", isOn: Binding(
+
+                    Toggle(isOn: Binding(
                         get: { appState.dynamicBackgroundEnabled },
                         set: { appState.updateDynamicBackground(enabled: $0) }
-                    ))
-                    .padding(.top, 4)
+                    )) {
+                        Label("Динамический фон", systemImage: "wand.and.stars")
+                    }
+                } header: {
+                    Text("Интерфейс")
+                } footer: {
+                    Text("Персонализируйте внешний вид плеера под ваш вкус.")
                 }
-                
-                Section("Storage & Cache") {
+
+                Section {
                     HStack {
-                        VStack(alignment: .leading) {
-                            Text("Audio Cache")
-                            Text("Unlimited storage for streamed tracks")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
+                        Label("Занято место", systemImage: "internaldrive")
                         Spacer()
                         Text(cacheSizeString)
                             .foregroundStyle(.secondary)
                     }
-                    
+
                     Button(role: .destructive) {
                         AudioCacheService.shared.clearCache()
                         appState.downloadsStore.clearAll()
                     } label: {
-                        Text("Clear All Downloads & Cache")
+                        Label("Очистить кеш и загрузки", systemImage: "trash")
                     }
+                } header: {
+                    Text("Хранилище")
+                } footer: {
+                    Text("Управление локальными файлами и временными данными.")
                 }
 
-                Section("Diagnostics") {
+                Section {
                     ConnectionStatusView()
+                } header: {
+                    Text("Диагностика")
+                } footer: {
+                    Text("Проверка стабильности связи с сервером.")
                 }
 
-                Section("App Information") {
+                Section {
                     HStack {
-                        Text("Version")
+                        Label("Версия", systemImage: "info.circle")
                         Spacer()
                         Text("1.2.5")
                             .foregroundStyle(.secondary)
                     }
+                } header: {
+                    Text("О приложении")
                 }
             }
             .navigationTitle("Settings")

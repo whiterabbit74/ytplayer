@@ -109,12 +109,16 @@ final class AppState: ObservableObject {
         do {
             // Simple ping to /api/v1/auth/refresh (or any lightweight endpoint)
             _ = try await apiClient.fetchPlaylists() 
-            DispatchQueue.main.async { self.isServerAvailable = true }
+            await MainActor.run { self.isServerAvailable = true }
         } catch {
             // If it's a 401 or something, the server IS up. 
-            // Only actual URLErrors count as "server down" in this context.
-            if let nsError = error as NSError?, nsError.domain != NSURLErrorDomain {
-                DispatchQueue.main.async { self.isServerAvailable = true }
+            // Only actual URLErrors (DNS, Connection Refused, Timeout) count as "server down".
+            if let urlErr = error as? URLError {
+                print("📡 Connection check failed (expected): \(urlErr.localizedDescription)")
+                // self.isServerAvailable remains false
+            } else {
+                // Some other error (401, 500, etc) means server responded
+                await MainActor.run { self.isServerAvailable = true }
             }
         }
     }

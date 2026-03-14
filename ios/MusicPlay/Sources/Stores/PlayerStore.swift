@@ -225,8 +225,7 @@ final class PlayerStore: ObservableObject {
 
     func updateTrackDuration(id: String, duration: Int) {
         // Update in currentTrack
-        if currentTrack?.id == id && currentTrack?.duration != duration {
-            var updated = currentTrack!
+        if let updated = currentTrack, updated.id == id && updated.duration != duration {
             // We need a way to mutate Track, but it's a struct with let properties.
             // Let's create a copy with new duration.
             currentTrack = Track(

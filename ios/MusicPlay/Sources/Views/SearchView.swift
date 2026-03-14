@@ -8,6 +8,7 @@ struct SearchView: View {
     @ObservedObject var downloadsStore: DownloadsStore
     @ObservedObject var favoritesStore: FavoritesStore
     let baseURL: String
+    @EnvironmentObject var appState: AppState
     @Binding var showPlayer: Bool
     @State private var query = ""
     @State private var showSettings = false
@@ -49,7 +50,7 @@ struct SearchView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
-                    .environmentObject(searchStore) // Pass something if needed, but SettingsView likely still needs AppState
+                    .environmentObject(appState)
             }
             .onChange(of: query) { _, newValue in
                 searchStore.fetchSuggestions(query: newValue)
