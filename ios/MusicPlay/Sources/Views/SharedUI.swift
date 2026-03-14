@@ -12,7 +12,10 @@ struct AirPlayButton: UIViewRepresentable {
         picker.activeTintColor = .white
         return picker
     }
-    func updateUIView(_ uiView: AVRoutePickerView, context: Context) {}
+    func updateUIView(_ uiView: AVRoutePickerView, context: Context) {
+        // Принудительно заставляем внутренние вьюхи растягиваться на весь размер
+        uiView.subviews.forEach { $0.frame = uiView.bounds }
+    }
 }
 
 struct MiniPlayerSpacer: View {
@@ -125,27 +128,22 @@ struct AudioRouteLabel: View {
     @State private var routeName: String = "iPhone"
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     var body: some View {
-        ZStack {
-            // Слой-приемник касаний (AirPlayButton/AVRoutePickerView)
-            // Должен быть внизу и занимать все пространство, чтобы ловить тапы.
-            AirPlayButton()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .opacity(0.011) // Минимальная видимость для сохранения кликабельности
-            
-            // Визуальный слой
-            HStack(spacing: 8) {
-                Image(systemName: "airplayaudio")
-                    .font(.system(size: 14))
-                Text(routeName).font(.caption.weight(.medium))
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(Color.white.opacity(0.1))
-            .clipShape(Capsule())
-            .foregroundStyle(.white.opacity(0.8))
-            .allowsHitTesting(false) // Пропускаем касания к нижнему слою
+        HStack(spacing: 8) {
+            Image(systemName: "airplayaudio")
+                .font(.system(size: 14))
+            Text(routeName).font(.caption.weight(.medium))
         }
-        .fixedSize() // Важно: ZStack должен сжаться до размеров визуального слоя
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            // Используем AirPlayButton как подложку (background),
+            // чтобы он ВСЕГДА имел в точности такой же размер, как основной блок.
+            AirPlayButton()
+                .opacity(0.015) // Почти невидимый, но кликабельный
+        )
+        .background(Color.white.opacity(0.1))
+        .clipShape(Capsule())
+        .foregroundStyle(.white.opacity(0.8))
         .onAppear(perform: updateRoute)
         .onReceive(timer) { _ in updateRoute() }
     }
