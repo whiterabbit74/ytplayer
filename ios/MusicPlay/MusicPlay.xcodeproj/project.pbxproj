@@ -28,11 +28,12 @@
 		7243C52ECCD860448C97A44F /* Styles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D886F7B95981E3AF17E8594 /* Styles.swift */; };
 		7AACB6FA1374E167EA5A4154 /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48EE71C50921E8AD456EB234 /* ImageCache.swift */; };
 		87733704CDB77D274FBFA3CC /* PlayerSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D202E4BB4B0BA6A242A903 /* PlayerSyncService.swift */; };
+		94B2B9DC2B424B284B611757 /* SharedUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E27D42025EDF57967008674 /* SharedUI.swift */; };
 		96C2425231857F8CA4E1E202 /* PlayerProgressSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D9F94EA1C66ADF0F3702B8F /* PlayerProgressSlider.swift */; };
 		971C9362218529900858D4CB /* DownloadsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EC2220C21F7A648BE966BA4 /* DownloadsStore.swift */; };
 		98CF6291A6460CCE6B04941F /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE4B5AA565684A40317FDD52 /* TokenStore.swift */; };
 		9D51F425259B296D1A348965 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8830842E003B7EB4DCBA4D15 /* SettingsView.swift */; };
-		A1B35D671787F5A8F4663A4A /* SharedUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDC47230823673D3FB74978 /* SharedUI.swift */; };
+		A1B35D671787F5A8F4663A4A /* AirPlayButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDC47230823673D3FB74978 /* AirPlayButton.swift */; };
 		A20268E98987FFF9ACCF53C6 /* PlayerFullView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC8AD137C04B4EA838920FA4 /* PlayerFullView.swift */; };
 		A24AEFE116457CC22C8CF87B /* TrackRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD7C0E0227BFA4776AD05F0D /* TrackRow.swift */; };
 		B26CD3E7DFA6326E0E44F0E3 /* DynamicBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A51EC6C789C7B16580CA9DE4 /* DynamicBackgroundView.swift */; };
@@ -45,6 +46,7 @@
 		EA97F5A01D8CBD7866DF6B5D /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5583C6CF69C4FA0EA13629F /* AppState.swift */; };
 		F148FEEE9BA6884CDFC32595 /* EqualizerIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EC1D31AAEFA4163DC48A8C7 /* EqualizerIndicator.swift */; };
 		F598C214DF1DEDEFDF6D8BA2 /* TrackThumbnail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE719D2AE924568E2D4C3AF /* TrackThumbnail.swift */; };
+		FEEF74ED4DD4F8CAFC798C22 /* I18n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F329FBF5BCCF3136E553734 /* I18n.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -78,12 +80,14 @@
 		8830842E003B7EB4DCBA4D15 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		8CE719D2AE924568E2D4C3AF /* TrackThumbnail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackThumbnail.swift; sourceTree = "<group>"; };
 		8EC2220C21F7A648BE966BA4 /* DownloadsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadsStore.swift; sourceTree = "<group>"; };
+		8F329FBF5BCCF3136E553734 /* I18n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = I18n.swift; sourceTree = "<group>"; };
 		9DD76F75C2392976A9367B7A /* MusicPlayApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicPlayApp.swift; sourceTree = "<group>"; };
+		9E27D42025EDF57967008674 /* SharedUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedUI.swift; sourceTree = "<group>"; };
 		A51EC6C789C7B16580CA9DE4 /* DynamicBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicBackgroundView.swift; sourceTree = "<group>"; };
 		A6D202E4BB4B0BA6A242A903 /* PlayerSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSyncService.swift; sourceTree = "<group>"; };
 		AA6C42B4B75EAA2B88C58DB3 /* HistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryStore.swift; sourceTree = "<group>"; };
 		AD7C0E0227BFA4776AD05F0D /* TrackRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRow.swift; sourceTree = "<group>"; };
-		AFDC47230823673D3FB74978 /* SharedUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedUI.swift; sourceTree = "<group>"; };
+		AFDC47230823673D3FB74978 /* AirPlayButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirPlayButton.swift; sourceTree = "<group>"; };
 		B76BF68FA92E011B1DFE501D /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
 		B81CFF640A51677869AC5A95 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
 		C6C234031C757BE6F658F3FD /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
@@ -128,6 +132,7 @@
 			isa = PBXGroup;
 			children = (
 				443BE5334278C77313EFB28C /* HapticManager.swift */,
+				8F329FBF5BCCF3136E553734 /* I18n.swift */,
 				48EE71C50921E8AD456EB234 /* ImageCache.swift */,
 				1EA64227D83AA89F3CFFEFDE /* PlayerService.swift */,
 				A6D202E4BB4B0BA6A242A903 /* PlayerSyncService.swift */,
@@ -189,7 +194,7 @@
 		FD131425F6F104D5C097E7B0 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				AFDC47230823673D3FB74978 /* SharedUI.swift */,
+				AFDC47230823673D3FB74978 /* AirPlayButton.swift */,
 				A51EC6C789C7B16580CA9DE4 /* DynamicBackgroundView.swift */,
 				7EC1D31AAEFA4163DC48A8C7 /* EqualizerIndicator.swift */,
 				B81CFF640A51677869AC5A95 /* FavoritesView.swift */,
@@ -205,6 +210,7 @@
 				4DFDA1DD85CF635777192AE7 /* QueueView.swift */,
 				B76BF68FA92E011B1DFE501D /* SearchView.swift */,
 				8830842E003B7EB4DCBA4D15 /* SettingsView.swift */,
+				9E27D42025EDF57967008674 /* SharedUI.swift */,
 				AD7C0E0227BFA4776AD05F0D /* TrackRow.swift */,
 				8CE719D2AE924568E2D4C3AF /* TrackThumbnail.swift */,
 				CA13EDB5F33B81C88EE09C40 /* VinylRecordView.swift */,
@@ -294,7 +300,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4AD5DEBC822173DC373387AD /* APIClient.swift in Sources */,
-				A1B35D671787F5A8F4663A4A /* SharedUI.swift in Sources */,
+				A1B35D671787F5A8F4663A4A /* AirPlayButton.swift in Sources */,
 				EA97F5A01D8CBD7866DF6B5D /* AppState.swift in Sources */,
 				971C9362218529900858D4CB /* DownloadsStore.swift in Sources */,
 				B26CD3E7DFA6326E0E44F0E3 /* DynamicBackgroundView.swift in Sources */,
@@ -303,6 +309,7 @@
 				6A931ED6151EF95E935A32F9 /* FavoritesView.swift in Sources */,
 				29CEADCD1127F9F4AB366D1C /* HapticManager.swift in Sources */,
 				1D9AAEF8025A0ABBB323AEA4 /* HistoryStore.swift in Sources */,
+				FEEF74ED4DD4F8CAFC798C22 /* I18n.swift in Sources */,
 				7AACB6FA1374E167EA5A4154 /* ImageCache.swift in Sources */,
 				0369315C46CA82ECEEE2A6E7 /* KeyboardObserver.swift in Sources */,
 				45352226436BDEE5F2D003D8 /* LoginView.swift in Sources */,
@@ -325,6 +332,7 @@
 				2D25845666DFD671B6DFE227 /* SearchStore.swift in Sources */,
 				B32C93531CF43DE7F65781A4 /* SearchView.swift in Sources */,
 				9D51F425259B296D1A348965 /* SettingsView.swift in Sources */,
+				94B2B9DC2B424B284B611757 /* SharedUI.swift in Sources */,
 				7243C52ECCD860448C97A44F /* Styles.swift in Sources */,
 				98CF6291A6460CCE6B04941F /* TokenStore.swift in Sources */,
 				A24AEFE116457CC22C8CF87B /* TrackRow.swift in Sources */,
