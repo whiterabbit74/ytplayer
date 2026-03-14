@@ -10,10 +10,14 @@ struct TrackRow: View {
     let onRemove: (() -> Void)?
     
     @Environment(\.editMode) private var editMode
-    @ObservedObject var downloadsStore: DownloadsStore
-    @ObservedObject var playlistsStore: PlaylistsStore
+    let downloadsStore: DownloadsStore
+    let playlistsStore: PlaylistsStore
     let playerStore: PlayerStore
     let playerService: PlayerService
+    
+    let isDownloaded: Bool
+    let downloadProgress: Double?
+    let isFailedDownload: Bool
 
     init(
         track: Track,
@@ -25,6 +29,9 @@ struct TrackRow: View {
         onPlay: @escaping () -> Void,
         onAddToQueue: @escaping () -> Void,
         isFavorite: Bool = false,
+        isDownloaded: Bool = false,
+        downloadProgress: Double? = nil,
+        isFailedDownload: Bool = false,
         onToggleFavorite: (() -> Void)? = nil,
         onRemove: (() -> Void)? = nil
     ) {
@@ -37,18 +44,29 @@ struct TrackRow: View {
         self.onPlay = onPlay
         self.onAddToQueue = onAddToQueue
         self.isFavorite = isFavorite
+        self.isDownloaded = isDownloaded
+        self.downloadProgress = downloadProgress
+        self.isFailedDownload = isFailedDownload
         self.onToggleFavorite = onToggleFavorite
         self.onRemove = onRemove
     }
 
     var body: some View {
         HStack(spacing: 12) {
-            TrackThumbnail(track: track, size: 48, forceSquare: true, cornerRadius: 8, baseURL: baseURL, downloadsStore: downloadsStore)
+            TrackThumbnail(
+                track: track,
+                size: 48,
+                forceSquare: true,
+                cornerRadius: 8,
+                baseURL: baseURL,
+                downloadProgress: downloadProgress,
+                isFailed: isFailedDownload
+            )
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(track.title).font(.headline).lineLimit(1)
                 HStack(spacing: 4) {
-                    if downloadsStore.isDownloaded(id: track.id) {
+                    if isDownloaded {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.blue)
                             .font(.caption2)
@@ -86,9 +104,7 @@ struct TrackRow: View {
                         }
                     }
                     
-                    let isDownloaded = downloadsStore.isDownloaded(id: track.id)
-                    let isFailed = downloadsStore.failedDownloads.contains(track.id)
-                    let isDownloading = downloadsStore.downloadProgresses[track.id] != nil
+                    let isDownloading = downloadProgress != nil
                     
                     if isDownloading {
                         Button(role: .destructive) {
@@ -97,7 +113,7 @@ struct TrackRow: View {
                         } label: {
                             Label("Cancel Download", systemImage: "xmark.circle")
                         }
-                    } else if isFailed {
+                    } else if isFailedDownload {
                         Button {
                             playerService.downloadTrack(track)
                         } label: {

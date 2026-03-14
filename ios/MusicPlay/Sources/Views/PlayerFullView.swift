@@ -6,7 +6,7 @@ struct PlayerFullView: View {
     @ObservedObject var downloadsStore: DownloadsStore
     @ObservedObject var favoritesStore: FavoritesStore
     @ObservedObject var playlistsStore: PlaylistsStore
-    @ObservedObject var progressStore: PlaybackProgressStore
+    let progressStore: PlaybackProgressStore // Pass by value/reference without observation
     let baseURL: String
     let dynamicBackgroundEnabled: Bool
     let coverStyle: AppState.CoverStyle
@@ -14,8 +14,6 @@ struct PlayerFullView: View {
 
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) var dismiss
-    @State private var isSeeking = false
-    @State private var seekTime: Double = 0
     @State private var showQueue = false
 
     var body: some View {
@@ -117,37 +115,9 @@ struct PlayerFullView: View {
                     .padding(.bottom, 24)
 
                     // 3. Progress Slider
-                    VStack(spacing: 12) {
-                        Slider(
-                            value: Binding(
-                                get: { isSeeking ? seekTime : progressStore.currentTime },
-                                set: { newValue in
-                                    isSeeking = true
-                                    seekTime = newValue
-                                }
-                            ),
-                            in: 0...max(progressStore.duration, 1),
-                            onEditingChanged: { editing in
-                                if !editing {
-                                    playerService.seek(to: seekTime)
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                        isSeeking = false
-                                    }
-                                }
-                            }
-                        )
-                        .accentColor(.white)
-
-                        HStack {
-                            Text(formatTime(isSeeking ? seekTime : progressStore.currentTime))
-                            Spacer()
-                            Text(formatTime(progressStore.duration))
-                        }
-                        .font(.caption2.monospacedDigit())
-                        .foregroundStyle(.white.opacity(0.5))
-                    }
-                    .padding(.horizontal, 32)
-                    .padding(.bottom, 24)
+                    PlayerProgressSlider(progressStore: progressStore, playerService: playerService)
+                        .padding(.horizontal, 32)
+                        .padding(.bottom, 24)
 
                     // 4. Playback Controls
                     HStack(spacing: 50) {
@@ -297,13 +267,5 @@ struct PlayerFullView: View {
             return URL(string: baseURL + track.thumbnail)
         }
         return URL(string: baseURL + "/" + track.thumbnail)
-    }
-
-    private func formatTime(_ seconds: Double) -> String {
-        if !seconds.isFinite || seconds < 0 { return "0:00" }
-        let total = Int(seconds)
-        let m = total / 60
-        let s = total % 60
-        return String(format: "%d:%02d", m, s)
     }
 }

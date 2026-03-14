@@ -4,7 +4,7 @@ struct PlayerMiniView: View {
     @ObservedObject var playerStore: PlayerStore
     @ObservedObject var playerService: PlayerService
     @ObservedObject var downloadsStore: DownloadsStore
-    @ObservedObject var progressStore: PlaybackProgressStore
+    let progressStore: PlaybackProgressStore // Pass by value/reference without observation
     let baseURL: String
     @Binding var showPlayer: Bool
 
@@ -12,13 +12,7 @@ struct PlayerMiniView: View {
         if let track = playerStore.currentTrack {
             VStack(spacing: 0) {
                 // Progress bar at the top of mini-player
-                GeometryReader { geo in
-                    let progress = progressStore.progress
-                    Rectangle()
-                        .fill(Color.white)
-                        .frame(width: geo.size.width * min(max(progress, 0), 1))
-                }
-                .frame(height: 2)
+                MiniPlayerProgressBar(progressStore: progressStore)
 
                 HStack(spacing: 12) {
                     // Track info — tapping opens full player

@@ -6,6 +6,7 @@ struct VinylRecordView: View {
     let baseURL: String
     @ObservedObject var playerService: PlayerService
     @ObservedObject var downloadsStore: DownloadsStore
+    @Environment(\.scenePhase) private var scenePhase
     @State private var rotation: Double = 0
     
     var body: some View {
@@ -74,16 +75,26 @@ struct VinylRecordView: View {
         }
         .frame(width: totalWidth, height: size)
         .onChange(of: isPlaying) { _, playing in
-            if playing {
+            if playing && scenePhase == .active {
+                startRotation()
+            } else {
+                stopRotation()
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active && isPlaying {
                 startRotation()
             } else {
                 stopRotation()
             }
         }
         .onAppear {
-            if isPlaying {
+            if isPlaying && scenePhase == .active {
                 startRotation()
             }
+        }
+        .onDisappear {
+            stopRotation()
         }
     }
 

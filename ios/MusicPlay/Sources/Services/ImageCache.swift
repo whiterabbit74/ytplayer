@@ -19,22 +19,31 @@ final class ImageCache {
         memoryCache.totalCostLimit = 50 * 1024 * 1024 // 50 MB
     }
 
-    func image(for url: URL) -> UIImage? {
-        // 1. Memory Cache
+    func image(for url: URL) async -> UIImage? {
+        // 1. Memory Cache (Sync check)
         if let image = memoryCache.object(forKey: url as NSURL) {
             return image
         }
         
-        // 2. Disk Cache
-        let fileName = cacheFileName(for: url)
-        let filePath = diskCacheDirectory.appendingPathComponent(fileName)
-        if let data = try? Data(contentsOf: filePath), let image = UIImage(data: data) {
+        // 2. Disk Cache (Async)
+        return await Task.detached(priority: .userInitiated) {
+            let fileName = self.cacheFileName(for: url)
+            let filePath = self.diskCacheDirectory.appendingPathComponent(fileName)
+            
+            guard self.fileManager.fileExists(atPath: filePath.path),
+                  let data = try? Data(contentsOf: filePath),
+                  let image = UIImage(data: data) else {
+                return nil
+            }
+            
             // Put back into memory cache
-            memoryCache.setObject(image, forKey: url as NSURL, cost: data.count)
+            self.memoryCache.setObject(image, forKey: url as NSURL, cost: data.count)
             return image
-        }
-        
-        return nil
+        }.value
+    }
+
+    func memoryImage(for url: URL) -> UIImage? {
+        return memoryCache.object(forKey: url as NSURL)
     }
 
     func insert(_ image: UIImage, for url: URL) {
@@ -118,27 +127,44 @@ struct CachedAsyncImage: View {
     }
 
     private func loadFromCache() {
-        if let url {
-            if let cached = ImageCache.shared.image(for: url) {
-                cachedImage = cached
-                loadedURL = url
-            } else {
-                // URL changed but no cache — reset so AsyncImage shows
-                cachedImage = nil
-                loadedURL = nil
-            }
-        } else {
+        guard let url = url else {
             cachedImage = nil
             loadedURL = nil
+            return
+        }
+        
+        // 1. Check memory cache synchronously for immediate display
+        if let memoryImage = ImageCache.shared.memoryImage(for: url) {
+            self.cachedImage = memoryImage
+            self.loadedURL = url
+            return
+        }
+        
+        // 2. Load asynchronously from disk or memory (via async method)
+        Task {
+            if let cached = await ImageCache.shared.image(for: url) {
+                await MainActor.run {
+                    if self.url == url {
+                        self.cachedImage = cached
+                        self.loadedURL = url
+                    }
+                }
+            } else {
+                await MainActor.run {
+                    if self.url == url {
+                        self.cachedImage = nil
+                        self.loadedURL = nil
+                    }
+                }
+            }
         }
     }
 
     private func cacheImage(from url: URL) {
-        // Optimization: In a real app we'd use a more robust caching library like Kingfisher
-        // to avoid double downloads. For now, we'll keep this but ensure it doesn't
-        // trample the main thread.
         Task.detached(priority: .background) {
-            guard ImageCache.shared.image(for: url) == nil else { return }
+            let existing = await ImageCache.shared.image(for: url)
+            guard existing == nil else { return }
+            
             guard let (data, _) = try? await URLSession.shared.data(from: url),
                   let uiImage = UIImage(data: data) else { return }
             

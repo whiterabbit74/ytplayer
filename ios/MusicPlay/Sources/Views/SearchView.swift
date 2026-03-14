@@ -159,6 +159,9 @@ struct SearchView: View {
                 playerStore.addToQueue(track)
             },
             isFavorite: favoritesStore.isFavorite(track.id),
+            isDownloaded: downloadsStore.isDownloaded(id: track.id),
+            downloadProgress: downloadsStore.downloadProgresses[track.id],
+            isFailedDownload: downloadsStore.failedDownloads.contains(track.id),
             onToggleFavorite: {
                 Task { await favoritesStore.toggleFavorite(track) }
             },

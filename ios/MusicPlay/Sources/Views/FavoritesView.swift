@@ -37,6 +37,9 @@ struct FavoritesView: View {
                                 appState.playerStore.addToQueue(track)
                             },
                             isFavorite: true,
+                            isDownloaded: appState.downloadsStore.isDownloaded(id: track.id),
+                            downloadProgress: appState.downloadsStore.downloadProgresses[track.id],
+                            isFailedDownload: appState.downloadsStore.failedDownloads.contains(track.id),
                             onToggleFavorite: {
                                 Task { await favoritesStore.toggleFavorite(track) }
                             },

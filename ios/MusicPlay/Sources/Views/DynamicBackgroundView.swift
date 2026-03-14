@@ -14,10 +14,10 @@ struct DynamicBackgroundView: View {
                 CachedAsyncImage(url: url, contentMode: .fill)
                     .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
                     .blur(radius: 40) // Reduced radius for better performance
+                    .drawingGroup() // Optimize rendering for animations: cache the blur result
+                    .opacity(0.5)
                     .scaleEffect(animate ? 1.4 : 1.1)
                     .offset(x: animate ? 20 : -20, y: animate ? -30 : 30)
-                    .opacity(0.5)
-                    .drawingGroup() // Optimize rendering for animations
                     .onAppear {
                         withAnimation(.easeInOut(duration: 10).repeatForever(autoreverses: true)) {
                             animate = true
