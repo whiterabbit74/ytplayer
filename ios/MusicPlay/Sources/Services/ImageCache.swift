@@ -47,15 +47,14 @@ final class ImageCache {
     }
 
     func insert(_ image: UIImage, for url: URL) {
-        let data = image.pngData()
-        let cost = data?.count ?? 0
+        let cost = Int(image.size.width * image.size.height * image.scale * image.scale)
         memoryCache.setObject(image, forKey: url as NSURL, cost: cost)
         
         // Save to disk asynchronously
-        if let data = data {
-            let fileName = cacheFileName(for: url)
-            let filePath = diskCacheDirectory.appendingPathComponent(fileName)
-            Task.detached(priority: .background) {
+        Task.detached(priority: .background) {
+            if let data = image.pngData() {
+                let fileName = self.cacheFileName(for: url)
+                let filePath = self.diskCacheDirectory.appendingPathComponent(fileName)
                 try? data.write(to: filePath)
             }
         }

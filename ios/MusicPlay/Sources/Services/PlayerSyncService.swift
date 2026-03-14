@@ -19,9 +19,11 @@ final class PlayerSyncService: ObservableObject {
 
     func start() {
         stop()
-        timer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+        let t = Timer(timeInterval: 30, repeats: true) { [weak self] _ in
             Task { await self?.sync() }
         }
+        RunLoop.main.add(t, forMode: .common)
+        timer = t
 
         // Save state when app goes to background or is about to terminate
         backgroundObserver = NotificationCenter.default.addObserver(
@@ -35,7 +37,13 @@ final class PlayerSyncService: ObservableObject {
             forName: UIApplication.willTerminateNotification,
             object: nil, queue: .main
         ) { [weak self] _ in
-            Task { await self?.sync(force: true) }
+            let taskId = UIApplication.shared.beginBackgroundTask(withName: "FinalSync") {
+                // End task if it takes too long
+            }
+            Task {
+                await self?.sync(force: true)
+                UIApplication.shared.endBackgroundTask(taskId)
+            }
         }
     }
 

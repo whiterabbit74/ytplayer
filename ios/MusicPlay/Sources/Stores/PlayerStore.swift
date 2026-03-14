@@ -20,6 +20,7 @@ struct QueueItem: Identifiable, Equatable, Codable {
     }
 }
 
+@MainActor
 final class PlayerStore: ObservableObject {
     @Published var currentTrack: Track?
     @Published var queue: [QueueItem] = []
@@ -69,11 +70,16 @@ final class PlayerStore: ObservableObject {
         }
         
         // If shuffle is on, shuffle the new queue immediately (but keep chosen track at its logical position or top)
-        if shuffleMode {
-            let current = queue.remove(at: currentIndex)
-            queue.shuffle()
-            queue.insert(current, at: 0)
-            currentIndex = 0
+        if shuffleMode && !queue.isEmpty {
+            if queue.indices.contains(currentIndex) {
+                let current = queue.remove(at: currentIndex)
+                queue.shuffle()
+                queue.insert(current, at: 0)
+                currentIndex = 0
+            } else {
+                queue.shuffle()
+                currentIndex = 0
+            }
         }
         
         currentTrack = queue.indices.contains(currentIndex) ? queue[currentIndex].track : nil

@@ -37,10 +37,21 @@ final class TokenStore {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key,
-            kSecValueData as String: data
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
         ]
-        SecItemDelete(query as CFDictionary)
-        SecItemAdd(query as CFDictionary, nil)
+        
+        let status = SecItemCopyMatching(query as CFDictionary, nil)
+        switch status {
+        case errSecSuccess:
+            let attributes: [String: Any] = [kSecValueData as String: data]
+            SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+        case errSecItemNotFound:
+            var newQuery = query
+            newQuery[kSecValueData as String] = data
+            SecItemAdd(newQuery as CFDictionary, nil)
+        default:
+            print("🔑 [Keychain] Save failed for \(key): \(status)")
+        }
     }
 
     private func read(key: String) -> String? {
@@ -52,7 +63,12 @@ final class TokenStore {
         ]
         var item: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
-        guard status == errSecSuccess, let data = item as? Data else { return nil }
+        guard status == errSecSuccess, let data = item as? Data else {
+            if status != errSecItemNotFound {
+                print("🔑 [Keychain] Read failed for \(key): \(status)")
+            }
+            return nil 
+        }
         return String(data: data, encoding: .utf8)
     }
 

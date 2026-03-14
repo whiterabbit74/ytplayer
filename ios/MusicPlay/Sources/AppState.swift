@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 
+@MainActor
 final class AppState: ObservableObject {
     @Published var isAuthenticated = false
     @Published var isLoading = true
@@ -93,8 +94,25 @@ final class AppState: ObservableObject {
                     print("📡 Server back online")
                     self?.isServerAvailable = true
                 }
+                self?.setupObservers()
             }
         }
+    }
+    
+    private func setupObservers() {
+        NotificationCenter.default.addObserver(forName: APIClient.sessionEndedNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.logout()
+        }
+    }
+
+    func logout() {
+        print("👤 [AppState] Logging out...")
+        playerSyncService.stop()
+        playerService.stop()
+        playerStore.clearQueue()
+        tokenStore.clear()
+        isAuthenticated = false
+        selectedTab = 0
     }
 
     private func startHealthCheck() {

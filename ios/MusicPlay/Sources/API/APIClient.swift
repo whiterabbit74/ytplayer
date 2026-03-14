@@ -6,10 +6,18 @@ final class APIClient {
     private let session: URLSession
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder
-    private var isRefreshing = false
+    private var _isRefreshing = false
+    private let refreshLock = NSLock()
+    private var isRefreshing: Bool {
+        refreshLock.lock(); defer { refreshLock.unlock() }
+        return _isRefreshing
+    }
+    
     var audioQuality: String = "high"
     var onConnectionError: ((Error) -> Void)?
     var onConnectionSuccess: (() -> Void)?
+    
+    static let sessionEndedNotification = Notification.Name("APIClientSessionEnded")
 
     init(baseURL: String, tokenStore: TokenStore) {
         self.baseURL = URL(string: baseURL) ?? URL(string: "http://qs-MacBook-Air.local:3001")!
@@ -79,8 +87,9 @@ final class APIClient {
                 if refreshed {
                     return try await request(path, method: method, query: query, body: body, auth: auth)
                 } else {
-                    print("🚫 [API] Refresh failed, clearing session")
-                    tokenStore.clear()
+                    // refreshToken() already handles clearing tokens and posting notification if it's an explicit auth failure.
+                    // If it returns false, it means refresh failed and we should propagate the authentication failure.
+                    print("🚫 [API] Refresh failed, session likely cleared by refreshToken() or not refreshable.")
                     throw URLError(.userAuthenticationRequired)
                 }
             }
@@ -146,7 +155,8 @@ final class APIClient {
                 if refreshed {
                     return try await requestVoid(path, method: method, query: query, body: body, auth: auth)
                 } else {
-                    tokenStore.clear()
+                    // Similar logic: only clear if we are sure it's an auth issue
+                    // (Handled inside refreshToken normally, but as safety check here)
                     throw URLError(.userAuthenticationRequired)
                 }
             }
@@ -180,9 +190,19 @@ final class APIClient {
 
     func refreshToken() async throws -> Bool {
         guard let refresh = tokenStore.refreshToken else { return false }
-        guard !isRefreshing else { return false }
-        isRefreshing = true
-        defer { isRefreshing = false }
+        refreshLock.lock()
+        guard !_isRefreshing else {
+            refreshLock.unlock()
+            return false
+        }
+        _isRefreshing = true
+        refreshLock.unlock()
+        
+        defer {
+            refreshLock.lock()
+            _isRefreshing = false
+            refreshLock.unlock()
+        }
         do {
             let resp: RefreshResponse = try await request(
                 "/api/v1/auth/refresh",
@@ -199,6 +219,7 @@ final class APIClient {
             if let apiErr = error as? APIErrorResponse {
                 print("🚫 [API] Refresh rejected by server: \(apiErr.error.message)")
                 tokenStore.clear()
+                NotificationCenter.default.post(name: APIClient.sessionEndedNotification, object: nil)
             } else if let urlErr = error as? URLError {
                 print("📡 [API] Refresh failed due to network: \(urlErr.localizedDescription)")
                 // Do NOT clear tokens

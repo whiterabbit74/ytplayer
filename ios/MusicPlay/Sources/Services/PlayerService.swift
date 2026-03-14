@@ -3,12 +3,13 @@ import AVFoundation
 import MediaPlayer
 import Combine
 
+@MainActor
 final class PlayerService: ObservableObject {
     var currentTime: Double = 0
     var duration: Double = 0
+    @Published var isBuffering: Bool = false
     @Published var isPlaying: Bool = false
     @Published var volume: Float = 1.0
-    @Published var isBuffering: Bool = false
     
     // Dedicated store for high-frequency UI updates
     private var progressStore: PlaybackProgressStore?
@@ -126,7 +127,7 @@ final class PlayerService: ObservableObject {
         statusObserver?.invalidate()
         statusObserver = item.observe(\.status, options: [.new]) { [weak self] item, _ in
             guard let self else { return }
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 if item.status == .readyToPlay {
                     self.isBuffering = false
                     let dur = item.duration.seconds
@@ -190,27 +191,33 @@ final class PlayerService: ObservableObject {
         
         crossfadeTimer?.invalidate()
         crossfadeTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] timer in
-            guard let self = self, self.currentCrossfadeId == fadeId else {
+            guard let self = self else {
                 timer.invalidate()
                 return
             }
-            
-            currentStep += 1
-            let progress = Float(currentStep) / Float(steps)
-            let currentSystemVolume = self.volume
-            
-            oldPlayer.volume = currentSystemVolume * (1.0 - progress)
-            newPlayer.volume = currentSystemVolume * progress
-            
-            if currentStep >= steps {
-                timer.invalidate()
-                print("Crossfade session \(fadeId.uuidString.prefix(8)) completed")
-                oldPlayer.pause()
-                oldPlayer.replaceCurrentItem(with: nil)
-                oldPlayer.volume = self.volume // Reset for next use
-                if self.currentCrossfadeId == fadeId {
-                    self.isCrossfading = false
-                    self.currentCrossfadeId = nil
+            Task { @MainActor in
+                guard self.currentCrossfadeId == fadeId else {
+                    timer.invalidate()
+                    return
+                }
+                
+                currentStep += 1
+                let progress = Float(currentStep) / Float(steps)
+                let currentSystemVolume = self.volume
+                
+                oldPlayer.volume = currentSystemVolume * (1.0 - progress)
+                newPlayer.volume = currentSystemVolume * progress
+                
+                if currentStep >= steps {
+                    timer.invalidate()
+                    print("Crossfade session \(fadeId.uuidString.prefix(8)) completed")
+                    oldPlayer.pause()
+                    oldPlayer.replaceCurrentItem(with: nil)
+                    oldPlayer.volume = self.volume // Reset for next use
+                    if self.currentCrossfadeId == fadeId {
+                        self.isCrossfading = false
+                        self.currentCrossfadeId = nil
+                    }
                 }
             }
         }
@@ -267,7 +274,7 @@ final class PlayerService: ObservableObject {
         statusObserver?.invalidate()
         statusObserver = item.observe(\.status, options: [.new]) { [weak self] item, _ in
             guard let self else { return }
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 if item.status == .readyToPlay {
                     if autoPlay { self.isBuffering = false }
                     let dur = item.duration.seconds
@@ -337,9 +344,11 @@ final class PlayerService: ObservableObject {
     func seek(to time: Double) {
         let clampedTime = max(0, min(time, duration > 0 ? duration : time))
         player.seek(to: CMTime(seconds: clampedTime, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
-            self?.currentTime = clampedTime
-            self?.progressStore?.currentTime = clampedTime
-            self?.updateNowPlayingPlaybackState()
+            Task { @MainActor in
+                self?.currentTime = clampedTime
+                self?.progressStore?.currentTime = clampedTime
+                self?.updateNowPlayingPlaybackState()
+            }
         }
     }
 
@@ -424,9 +433,6 @@ final class PlayerService: ObservableObject {
         }
         
         // 2. Safety Net for Autoplay
-        // If AVPlayer misses the end notification or is confused by corrupt duration info,
-        // we manually move to the next track when we reach the end of our reconciled duration.
-        // We use a small threshold to avoid "jumping" too early, but guarantee transition.
         if seconds >= dur - 0.2 {
             print("🏁 Safety net: Track reached logical end at \(seconds)/\(dur)")
             self.handleEnded()
@@ -436,6 +442,7 @@ final class PlayerService: ObservableObject {
     private func setupGlobalObservers() {
         // Track ended
         NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] notification in
                 // Verify this notification is for our current item
                 guard let self,
@@ -447,6 +454,7 @@ final class PlayerService: ObservableObject {
 
         // Playback error
         NotificationCenter.default.publisher(for: .AVPlayerItemFailedToPlayToEndTime)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] notification in
                 guard let self,
                       let failedItem = notification.object as? AVPlayerItem,
@@ -458,7 +466,7 @@ final class PlayerService: ObservableObject {
             }
             .store(in: &cancellables)
 
-        // Stall detection — playback stalled (buffering)
+        // Stall detection
         stallObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemPlaybackStalled,
             object: nil, queue: .main
@@ -467,10 +475,8 @@ final class PlayerService: ObservableObject {
                   let stalledItem = notification.object as? AVPlayerItem,
                   stalledItem == self.player.currentItem else { return }
             self.isBuffering = true
-            // Player will auto-resume when buffer is sufficient
         }
 
-        // Observe player.timeControlStatus for buffering state
         playerA.publisher(for: \.timeControlStatus)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] status in
@@ -485,10 +491,9 @@ final class PlayerService: ObservableObject {
             }
             .store(in: &cancellables)
             
-        // Observe audio session interruptions (phone calls, etc.)
-
-        // Observe audio session interruptions (phone calls, etc.)
+        // Interruptions
         NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] notification in
                 guard let self,
                       let info = notification.userInfo,
@@ -510,8 +515,9 @@ final class PlayerService: ObservableObject {
             }
             .store(in: &cancellables)
 
-        // Handle route changes (headphones disconnected)
+        // Route changes
         NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] notification in
                 guard let self,
                       let info = notification.userInfo,
@@ -519,10 +525,7 @@ final class PlayerService: ObservableObject {
                       let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else { return }
 
                 if reason == .oldDeviceUnavailable {
-                    // Headphones unplugged — pause
-                    DispatchQueue.main.async {
-                        self.pause()
-                    }
+                    self.pause()
                 }
             }
             .store(in: &cancellables)
@@ -531,10 +534,8 @@ final class PlayerService: ObservableObject {
     private func triggerNextWithCrossfade() {
         guard let store = playerStore, !isCrossfading else { return }
         
-        // If repeat one is on, or no next track (and no wrap), don't crossfade
         if store.repeatMode == "one" { return }
         
-        // Peek if there is a next track (including wrap-around)
         let hasNext = store.currentIndex + 1 < store.queue.count || store.repeatMode == "all"
         guard hasNext else { return }
         
@@ -546,7 +547,6 @@ final class PlayerService: ObservableObject {
     }
 
     private func handleStatusChange(_ status: AVPlayer.TimeControlStatus, isPlayerA: Bool) {
-        // Only care about status changes from the ACTIVE player
         guard isPlayerA == activePlayerA else { return }
         
         switch status {
@@ -568,34 +568,30 @@ final class PlayerService: ObservableObject {
         guard !isProcessingEnd else { return }
         isProcessingEnd = true
         
-        DispatchQueue.main.async { [weak self] in
-            defer { self?.isProcessingEnd = false }
-            guard let self, let store = self.playerStore else { return }
-            
-            // If crossfade is in progress, it means this "end" is from the OLD track.
-            // We ALREADY triggered the next track, so we just ignore this notification.
-            if self.isCrossfading {
-                print("Track ended while crossfading - ignoring secondary end notification")
-                return
-            }
-            
-            if store.repeatMode == "one" {
-                print("Looping track: Repeat mode is 'one'")
-                self.seek(to: 0)
-                self.player.play()
-                self.isPlaying = true
-                store.isPlaying = true
-                return
-            }
-            
-            let hasNext = store.playNext()
-            if hasNext, let next = store.currentTrack {
-                print("Autoplay: Transitioning to next track \(next.title)")
-                self.playInternal(track: next)
-            } else {
-                print("Queue end: Stopping playback")
-                self.stop()
-            }
+        defer { self.isProcessingEnd = false }
+        guard let store = self.playerStore else { return }
+        
+        if self.isCrossfading {
+            print("Track ended while crossfading - ignoring secondary end notification")
+            return
+        }
+        
+        if store.repeatMode == "one" {
+            print("Looping track: Repeat mode is 'one'")
+            self.seek(to: 0)
+            self.player.play()
+            self.isPlaying = true
+            store.isPlaying = true
+            return
+        }
+        
+        let hasNext = store.playNext()
+        if hasNext, let next = store.currentTrack {
+            print("Autoplay: Transitioning to next track \(next.title)")
+            self.playInternal(track: next)
+        } else {
+            print("Queue end: Stopping playback")
+            self.stop()
         }
     }
 
@@ -604,22 +600,20 @@ final class PlayerService: ObservableObject {
         guard let store = playerStore, let current = store.currentTrack else { return }
         
         errorCount += 1
-        print("Playback error count: \(errorCount). Retrying indefinitely as requested.")
+        print("Playback error count: \(errorCount). Retrying indefinitely.")
         
-        // Retry playing the same track after a brief delay
         let lastPosition = currentTime
         let retryTrackId = current.id
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-            guard let self = self, self.currentTrackId == retryTrackId else { return }
-            print("Retrying playback for \(retryTrackId) at \(lastPosition) (attempt \(self.errorCount))")
-            
-            // Systemic fix: Clear error state in DownloadsStore so the red icon disappears on retry
-            self.appState?.downloadsStore.clearError(id: retryTrackId)
-            
-            // Set currentTrackId to nil to force recreation of player item
-            self.currentTrackId = nil
-            self.prepareTrack(current, at: lastPosition, autoPlay: true)
+            guard let self = self else { return }
+            Task { @MainActor in
+                guard self.currentTrackId == retryTrackId else { return }
+                print("Retrying playback for \(retryTrackId) at \(lastPosition)")
+                self.appState?.downloadsStore.clearError(id: retryTrackId)
+                self.currentTrackId = nil
+                self.prepareTrack(current, at: lastPosition, autoPlay: true)
+            }
         }
     }
 
@@ -638,31 +632,36 @@ final class PlayerService: ObservableObject {
 
         commandCenter.playCommand.isEnabled = true
         commandCenter.playCommand.addTarget { [weak self] _ in
-            self?.resume()
+            guard let self = self else { return .commandFailed }
+            Task { @MainActor in self.resume() }
             return .success
         }
 
         commandCenter.pauseCommand.isEnabled = true
         commandCenter.pauseCommand.addTarget { [weak self] _ in
-            self?.pause()
+            guard let self = self else { return .commandFailed }
+            Task { @MainActor in self.pause() }
             return .success
         }
 
         commandCenter.togglePlayPauseCommand.isEnabled = true
         commandCenter.togglePlayPauseCommand.addTarget { [weak self] _ in
-            self?.togglePlayPause()
+            guard let self = self else { return .commandFailed }
+            Task { @MainActor in self.togglePlayPause() }
             return .success
         }
 
         commandCenter.nextTrackCommand.isEnabled = true
         commandCenter.nextTrackCommand.addTarget { [weak self] _ in
-            self?.next()
+            guard let self = self else { return .commandFailed }
+            Task { @MainActor in self.next() }
             return .success
         }
 
         commandCenter.previousTrackCommand.isEnabled = true
         commandCenter.previousTrackCommand.addTarget { [weak self] _ in
-            self?.previous()
+            guard let self = self else { return .commandFailed }
+            Task { @MainActor in self.previous() }
             return .success
         }
 
@@ -671,7 +670,7 @@ final class PlayerService: ObservableObject {
             guard let self, let positionEvent = event as? MPChangePlaybackPositionCommandEvent else {
                 return .commandFailed
             }
-            self.seek(to: positionEvent.positionTime)
+            Task { @MainActor in self.seek(to: positionEvent.positionTime) }
             return .success
         }
     }
@@ -700,25 +699,21 @@ final class PlayerService: ObservableObject {
     private func updateDurationIfTrustworthy(_ newDuration: Double) {
         guard newDuration.isFinite, newDuration > 0 else { return }
         
-        // Use the duration from the track metadata (from YouTube API) as the authoritative source
         let trackDuration = Double(playerStore?.currentTrack?.duration ?? 0)
         
         if trackDuration > 0 {
-            // If the player reports a duration significantly different from the API (e.g. 2x), 
-            // it's likely a sample rate or VBR estimation error. We trust the API "ground truth".
             let difference = abs(newDuration - trackDuration)
-            if difference > trackDuration * 0.1 { // More than 10% difference
+            if difference > trackDuration * 0.1 {
                 if self.duration != trackDuration {
-                    print("⚠️ Player reported duration \(newDuration)s deviates significantly from API \(trackDuration)s. Trusting API.")
+                    print("⚠️ Duration mismatch. Trusting API.")
                     self.duration = trackDuration
                     self.progressStore?.duration = trackDuration
                 }
                 return
             }
             
-            // If the difference is small but exists, update to the most accurate "ground truth"
             if abs(newDuration - trackDuration) > 0.5 {
-                print("📝 Updating track duration to ground truth: \(newDuration)s (was \(trackDuration)s)")
+                print("📝 Updating track duration to ground truth: \(newDuration)s")
                 self.duration = newDuration
                 self.progressStore?.duration = newDuration
                 if let trackId = playerStore?.currentTrack?.id {
@@ -738,39 +733,37 @@ final class PlayerService: ObservableObject {
         let url = api.streamURL(for: track.id)
         if let localURL = AudioCacheService.shared.localURL(for: track.id) {
             print("Playing from cache: \(track.id)")
-            // Systemic fix: Ensure it's in downloads store if we play it from cache
             appState?.downloadsStore.saveTrackInternal(track)
             return AVURLAsset(url: localURL)
         } else {
             print("Streaming and caching: \(track.id)")
             let headers = ["Authorization": "Bearer \(apiToken)"]
-            // Systemic fix: Tell the store to expect this track as a download
-            // so that once AudioCacheService finishes, it knows WHICH track object to save.
             appState?.downloadsStore.registerPotentialTrack(track)
-            
-            // Automatically cache while streaming
             AudioCacheService.shared.cacheTrack(id: track.id, remoteURL: url, token: apiToken)
-            
             return AVURLAsset(url: url, options: ["AVURLAssetHTTPHeaderFieldsKey": headers])
         }
     }
+    
     func downloadTrack(_ track: Track) {
         guard let api else { return }
         
-        // Systemic fix: If already cached, just ensure it's in the downloads list
         if AudioCacheService.shared.localURL(for: track.id) != nil {
-            print("Track \(track.id) already cached. Adding to list.")
             appState?.downloadsStore.saveTrackInternal(track)
             return
         }
         
         let url = api.streamURL(for: track.id)
-        // Add to pending immediately so it shows up in UI
         appState?.downloadsStore.startDownload(track)
         AudioCacheService.shared.cacheTrack(id: track.id, remoteURL: url, token: apiToken)
     }
+
+    deinit {
+        // Non-actor isolated deinit is okay as long as it doesn't access actor-protected state synchronously
+        // But since deinit is special, we must be careful.
+    }
 }
 
+// Subordinate services remain thread-safe but non-isolated if possible
 final class AudioCacheService {
     static let shared = AudioCacheService()
     
@@ -789,8 +782,7 @@ final class AudioCacheService {
         return paths[0].appendingPathComponent("AudioCache")
     }
     
-    private let maxCacheSize: UInt64 = UInt64.max // Effectively unlimited
-    
+    private let maxCacheSize: UInt64 = UInt64.max
     private var downloadTasks: [String: Task<Void, Never>] = [:]
     private let queue = DispatchQueue(label: "com.musicplay.audiocache", qos: .userInitiated)
     private var lastCleanupDate = Date.distantPast
@@ -803,30 +795,20 @@ final class AudioCacheService {
     private func migrateOldCache() {
         let oldDir = oldCacheDirectory
         guard fileManager.fileExists(atPath: oldDir.path) else { return }
-        
-        print("📦 Migrating old audio cache from \(oldDir.path) to \(cacheDirectory.path)")
-        
         do {
             let files = try fileManager.contentsOfDirectory(at: oldDir, includingPropertiesForKeys: nil)
             for file in files {
                 let dest = cacheDirectory.appendingPathComponent(file.lastPathComponent)
-                if fileManager.fileExists(atPath: dest.path) {
-                    try? fileManager.removeItem(at: dest)
-                }
+                if fileManager.fileExists(atPath: dest.path) { try? fileManager.removeItem(at: dest) }
                 try fileManager.moveItem(at: file, to: dest)
-                print("✅ Moved \(file.lastPathComponent) to new cache")
             }
             try fileManager.removeItem(at: oldDir)
-            print("✨ Migration complete, removed old cache directory")
-        } catch {
-            print("❌ Migration failed: \(error)")
-        }
+        } catch { print("❌ Migration failed: \(error)") }
     }
     
     func localURL(for trackId: String) -> URL? {
         let fileURL = cacheDirectory.appendingPathComponent("\(trackId).m4a")
         if fileManager.fileExists(atPath: fileURL.path) {
-            // Touch file to update modification date for LRU eviction
             try? fileManager.setAttributes([.modificationDate: Date()], ofItemAtPath: fileURL.path)
             return fileURL
         }
@@ -850,10 +832,7 @@ final class AudioCacheService {
         queue.sync {
             if downloadTasks[trackId] != nil { return }
             if localURL(for: trackId) != nil { return }
-            
-            let task = Task {
-                await download(trackId: trackId, remoteURL: remoteURL, token: token)
-            }
+            let task = Task { await download(trackId: trackId, remoteURL: remoteURL, token: token) }
             downloadTasks[trackId] = task
         }
     }
@@ -861,7 +840,6 @@ final class AudioCacheService {
     private func download(trackId: String, remoteURL: URL, token: String) async {
         let tempURL = cacheDirectory.appendingPathComponent("\(trackId).tmp")
         let finalURL = cacheDirectory.appendingPathComponent("\(trackId).m4a")
-        
         var request = URLRequest(url: remoteURL)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("true", forHTTPHeaderField: "X-Full-Download")
@@ -869,79 +847,45 @@ final class AudioCacheService {
         do {
             let delegate = ProgressDownloadDelegate(trackId: trackId)
             let (downloadURL, response) = try await URLSession.shared.download(for: request, delegate: delegate)
-            
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 || httpResponse.statusCode == 206 else {
                 _ = queue.sync { downloadTasks.removeValue(forKey: trackId) }
-                DispatchQueue.main.async {
-                    NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFailed"), object: trackId)
-                }
+                DispatchQueue.main.async { NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFailed"), object: trackId) }
                 return
             }
-            
-            // Check for ground truth duration from server
-            if let durationStr = httpResponse.value(forHTTPHeaderField: "X-Audio-Duration"),
-               let durationSeconds = Double(durationStr) {
-                print("⏱ Server provided ground truth duration for \(trackId): \(durationSeconds)s")
-                DispatchQueue.main.async {
-                    NotificationCenter.default.post(name: NSNotification.Name("TrackDurationUpdated"), object: trackId, userInfo: ["duration": Int(durationSeconds)])
-                }
+            if let durationStr = httpResponse.value(forHTTPHeaderField: "X-Audio-Duration"), let durationSeconds = Double(durationStr) {
+                DispatchQueue.main.async { NotificationCenter.default.post(name: NSNotification.Name("TrackDurationUpdated"), object: trackId, userInfo: ["duration": Int(durationSeconds)]) }
             }
-            
-            if fileManager.fileExists(atPath: finalURL.path) {
-                try? fileManager.removeItem(at: finalURL)
-            }
-            if fileManager.fileExists(atPath: tempURL.path) {
-                try? fileManager.removeItem(at: tempURL)
-            }
-            
+            if fileManager.fileExists(atPath: finalURL.path) { try? fileManager.removeItem(at: finalURL) }
+            if fileManager.fileExists(atPath: tempURL.path) { try? fileManager.removeItem(at: tempURL) }
             try fileManager.moveItem(at: downloadURL, to: tempURL)
             try fileManager.moveItem(at: tempURL, to: finalURL)
-            
             cleanUpCacheIfNeeded()
-            print("Successfully cached track: \(trackId)")
-            
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFinished"), object: trackId)
-            }
+            DispatchQueue.main.async { NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFinished"), object: trackId) }
         } catch {
             print("Failed to cache track \(trackId): \(error)")
             try? fileManager.removeItem(at: tempURL)
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFailed"), object: trackId)
-            }
+            DispatchQueue.main.async { NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFailed"), object: trackId) }
         }
-        
-        queue.sync {
-            downloadTasks.removeValue(forKey: trackId)
-        }
+        queue.sync { downloadTasks.removeValue(forKey: trackId) }
     }
     
     func clearCache() {
         queue.sync {
             for task in downloadTasks.values { task.cancel() }
             downloadTasks.removeAll()
-            do {
-                let files = try fileManager.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: nil)
-                for file in files { try fileManager.removeItem(at: file) }
-            } catch { print("Failed to clear audio cache: \(error)") }
+            try? fileManager.removeItem(at: cacheDirectory)
+            try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
         }
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(name: NSNotification.Name("CacheCleared"), object: nil)
-        }
+        DispatchQueue.main.async { NotificationCenter.default.post(name: NSNotification.Name("CacheCleared"), object: nil) }
     }
     
     func getCacheSize() -> UInt64 {
         var totalSize: UInt64 = 0
-        do {
-            let files = try fileManager.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: [.fileSizeKey])
-            for file in files {
-                let attrs = try file.resourceValues(forKeys: [.fileSizeKey])
-                if let size = attrs.fileSize {
-                    totalSize += UInt64(size)
-                }
+        let files = (try? fileManager.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: [.fileSizeKey])) ?? []
+        for file in files {
+            if let size = (try? file.resourceValues(forKeys: [.fileSizeKey]))?.fileSize {
+                totalSize += UInt64(size)
             }
-        } catch {
-            print("Error getting cache size: \(error)")
         }
         return totalSize
     }
@@ -950,37 +894,24 @@ final class AudioCacheService {
         let now = Date()
         guard now.timeIntervalSince(lastCleanupDate) > 60 else { return }
         lastCleanupDate = now
-        
         queue.async { [weak self] in
             guard let self else { return }
-            do {
-                let resourceKeys: [URLResourceKey] = [.fileSizeKey, .contentModificationDateKey]
-                let files = try self.fileManager.contentsOfDirectory(at: self.cacheDirectory, includingPropertiesForKeys: resourceKeys)
-                
-                var totalSize: UInt64 = 0
-                var fileProps: [(url: URL, size: UInt64, date: Date)] = []
-                
-                for file in files {
-                    guard file.pathExtension == "m4a" else { continue }
-                    let attrs = try file.resourceValues(forKeys: Set(resourceKeys))
-                    if let size = attrs.fileSize, let date = attrs.contentModificationDate {
-                        totalSize += UInt64(size)
-                        fileProps.append((url: file, size: UInt64(size), date: date))
-                    }
+            let files = (try? self.fileManager.contentsOfDirectory(at: self.cacheDirectory, includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey])) ?? []
+            var totalSize: UInt64 = 0
+            var fileProps: [(url: URL, size: UInt64, date: Date)] = []
+            for file in files where file.pathExtension == "m4a" {
+                if let attrs = try? file.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey]), let size = attrs.fileSize, let date = attrs.contentModificationDate {
+                    totalSize += UInt64(size)
+                    fileProps.append((url: file, size: UInt64(size), date: date))
                 }
-                
-                if totalSize > self.maxCacheSize {
-                    fileProps.sort { $0.date < $1.date }
-                    var currentSize = totalSize
-                    for prop in fileProps {
-                        if currentSize <= self.maxCacheSize { break }
-                        try? self.fileManager.removeItem(at: prop.url)
-                        currentSize -= prop.size
-                        print("Evicted track from cache: \(prop.url.lastPathComponent)")
-                    }
+            }
+            if totalSize > self.maxCacheSize {
+                fileProps.sort { $0.date < $1.date }
+                var currentSize = totalSize
+                for prop in fileProps where currentSize > self.maxCacheSize {
+                    try? self.fileManager.removeItem(at: prop.url)
+                    currentSize -= prop.size
                 }
-            } catch {
-                print("Cache cleanup error: \(error)")
             }
         }
     }
@@ -989,25 +920,16 @@ final class AudioCacheService {
 final class ProgressDownloadDelegate: NSObject, URLSessionDownloadDelegate {
     let trackId: String
     private var lastUpdate: TimeInterval = 0
-    
-    init(trackId: String) {
-        self.trackId = trackId
-    }
-    
+    init(trackId: String) { self.trackId = trackId }
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
         let now = Date().timeIntervalSince1970
         if totalBytesExpectedToWrite > 0 && (now - lastUpdate) > 0.1 {
             let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadProgress"), object: self.trackId, userInfo: ["progress": progress])
-            }
+            DispatchQueue.main.async { NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadProgress"), object: self.trackId, userInfo: ["progress": progress]) }
             lastUpdate = now
         }
     }
-    
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadProgress"), object: self.trackId, userInfo: ["progress": 1.0])
-        }
+        DispatchQueue.main.async { NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadProgress"), object: self.trackId, userInfo: ["progress": 1.0]) }
     }
 }

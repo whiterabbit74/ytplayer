@@ -1,11 +1,16 @@
 import Foundation
 import Combine
 
+@MainActor
 final class DownloadsStore: ObservableObject {
     @Published var downloadedTracks: [Track] = []
     @Published var pendingTracks: [String: Track] = [:]
     @Published var downloadProgresses: [String: Double] = [:]
     @Published var failedDownloads: Set<String> = []
+    
+    private var cancellables = Set<AnyCancellable>()
+    private var observerTokens: [Any] = []
+    private let ioQueue = DispatchQueue(label: "com.musicplay.downloads.io", qos: .background)
     
     private var storageURL: URL {
         let paths = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
@@ -20,7 +25,7 @@ final class DownloadsStore: ObservableObject {
         loadFromDisk()
         
         // Listen for progress updates
-        NotificationCenter.default.addObserver(forName: NSNotification.Name("TrackDownloadProgress"), object: nil, queue: .main) { [weak self] note in
+        let pToken = NotificationCenter.default.addObserver(forName: NSNotification.Name("TrackDownloadProgress"), object: nil, queue: .main) { [weak self] note in
             guard let self = self else { return }
             if let id = note.object as? String, let progress = note.userInfo?["progress"] as? Double {
                 self.downloadProgresses[id] = progress
@@ -35,9 +40,10 @@ final class DownloadsStore: ObservableObject {
                 }
             }
         }
+        observerTokens.append(pToken)
         
         // Listen for download finished (verified on disk)
-        NotificationCenter.default.addObserver(forName: NSNotification.Name("TrackDownloadFinished"), object: nil, queue: .main) { [weak self] note in
+        let fToken = NotificationCenter.default.addObserver(forName: NSNotification.Name("TrackDownloadFinished"), object: nil, queue: .main) { [weak self] note in
             guard let self = self else { return }
             if let id = note.object as? String {
                 self.failedDownloads.remove(id)
@@ -48,27 +54,31 @@ final class DownloadsStore: ObservableObject {
                 self.saveToDisk()
             }
         }
+        observerTokens.append(fToken)
         
         // Listen for download started
-        NotificationCenter.default.addObserver(forName: NSNotification.Name("TrackDownloadStarted"), object: nil, queue: .main) { [weak self] note in
+        let sToken = NotificationCenter.default.addObserver(forName: NSNotification.Name("TrackDownloadStarted"), object: nil, queue: .main) { [weak self] note in
             if let track = note.object as? Track {
                 self?.startDownload(track)
             }
         }
+        observerTokens.append(sToken)
 
         // Listen for download failed
-        NotificationCenter.default.addObserver(forName: NSNotification.Name("TrackDownloadFailed"), object: nil, queue: .main) { [weak self] note in
+        let errToken = NotificationCenter.default.addObserver(forName: NSNotification.Name("TrackDownloadFailed"), object: nil, queue: .main) { [weak self] note in
             if let id = note.object as? String {
                 self?.handleDownloadError(id: id)
             }
         }
+        observerTokens.append(errToken)
         
         // Listen for metadata updates discovered during streaming/downloading
-        NotificationCenter.default.addObserver(forName: NSNotification.Name("TrackDurationUpdated"), object: nil, queue: .main) { [weak self] note in
+        let uToken = NotificationCenter.default.addObserver(forName: NSNotification.Name("TrackDurationUpdated"), object: nil, queue: .main) { [weak self] note in
             if let id = note.object as? String, let duration = note.userInfo?["duration"] as? Int {
                 self?.updateTrackDuration(id: id, duration: duration)
             }
         }
+        observerTokens.append(uToken)
     }
     
     func startDownload(_ track: Track) {
@@ -263,8 +273,17 @@ final class DownloadsStore: ObservableObject {
             failedIds: Array(failedDownloads),
             pending: pendingTracks
         )
-        if let data = try? JSONEncoder().encode(metadata) {
-            try? data.write(to: storageURL)
+        let url = storageURL
+        ioQueue.async {
+            if let data = try? JSONEncoder().encode(metadata) {
+                try? data.write(to: url)
+            }
+        }
+    }
+
+    deinit {
+        for token in observerTokens {
+            NotificationCenter.default.removeObserver(token)
         }
     }
 }
