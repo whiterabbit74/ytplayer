@@ -39,14 +39,16 @@ struct Track: Codable, Identifiable, Hashable {
     }
 
     func thumbnailURL(baseURL: String) -> URL? {
-        Track.thumbnailURL(path: thumbnail, baseURL: baseURL)
+        Track.thumbnailURL(path: thumbnail, baseURL: baseURL, trackId: id)
     }
 
-    static func thumbnailURL(path: String, baseURL: String) -> URL? {
+    static func thumbnailURL(path: String, baseURL: String, trackId: String? = nil) -> URL? {
         if path.hasPrefix("http") {
             return URL(string: path)
         }
-        return URL(string: "\(baseURL)/proxy/image?url=\(path.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")
+        // Use the new /api/thumb/:videoId endpoint if we have a trackId, otherwise fallback to path
+        let id = trackId ?? path
+        return URL(string: "\(baseURL)/api/thumb/\(id)")
     }
 
     enum CodingKeys: String, CodingKey {

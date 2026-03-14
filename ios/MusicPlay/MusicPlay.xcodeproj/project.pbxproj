@@ -33,7 +33,6 @@
 		971C9362218529900858D4CB /* DownloadsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EC2220C21F7A648BE966BA4 /* DownloadsStore.swift */; };
 		98CF6291A6460CCE6B04941F /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE4B5AA565684A40317FDD52 /* TokenStore.swift */; };
 		9D51F425259B296D1A348965 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8830842E003B7EB4DCBA4D15 /* SettingsView.swift */; };
-		A1B35D671787F5A8F4663A4A /* AirPlayButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDC47230823673D3FB74978 /* AirPlayButton.swift */; };
 		A20268E98987FFF9ACCF53C6 /* PlayerFullView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC8AD137C04B4EA838920FA4 /* PlayerFullView.swift */; };
 		A24AEFE116457CC22C8CF87B /* TrackRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD7C0E0227BFA4776AD05F0D /* TrackRow.swift */; };
 		B26CD3E7DFA6326E0E44F0E3 /* DynamicBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A51EC6C789C7B16580CA9DE4 /* DynamicBackgroundView.swift */; };
@@ -87,7 +86,6 @@
 		A6D202E4BB4B0BA6A242A903 /* PlayerSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSyncService.swift; sourceTree = "<group>"; };
 		AA6C42B4B75EAA2B88C58DB3 /* HistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryStore.swift; sourceTree = "<group>"; };
 		AD7C0E0227BFA4776AD05F0D /* TrackRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRow.swift; sourceTree = "<group>"; };
-		AFDC47230823673D3FB74978 /* AirPlayButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirPlayButton.swift; sourceTree = "<group>"; };
 		B76BF68FA92E011B1DFE501D /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
 		B81CFF640A51677869AC5A95 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
 		C6C234031C757BE6F658F3FD /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
@@ -194,7 +192,6 @@
 		FD131425F6F104D5C097E7B0 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				AFDC47230823673D3FB74978 /* AirPlayButton.swift */,
 				A51EC6C789C7B16580CA9DE4 /* DynamicBackgroundView.swift */,
 				7EC1D31AAEFA4163DC48A8C7 /* EqualizerIndicator.swift */,
 				B81CFF640A51677869AC5A95 /* FavoritesView.swift */,
@@ -300,7 +297,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				4AD5DEBC822173DC373387AD /* APIClient.swift in Sources */,
-				A1B35D671787F5A8F4663A4A /* AirPlayButton.swift in Sources */,
 				EA97F5A01D8CBD7866DF6B5D /* AppState.swift in Sources */,
 				971C9362218529900858D4CB /* DownloadsStore.swift in Sources */,
 				B26CD3E7DFA6326E0E44F0E3 /* DynamicBackgroundView.swift in Sources */,
