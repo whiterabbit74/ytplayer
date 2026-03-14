@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct FavoritesView: View {
+    @Environment(\.baseURL) var baseURL
     @EnvironmentObject var appState: AppState
     @ObservedObject var favoritesStore: FavoritesStore
     @State private var showSettings = false
@@ -18,34 +19,24 @@ struct FavoritesView: View {
                     }
                     .listRowSeparator(.hidden)
                 } else if favoritesStore.favorites.isEmpty && !favoritesStore.isLoading {
-                    ContentUnavailableView("No Favorites", systemImage: "heart", description: Text("Tap the heart icon on any track to add it here"))
+                    ContentUnavailableView(
+                        "No Favorites",
+                        systemImage: "heart",
+                        description: Text("Tap the heart icon on any track to add it here")
+                    )
                 } else {
                     let tracks = favoritesStore.favorites
                     ForEach(tracks) { track in
                         TrackRow(
                             track: track,
-                            baseURL: appState.baseURL,
-                            downloadsStore: appState.downloadsStore,
-                            playlistsStore: appState.playlistsStore,
-                            playerStore: appState.playerStore,
-                            playerService: appState.playerService,
                             onPlay: {
                                 appState.playerService.playTrack(track, context: tracks)
                                 showPlayer = true
                             },
-                            onAddToQueue: {
-                                appState.playerStore.addToQueue(track)
-                            },
+                            onAddToQueue: { appState.playerStore.addToQueue(track) },
                             isFavorite: true,
-                            isDownloaded: appState.downloadsStore.isDownloaded(id: track.id),
-                            downloadProgress: appState.downloadsStore.downloadProgresses[track.id],
-                            isFailedDownload: appState.downloadsStore.failedDownloads.contains(track.id),
-                            onToggleFavorite: {
-                                Task { await favoritesStore.toggleFavorite(track) }
-                            },
-                            onRemove: {
-                                Task { await favoritesStore.toggleFavorite(track) }
-                            }
+                            onToggleFavorite: { Task { await favoritesStore.toggleFavorite(track) } },
+                            onRemove: { Task { await favoritesStore.toggleFavorite(track) } }
                         )
                     }
                     .onDelete { offsets in

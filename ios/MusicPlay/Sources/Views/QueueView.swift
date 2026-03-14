@@ -1,10 +1,10 @@
 import SwiftUI
 
 struct QueueView: View {
+    @Environment(\.baseURL) var baseURL
     @ObservedObject var playerStore: PlayerStore
     @ObservedObject var playerService: PlayerService
     @ObservedObject var downloadsStore: DownloadsStore
-    let baseURL: String
     @Binding var showPlayer: Bool
     @State private var editMode: EditMode = .active
 
@@ -13,13 +13,12 @@ struct QueueView: View {
             List {
                 ForEach(playerStore.queue) { item in
                     queueRow(item: item)
-                        .shadow(radius: editMode == .active ? 2 : 0) // Small shadow for draggability
+                        .shadow(radius: editMode == .active ? 2 : 0)
                         .scaleEffect(editMode == .active ? 0.98 : 1.0)
                         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: editMode)
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
-                                let index = playerStore.queue.firstIndex(where: { $0.id == item.id })
-                                if let index = index {
+                                if let index = playerStore.queue.firstIndex(where: { $0.id == item.id }) {
                                     playerStore.removeFromQueue(index: index)
                                 }
                             } label: {
@@ -28,7 +27,7 @@ struct QueueView: View {
                         }
                 }
                 .onMove(perform: moveItems)
-                .deleteDisabled(true) // Hides the red minus buttons in EditMode
+                .deleteDisabled(true)
             }
             .environment(\.editMode, $editMode)
             .safeAreaInset(edge: .bottom) {
@@ -36,16 +35,15 @@ struct QueueView: View {
             }
             .overlay {
                 if playerStore.queue.isEmpty {
-                    ContentUnavailableView("Queue is Empty", systemImage: "list.bullet", description: Text("Add tracks from search or playlists"))
+                    ContentUnavailableView(
+                        "Queue is Empty",
+                        systemImage: "list.bullet",
+                        description: Text("Add tracks from search or playlists")
+                    )
                 }
             }
             .navigationTitle("Queue")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    if !playerStore.queue.isEmpty {
-                        // EditButton is not needed since we stay in edit mode
-                    }
-                }
                 ToolbarItem(placement: .topBarLeading) {
                     if !playerStore.queue.isEmpty {
                         Button("Clear") {
@@ -62,12 +60,6 @@ struct QueueView: View {
         playerStore.moveQueue(from: source, to: destination)
     }
 
-    private func deleteItems(at offsets: IndexSet) {
-        for idx in offsets.sorted(by: >) {
-            playerStore.removeFromQueue(index: idx)
-        }
-    }
-
     @ViewBuilder
     private func queueRow(item: QueueItem) -> some View {
         let track = item.track
@@ -82,9 +74,8 @@ struct QueueView: View {
                 size: 44,
                 forceSquare: true,
                 cornerRadius: 6,
-                baseURL: baseURL,
-                downloadProgress: downloadsStore.downloadProgresses[track.id],
-                isFailed: downloadsStore.failedDownloads.contains(track.id)
+                downloadProgress: downloadsStore.progress(for: track.id),
+                isFailed: downloadsStore.isFailed(track.id)
             )
 
             VStack(alignment: .leading, spacing: 2) {
@@ -92,7 +83,7 @@ struct QueueView: View {
                     .font(.subheadline.weight(isCurrent ? .semibold : .regular))
                     .lineLimit(1)
                 HStack(spacing: 4) {
-                    if downloadsStore.isDownloaded(id: track.id) {
+                    if downloadsStore.isTrackDownloaded(track.id) {
                         DownloadIcon(size: .small)
                     }
                     Text(track.artist)

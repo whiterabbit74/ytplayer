@@ -24,7 +24,6 @@ struct MainTabView: View {
                     playerService: appState.playerService,
                     downloadsStore: appState.downloadsStore,
                     favoritesStore: appState.favoritesStore,
-                    baseURL: appState.baseURL,
                     showPlayer: $showPlayer
                 )
                     .tabItem { Label("Search", systemImage: "magnifyingglass").symbolEffect(.bounce, value: appState.selectedTab == 0) }
@@ -42,12 +41,12 @@ struct MainTabView: View {
                     playerStore: appState.playerStore,
                     playerService: appState.playerService,
                     downloadsStore: appState.downloadsStore,
-                    baseURL: appState.baseURL,
                     showPlayer: $showPlayer
                 )
                 .tabItem { Label("Queue", systemImage: "list.bullet").symbolEffect(.bounce, value: appState.selectedTab == 3) }
                 .tag(3)
             }
+            .environment(\.baseURL, appState.baseURL) // Inject baseURL to all child views
 
             if appState.playerStore.currentTrack != nil {
                 PlayerMiniView(
@@ -55,10 +54,10 @@ struct MainTabView: View {
                     playerService: appState.playerService,
                     downloadsStore: appState.downloadsStore,
                     progressStore: appState.progressStore,
-                    baseURL: appState.baseURL,
                     showPlayer: $showPlayer
                 )
-                .padding(.bottom, keyboard.isVisible ? 0 : 60) // Align above standard TabBar, but sit on keyboard when visible
+                .environment(\.baseURL, appState.baseURL)
+                .padding(.bottom, keyboard.isVisible ? 0 : 60)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
@@ -86,17 +85,13 @@ struct MainTabView: View {
                 playerStore: appState.playerStore,
                 playerService: appState.playerService,
                 downloadsStore: appState.downloadsStore,
-                favoritesStore: appState.favoritesStore,
+                favoritesStore: favoritesStoreSafe, // Use computed property if direct access is complex
                 playlistsStore: appState.playlistsStore,
-                progressStore: appState.progressStore,
-                baseURL: appState.baseURL,
-                dynamicBackgroundEnabled: appState.dynamicBackgroundEnabled,
-                coverStyle: appState.coverStyle,
-                squareCovers: appState.squareCovers
+                progressStore: appState.progressStore
             )
+            .environment(\.baseURL, appState.baseURL)
         }
         .onAppear {
-            // Load initial player state from server
             Task { await appState.playerSyncService.loadInitialState() }
             appState.playerSyncService.start()
         }
@@ -104,4 +99,7 @@ struct MainTabView: View {
             appState.playerSyncService.stop()
         }
     }
+    
+    // Help with passing favoritesStore if needed
+    private var favoritesStoreSafe: FavoritesStore { appState.favoritesStore }
 }

@@ -1,55 +1,19 @@
 import SwiftUI
 
 struct TrackRow: View {
+    @Environment(\.baseURL) var baseURL
+    @Environment(\.editMode) private var editMode
+    
     let track: Track
-    let baseURL: String
     let onPlay: () -> Void
     let onAddToQueue: () -> Void
     let isFavorite: Bool
     let onToggleFavorite: (() -> Void)?
     let onRemove: (() -> Void)?
     
-    @Environment(\.editMode) private var editMode
-    let downloadsStore: DownloadsStore
-    let playlistsStore: PlaylistsStore
-    let playerStore: PlayerStore
-    let playerService: PlayerService
-    
-    let isDownloaded: Bool
-    let downloadProgress: Double?
-    let isFailedDownload: Bool
-
-    init(
-        track: Track,
-        baseURL: String,
-        downloadsStore: DownloadsStore,
-        playlistsStore: PlaylistsStore,
-        playerStore: PlayerStore,
-        playerService: PlayerService,
-        onPlay: @escaping () -> Void,
-        onAddToQueue: @escaping () -> Void,
-        isFavorite: Bool = false,
-        isDownloaded: Bool = false,
-        downloadProgress: Double? = nil,
-        isFailedDownload: Bool = false,
-        onToggleFavorite: (() -> Void)? = nil,
-        onRemove: (() -> Void)? = nil
-    ) {
-        self.track = track
-        self.baseURL = baseURL
-        self.downloadsStore = downloadsStore
-        self.playlistsStore = playlistsStore
-        self.playerStore = playerStore
-        self.playerService = playerService
-        self.onPlay = onPlay
-        self.onAddToQueue = onAddToQueue
-        self.isFavorite = isFavorite
-        self.isDownloaded = isDownloaded
-        self.downloadProgress = downloadProgress
-        self.isFailedDownload = isFailedDownload
-        self.onToggleFavorite = onToggleFavorite
-        self.onRemove = onRemove
-    }
+    @EnvironmentObject var playerStore: PlayerStore
+    @EnvironmentObject var downloadsStore: DownloadsStore
+    @EnvironmentObject var playerService: PlayerService
 
     @State private var showAddedToQueue = false
 
@@ -58,20 +22,16 @@ struct TrackRow: View {
             TrackThumbnail(
                 track: track,
                 size: 48,
-                forceSquare: true,
                 cornerRadius: 8,
-                baseURL: baseURL,
-                downloadProgress: downloadProgress,
-                isFailed: isFailedDownload,
+                downloadProgress: downloadsStore.progress(for: track.id),
+                isFailed: downloadsStore.isFailed(track.id),
                 isPlaying: playerStore.currentTrack?.id == track.id
             )
 
             VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(track.title).font(.headline).lineLimit(1)
-                }
+                Text(track.title).font(.headline).lineLimit(1)
                 HStack(spacing: 4) {
-                    if isDownloaded {
+                    if downloadsStore.isTrackDownloaded(track.id) {
                         DownloadIcon(size: .custom(12), showShadow: true)
                             .transition(.scale.combined(with: .opacity))
                     }
@@ -91,89 +51,24 @@ struct TrackRow: View {
                 }
 
                 Menu {
-                    Button(action: onPlay) {
-                        Label("Play", systemImage: "play")
-                    }
-                    
-                    Button {
-                        onAddToQueue()
-                        triggerAddedAnimation()
-                    } label: {
-                        Label("Add to Queue", systemImage: "text.badge.plus")
-                    }
-                    
-                    Button {
-                        playerStore.addToQueueNext(track)
-                        triggerAddedAnimation()
-                    } label: {
-                        Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
-                    }
-                    
-                    if let onToggleFavorite {
-                        Button {
-                            onToggleFavorite()
-                        } label: {
-                            Label(isFavorite ? "Remove from Favorites" : "Add to Favorites", systemImage: isFavorite ? "heart.fill" : "heart")
-                        }
-                    }
-                    
-                    let isDownloading = downloadProgress != nil
-                    
-                    if isDownloading {
-                        Button(role: .destructive) {
-                            downloadsStore.removeTrack(track.id)
-                            AudioCacheService.shared.removeTrack(id: track.id)
-                        } label: {
-                            Label("Cancel Download", systemImage: "xmark.circle")
-                        }
-                    } else if isFailedDownload {
-                        Button {
-                            playerService.downloadTrack(track)
-                        } label: {
-                            Label("Retry Download", systemImage: "arrow.clockwise.circle")
-                        }
-                        
-                        Button(role: .destructive) {
-                            downloadsStore.removeTrack(track.id)
-                            AudioCacheService.shared.removeTrack(id: track.id)
-                        } label: {
-                            Label("Remove from Downloads", systemImage: "trash")
-                        }
-                    } else {
-                        Button {
-                            if isDownloaded {
-                                downloadsStore.removeTrack(track.id)
-                                AudioCacheService.shared.removeTrack(id: track.id)
-                            } else {
-                                playerService.downloadTrack(track)
-                            }
-                        } label: {
-                            Label(isDownloaded ? "Remove Download" : "Download", systemImage: isDownloaded ? "trash" : "arrow.down.circle")
-                        }
-                    }
-                    
-                    Menu {
-                        ForEach(playlistsStore.playlists) { pl in
-                            Button(pl.name) {
-                                Task { await playlistsStore.addTrack(playlistId: pl.id, track: track) }
-                            }
-                        }
-                    } label: {
-                        Label("Add to Playlist", systemImage: "folder.badge.plus")
-                    }
-
-                    if let onRemove {
-                        Button(role: .destructive, action: onRemove) {
-                            Label("Remove", systemImage: "trash")
-                        }
-                    }
+                    TrackMenuContent(
+                        track: track,
+                        onPlay: onPlay,
+                        onAddToQueue: {
+                            onAddToQueue()
+                            triggerAddedAnimation()
+                        },
+                        onToggleFavorite: onToggleFavorite,
+                        isFavorite: isFavorite,
+                        onRemove: onRemove
+                    )
                 } label: {
                     Image(systemName: "ellipsis")
                         .padding(8)
                 }
                 .buttonStyle(.plain)
 
-                if let progress = downloadProgress {
+                if let progress = downloadsStore.progress(for: track.id) {
                     ProgressView(value: progress)
                         .progressViewStyle(CircularProgressViewStyle())
                         .frame(width: 20, height: 20)
@@ -189,17 +84,6 @@ struct TrackRow: View {
                 onPlay()
             }
         }
-    }
-
-    private var thumbURL: URL? {
-        let cleaned = track.thumbnail
-        if cleaned.hasPrefix("http") {
-            return URL(string: cleaned)
-        }
-        if cleaned.hasPrefix("/") {
-            return URL(string: baseURL + cleaned)
-        }
-        return URL(string: baseURL + "/" + cleaned)
     }
 
     private func triggerAddedAnimation() {

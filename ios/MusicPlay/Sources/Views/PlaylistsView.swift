@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct PlaylistsView: View {
+    @Environment(\.baseURL) var baseURL
     @EnvironmentObject var appState: AppState
     @ObservedObject var playlistsStore: PlaylistsStore
     @State private var newName = ""
@@ -34,7 +35,6 @@ struct PlaylistsView: View {
                             playerStore: appState.playerStore,
                             playerService: appState.playerService,
                             favoritesStore: appState.favoritesStore,
-                            baseURL: appState.baseURL,
                             showPlayer: $showPlayer
                         )
                     } label: {
@@ -42,7 +42,6 @@ struct PlaylistsView: View {
                             name: "Downloads",
                             thumbnails: appState.downloadsStore.downloadedTracks.prefix(4).map { $0.thumbnail },
                             defaultIcon: "arrow.down.circle",
-                            baseURL: appState.baseURL,
                             count: appState.downloadsStore.downloadedTracks.count
                         )
                     }
@@ -55,7 +54,6 @@ struct PlaylistsView: View {
                             playerStore: appState.playerStore,
                             playerService: appState.playerService,
                             favoritesStore: appState.favoritesStore,
-                            baseURL: appState.baseURL,
                             showPlayer: $showPlayer
                         )
                     } label: {
@@ -63,7 +61,6 @@ struct PlaylistsView: View {
                             name: "Recently Played",
                             thumbnails: appState.historyStore.history.prefix(4).map { $0.thumbnail },
                             defaultIcon: "clock.arrow.circlepath",
-                            baseURL: appState.baseURL,
                             count: appState.historyStore.history.count
                         )
                     }
@@ -76,7 +73,6 @@ struct PlaylistsView: View {
                                 playerService: appState.playerService,
                                 downloadsStore: appState.downloadsStore,
                                 favoritesStore: appState.favoritesStore,
-                                baseURL: appState.baseURL,
                                 playlist: pl,
                                 showPlayer: $showPlayer
                             )
@@ -85,7 +81,6 @@ struct PlaylistsView: View {
                                 name: pl.name,
                                 thumbnails: pl.thumbnails ?? [],
                                 defaultIcon: "music.note",
-                                baseURL: appState.baseURL,
                                 count: pl.trackCount ?? 0
                             )
                         }
@@ -122,23 +117,40 @@ struct PlaylistsView: View {
 }
 
 struct DownloadsView: View {
+    @Environment(\.baseURL) var baseURL
     @ObservedObject var downloadsStore: DownloadsStore
     @ObservedObject var playlistsStore: PlaylistsStore
     @ObservedObject var playerStore: PlayerStore
     @ObservedObject var playerService: PlayerService
     @ObservedObject var favoritesStore: FavoritesStore
-    let baseURL: String
     @Binding var showPlayer: Bool
     @State private var editMode: EditMode = .inactive
 
     var body: some View {
         List {
             if downloadsStore.downloadedTracks.isEmpty {
-                ContentUnavailableView("No Downloads", systemImage: "arrow.down.to.line.circle", description: Text("Download tracks to listen offline"))
+                ContentUnavailableView(
+                    "No Downloads",
+                    systemImage: "arrow.down.to.line.circle",
+                    description: Text("Download tracks to listen offline")
+                )
             }
 
             ForEach(downloadsStore.downloadedTracks) { track in
-                trackRow(track)
+                TrackRow(
+                    track: track,
+                    onPlay: {
+                        playerService.playTrack(track, context: downloadsStore.downloadedTracks)
+                        showPlayer = true
+                    },
+                    onAddToQueue: { playerStore.addToQueue(track) },
+                    isFavorite: favoritesStore.isFavorite(track.id),
+                    onToggleFavorite: { Task { await favoritesStore.toggleFavorite(track) } },
+                    onRemove: {
+                        downloadsStore.removeTrack(track.id)
+                        AudioCacheService.shared.removeTrack(id: track.id)
+                    }
+                )
             }
             .onDelete { indexSet in
                 for index in indexSet.sorted(by: >) {
@@ -153,68 +165,50 @@ struct DownloadsView: View {
         }
         .environment(\.editMode, $editMode)
         .safeAreaInset(edge: .bottom) {
-            if playerStore.currentTrack != nil {
-                Color.clear.frame(height: 70)
-            }
+            MiniPlayerSpacer()
         }
-        .navigationTitle("Downloads")
+        .navigationTitle("Navigation Example")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 EditButton()
             }
         }
     }
-
-    @ViewBuilder
-    private func trackRow(_ track: Track) -> some View {
-        TrackRow(
-            track: track,
-            baseURL: baseURL,
-            downloadsStore: downloadsStore,
-            playlistsStore: playlistsStore,
-            playerStore: playerStore,
-            playerService: playerService,
-            onPlay: {
-                playerService.playTrack(track, context: downloadsStore.downloadedTracks)
-                showPlayer = true
-            },
-            onAddToQueue: {
-                playerStore.addToQueue(track)
-            },
-            isFavorite: favoritesStore.isFavorite(track.id),
-            isDownloaded: downloadsStore.isDownloaded(id: track.id),
-            downloadProgress: downloadsStore.downloadProgresses[track.id],
-            isFailedDownload: downloadsStore.failedDownloads.contains(track.id),
-            onToggleFavorite: {
-                Task { await favoritesStore.toggleFavorite(track) }
-            },
-            onRemove: {
-                downloadsStore.removeTrack(track.id)
-                AudioCacheService.shared.removeTrack(id: track.id)
-            }
-        )
-    }
 }
 
 struct HistoryView: View {
+    @Environment(\.baseURL) var baseURL
     @ObservedObject var historyStore: HistoryStore
     @ObservedObject var downloadsStore: DownloadsStore
     @ObservedObject var playlistsStore: PlaylistsStore
     @ObservedObject var playerStore: PlayerStore
     @ObservedObject var playerService: PlayerService
     @ObservedObject var favoritesStore: FavoritesStore
-    let baseURL: String
     @Binding var showPlayer: Bool
     @State private var editMode: EditMode = .inactive
 
     var body: some View {
         List {
             if historyStore.history.isEmpty {
-                ContentUnavailableView("No History", systemImage: "clock", description: Text("Tracks you listen to will appear here"))
+                ContentUnavailableView(
+                    "No History",
+                    systemImage: "clock",
+                    description: Text("Tracks you listen to will appear here")
+                )
             }
 
             ForEach(historyStore.history) { track in
-                trackRow(track)
+                TrackRow(
+                    track: track,
+                    onPlay: {
+                        playerService.playTrack(track, context: historyStore.history)
+                        showPlayer = true
+                    },
+                    onAddToQueue: { playerStore.addToQueue(track) },
+                    isFavorite: favoritesStore.isFavorite(track.id),
+                    onToggleFavorite: { Task { await favoritesStore.toggleFavorite(track) } },
+                    onRemove: { historyStore.removeTrack(id: track.id) }
+                )
             }
             .onDelete { indexSet in
                 for index in indexSet {
@@ -225,9 +219,7 @@ struct HistoryView: View {
         }
         .environment(\.editMode, $editMode)
         .safeAreaInset(edge: .bottom) {
-            if playerStore.currentTrack != nil {
-                Color.clear.frame(height: 70)
-            }
+            MiniPlayerSpacer()
         }
         .navigationTitle("History")
         .toolbar {
@@ -242,35 +234,6 @@ struct HistoryView: View {
             }
         }
     }
-
-    @ViewBuilder
-    private func trackRow(_ track: Track) -> some View {
-        TrackRow(
-            track: track,
-            baseURL: baseURL,
-            downloadsStore: downloadsStore,
-            playlistsStore: playlistsStore,
-            playerStore: playerStore,
-            playerService: playerService,
-            onPlay: {
-                playerService.playTrack(track, context: historyStore.history)
-                showPlayer = true
-            },
-            onAddToQueue: {
-                playerStore.addToQueue(track)
-            },
-            isFavorite: favoritesStore.isFavorite(track.id),
-            isDownloaded: downloadsStore.isDownloaded(id: track.id),
-            downloadProgress: downloadsStore.downloadProgresses[track.id],
-            isFailedDownload: downloadsStore.failedDownloads.contains(track.id),
-            onToggleFavorite: {
-                Task { await favoritesStore.toggleFavorite(track) }
-            },
-            onRemove: {
-                historyStore.removeTrack(id: track.id)
-            }
-        )
-    }
 }
 
 // MARK: - Components
@@ -279,12 +242,11 @@ struct PlaylistRow: View {
     let name: String
     let thumbnails: [String]
     let defaultIcon: String
-    let baseURL: String
     let count: Int
     
     var body: some View {
         HStack(spacing: 20) {
-            PlaylistArtworkView(thumbnails: thumbnails, size: 60, defaultIcon: defaultIcon, baseURL: baseURL)
+            PlaylistArtworkView(thumbnails: thumbnails, size: 60, defaultIcon: defaultIcon)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(name)
@@ -300,17 +262,16 @@ struct PlaylistRow: View {
     }
     
     private func pluralizedTracks(_ count: Int) -> String {
-        // Simple pluralization for now, could use a helper for ru/en
         if count == 0 { return "No tracks" }
         return "\(count) track\(count == 1 ? "" : "s")"
     }
 }
 
 struct PlaylistArtworkView: View {
+    @Environment(\.baseURL) var baseURL
     let thumbnails: [String]
     let size: CGFloat
     let defaultIcon: String
-    let baseURL: String
     
     var body: some View {
         ZStack {
@@ -324,42 +285,35 @@ struct PlaylistArtworkView: View {
                 }
                 .frame(width: size, height: size)
             } else {
-                // Fan style: Stack of covers with rotation
-                let count = thumbnails.prefix(3).count
-                ForEach(0..<count, id: \.self) { index in
-                    let reverseIndex = count - 1 - index
-                    let thumb = thumbnails[reverseIndex]
-                    
-                    CachedAsyncImage(url: thumbURL(thumb), contentMode: .fill)
-                        .frame(width: size, height: size)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(.white.opacity(0.1), lineWidth: 0.5))
-                        .shadow(radius: 4)
-                        .rotationEffect(.degrees(Double(reverseIndex - 1) * 12))
-                        .offset(x: CGFloat(reverseIndex - 1) * 12, y: CGFloat(reverseIndex) * 2)
-                        .scaleEffect(1.0 - CGFloat(reverseIndex) * 0.05)
-                        .zIndex(Double(count - reverseIndex))
+                let showThumbnails = Array(thumbnails.prefix(3))
+                let total = showThumbnails.count
+                
+                ZStack {
+                    if total > 2 {
+                        thumbnailView(path: showThumbnails[2], index: 2, total: total)
+                    }
+                    if total > 1 {
+                        thumbnailView(path: showThumbnails[1], index: 1, total: total)
+                    }
+                    if total > 0 {
+                        thumbnailView(path: showThumbnails[0], index: 0, total: total)
+                    }
                 }
             }
         }
         .frame(width: size + 20, height: size + 10)
     }
-
-    private func thumbURL(_ path: String) -> URL? {
-        if path.hasPrefix("http") {
-            return URL(string: path)
-        }
-        
-        // Use the same robust URL construction as APIClient
-        guard var components = URLComponents(string: baseURL) else {
-            return nil
-        }
-        
-        let basePath = components.path
-        let cleanedPath = path.hasPrefix("/") ? String(path.dropFirst()) : path
-        let finalPath = basePath.hasSuffix("/") ? "\(basePath)\(cleanedPath)" : "\(basePath)/\(cleanedPath)"
-        
-        components.path = finalPath
-        return components.url
+    
+    private func thumbnailView(path: String, index: Int, total: Int) -> some View {
+        let reverseIndex = total - 1 - index
+        return CachedAsyncImage(url: Track.thumbnailURL(path: path, baseURL: baseURL), contentMode: .fill)
+            .frame(width: size, height: size)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(.white.opacity(0.1), lineWidth: 0.5))
+            .shadow(radius: 4)
+            .rotationEffect(.degrees(Double(reverseIndex - 1) * 12.0))
+            .offset(x: CGFloat(reverseIndex - 1) * 12.0, y: CGFloat(reverseIndex) * 2.0)
+            .scaleEffect(1.0 - CGFloat(reverseIndex) * 0.05)
+            .zIndex(Double(total - reverseIndex))
     }
 }

@@ -140,11 +140,169 @@ struct AudioRouteLabel: View {
     }
 }
 
+// MARK: - Playback Controls
+
+struct PlaybackControlsRow: View {
+    let isPlaying: Bool
+    let isBuffering: Bool
+    let onPrevious: () -> Void
+    let onTogglePlay: () -> Void
+    let onNext: () -> Void
+    var style: PlayPauseButton.Style = .row
+    
+    var body: some View {
+        HStack(spacing: style == .large ? 40 : 12) {
+            Button(action: {
+                HapticManager.shared.trigger(.selection)
+                onPrevious()
+            }) {
+                Image(systemName: "backward.fill")
+                    .font(style == .large ? .title : .body)
+            }
+            .buttonStyle(.plain)
+            
+            PlayPauseButton(
+                isPlaying: isPlaying,
+                isBuffering: isBuffering,
+                action: onTogglePlay,
+                style: style
+            )
+            
+            Button(action: {
+                HapticManager.shared.trigger(.selection)
+                onNext()
+            }) {
+                Image(systemName: "forward.fill")
+                    .font(style == .large ? .title : .body)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+}
+
+// MARK: - Track Menu
+
+struct TrackMenuContent: View {
+    let track: Track
+    let onPlay: () -> Void
+    let onAddToQueue: () -> Void
+    var onToggleFavorite: (() -> Void)? = nil
+    var isFavorite: Bool = false
+    var onRemove: (() -> Void)? = nil
+    
+    @EnvironmentObject var appState: AppState
+    @EnvironmentObject var playerStore: PlayerStore
+    @EnvironmentObject var playerService: PlayerService
+    @EnvironmentObject var downloadsStore: DownloadsStore
+    @EnvironmentObject var playlistsStore: PlaylistsStore
+    
+    var body: some View {
+        Group {
+            Button(action: onPlay) {
+                Label("Play", systemImage: "play")
+            }
+            
+            Button(action: onAddToQueue) {
+                Label("Add to Queue", systemImage: "text.badge.plus")
+            }
+            
+            Button {
+                playerStore.addToQueueNext(track)
+            } label: {
+                Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
+            }
+            
+            if let onToggleFavorite {
+                Button(action: onToggleFavorite) {
+                    Label(isFavorite ? "Remove from Favorites" : "Add to Favorites", 
+                          systemImage: isFavorite ? "heart.fill" : "heart")
+                }
+            }
+            
+            downloadSection
+            
+            playlistMenu
+            
+            if let onRemove {
+                Button(role: .destructive, action: onRemove) {
+                    Label("Remove", systemImage: "trash")
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var downloadSection: some View {
+        let isDownloaded = downloadsStore.isTrackDownloaded(track.id)
+        let isDownloading = downloadsStore.isDownloading(track.id)
+        let isFailed = downloadsStore.isFailed(track.id)
+        
+        if isDownloading {
+            Button(role: .destructive) {
+                downloadsStore.removeTrack(track.id)
+                AudioCacheService.shared.removeTrack(id: track.id)
+            } label: {
+                Label("Cancel Download", systemImage: "xmark.circle")
+            }
+        } else if isFailed {
+            Button {
+                playerService.downloadTrack(track)
+            } label: {
+                Label("Retry Download", systemImage: "arrow.clockwise.circle")
+            }
+            
+            Button(role: .destructive) {
+                downloadsStore.removeTrack(track.id)
+                AudioCacheService.shared.removeTrack(id: track.id)
+            } label: {
+                Label("Remove from Downloads", systemImage: "trash")
+            }
+        } else {
+            Button {
+                if isDownloaded {
+                    downloadsStore.removeTrack(track.id)
+                    AudioCacheService.shared.removeTrack(id: track.id)
+                } else {
+                    playerService.downloadTrack(track)
+                }
+            } label: {
+                Label(isDownloaded ? "Remove Download" : "Download", 
+                      systemImage: isDownloaded ? "trash" : "arrow.down.circle")
+            }
+        }
+    }
+    
+    private var playlistMenu: some View {
+        Menu {
+            ForEach(playlistsStore.playlists) { pl in
+                Button(pl.name) {
+                    Task { await playlistsStore.addTrack(playlistId: pl.id, track: track) }
+                }
+            }
+        } label: {
+            Label("Add to Playlist", systemImage: "folder.badge.plus")
+        }
+    }
+}
+
 // MARK: - Extensions
 
 extension View {
     @ViewBuilder
     func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
         if condition { transform(self) } else { self }
+    }
+}
+
+// MARK: - Environment
+
+struct BaseURLEnvironmentKey: EnvironmentKey {
+    static let defaultValue: String = "http://localhost:3001"
+}
+
+extension EnvironmentValues {
+    var baseURL: String {
+        get { self[BaseURLEnvironmentKey.self] }
+        set { self[BaseURLEnvironmentKey.self] = newValue }
     }
 }

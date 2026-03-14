@@ -1,9 +1,9 @@
 import SwiftUI
 
 struct VinylRecordView: View {
+    @Environment(\.baseURL) var baseURL
     let track: Track
     let size: CGFloat // This is the sleeve size
-    let baseURL: String
     @ObservedObject var playerService: PlayerService
     let downloadProgress: Double?
     let isFailed: Bool
@@ -43,7 +43,6 @@ struct VinylRecordView: View {
                     forceSquare: true,
                     cornerRadius: size * 0.175,
                     showStatus: false,
-                    baseURL: baseURL,
                     downloadProgress: downloadProgress,
                     isFailed: isFailed,
                     isPlaying: false // No eq on record center
@@ -67,7 +66,6 @@ struct VinylRecordView: View {
                 forceSquare: true,
                 cornerRadius: 8,
                 showStatus: false,
-                baseURL: baseURL,
                 downloadProgress: downloadProgress,
                 isFailed: isFailed,
                 isPlaying: isPlaying, // Show eq on sleeve when playing
@@ -100,14 +98,12 @@ struct VinylRecordView: View {
     }
 
     private func startRotation() {
-        // Use linear animation directly for rotation to avoid "jumping"
         withAnimation(.linear(duration: 20).repeatForever(autoreverses: false)) {
             rotation += 360
         }
     }
 
     private func stopRotation() {
-        // Stop exactly where it is
         withAnimation(.none) {
             rotation = rotation.truncatingRemainder(dividingBy: 360)
         }

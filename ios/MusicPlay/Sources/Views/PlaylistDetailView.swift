@@ -1,12 +1,13 @@
 import SwiftUI
 
 struct PlaylistDetailView: View {
+    @Environment(\.baseURL) var baseURL
     @ObservedObject var playlistsStore: PlaylistsStore
     @ObservedObject var playerStore: PlayerStore
     @ObservedObject var playerService: PlayerService
     @ObservedObject var downloadsStore: DownloadsStore
     @ObservedObject var favoritesStore: FavoritesStore
-    let baseURL: String
+    
     let playlist: Playlist
     @Binding var showPlayer: Bool
 
@@ -24,13 +25,35 @@ struct PlaylistDetailView: View {
                 }
                 .listRowSeparator(.hidden)
             } else if playlistsStore.activeTracks.isEmpty && !playlistsStore.isLoading {
-                ContentUnavailableView("Empty Playlist", systemImage: "music.note.list", description: Text("Add tracks from search"))
+                ContentUnavailableView(
+                    "Empty Playlist",
+                    systemImage: "music.note.list",
+                    description: Text("Add tracks from search")
+                )
             }
             
             ForEach(Array(playlistsStore.activeTracks.enumerated()), id: \.element.id) { index, track in
-                trackRow(track)
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                    .animation(.spring(response: 0.4, dampingFraction: 0.8).delay(Double(index) * 0.05), value: playlistsStore.activeTracks)
+                TrackRow(
+                    track: track,
+                    onPlay: {
+                        playerService.playTrack(track, context: playlistsStore.activeTracks)
+                        showPlayer = true
+                    },
+                    onAddToQueue: {
+                        playerStore.addToQueue(track)
+                    },
+                    isFavorite: favoritesStore.isFavorite(track.id),
+                    onToggleFavorite: {
+                        Task { await favoritesStore.toggleFavorite(track) }
+                    },
+                    onRemove: {
+                        if let rowId = track.rowId {
+                            Task { await playlistsStore.removeTrack(playlistId: playlist.id, trackId: rowId) }
+                        }
+                    }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                .animation(.spring(response: 0.4, dampingFraction: 0.8).delay(Double(index) * 0.05), value: playlistsStore.activeTracks)
             }
             .onDelete { indexSet in
                 for index in indexSet.sorted(by: >) {
@@ -49,9 +72,7 @@ struct PlaylistDetailView: View {
         }
         .environment(\.editMode, $editMode)
         .safeAreaInset(edge: .bottom) {
-            if playerStore.currentTrack != nil {
-                Color.clear.frame(height: 70)
-            }
+            MiniPlayerSpacer()
         }
         .navigationTitle(playlist.name)
         .toolbar {
@@ -81,36 +102,5 @@ struct PlaylistDetailView: View {
             }
         }
         .onAppear { Task { await playlistsStore.selectPlaylist(id: playlist.id) } }
-    }
-
-    @ViewBuilder
-    private func trackRow(_ track: Track) -> some View {
-        TrackRow(
-            track: track,
-            baseURL: baseURL,
-            downloadsStore: downloadsStore,
-            playlistsStore: playlistsStore,
-            playerStore: playerStore,
-            playerService: playerService,
-            onPlay: {
-                playerService.playTrack(track, context: playlistsStore.activeTracks)
-                showPlayer = true
-            },
-            onAddToQueue: {
-                playerStore.addToQueue(track)
-            },
-            isFavorite: favoritesStore.isFavorite(track.id),
-            isDownloaded: downloadsStore.isDownloaded(id: track.id),
-            downloadProgress: downloadsStore.downloadProgresses[track.id],
-            isFailedDownload: downloadsStore.failedDownloads.contains(track.id),
-            onToggleFavorite: {
-                Task { await favoritesStore.toggleFavorite(track) }
-            },
-            onRemove: {
-                if let rowId = track.rowId {
-                    Task { await playlistsStore.removeTrack(playlistId: playlist.id, trackId: rowId) }
-                }
-            }
-        )
     }
 }

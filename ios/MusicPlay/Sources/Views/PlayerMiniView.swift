@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct PlayerMiniView: View {
+    @Environment(\.baseURL) var baseURL
     @ObservedObject var playerStore: PlayerStore
     @ObservedObject var playerService: PlayerService
     @ObservedObject var downloadsStore: DownloadsStore
-    let progressStore: PlaybackProgressStore // Pass by value/reference without observation
-    let baseURL: String
+    let progressStore: PlaybackProgressStore
     @Binding var showPlayer: Bool
 
     var body: some View {
@@ -20,25 +20,24 @@ struct PlayerMiniView: View {
                         showPlayer = true
                     } label: {
                         HStack(spacing: 12) {
-                                TrackThumbnail(
-                                    track: track,
-                                    size: 44,
-                                    forceSquare: true,
-                                    cornerRadius: 8,
-                                    showStatus: false,
-                                    baseURL: baseURL,
-                                    downloadProgress: downloadsStore.downloadProgresses[track.id],
-                                    isFailed: downloadsStore.failedDownloads.contains(track.id),
-                                    isPlaying: playerService.isPlaying
-                                )
+                            TrackThumbnail(
+                                track: track,
+                                size: 44,
+                                forceSquare: true,
+                                cornerRadius: 8,
+                                showStatus: false,
+                                downloadProgress: downloadsStore.progress(for: track.id),
+                                isFailed: downloadsStore.isFailed(track.id),
+                                isPlaying: playerService.isPlaying
+                            )
 
                             ZStack(alignment: .leading) {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(track.title)
-                                        .font(.subheadline.weight(.medium))
-                                        .lineLimit(1)
+                                    MarqueeText(text: track.title, font: .subheadline.weight(.medium), speed: 20)
+                                        .frame(height: 18)
+                                    
                                     HStack(spacing: 4) {
-                                        if downloadsStore.isDownloaded(id: track.id) {
+                                        if downloadsStore.isTrackDownloaded(track.id) {
                                             DownloadIcon(size: .small)
                                         }
                                         TrackMetadataView(track: track, showDuration: false)
@@ -58,8 +57,8 @@ struct PlayerMiniView: View {
 
                     Spacer()
 
-                    // Playback controls — do NOT open full player
-                    HStack(spacing: 16) {
+                    // Mini Controls
+                    HStack(spacing: 8) {
                         PlayPauseButton(
                             isPlaying: playerService.isPlaying,
                             isBuffering: playerService.isBuffering,
@@ -85,7 +84,7 @@ struct PlayerMiniView: View {
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
             .shadow(color: .black.opacity(0.15), radius: 8, y: -2)
             .padding(.horizontal, 8)
-            .padding(.bottom, 4) // Small gap from whatever is below
+            .padding(.bottom, 4)
         }
     }
 }

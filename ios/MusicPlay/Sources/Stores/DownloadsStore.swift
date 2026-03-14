@@ -205,6 +205,22 @@ final class DownloadsStore: ObservableObject {
     func canRetry(id: String) -> Bool {
         failedDownloads.contains(id)
     }
+
+    func isTrackDownloaded(_ id: String) -> Bool {
+        isDownloaded(id: id)
+    }
+
+    func isDownloading(_ id: String) -> Bool {
+        downloadProgresses[id] != nil
+    }
+
+    func isFailed(_ id: String) -> Bool {
+        failedDownloads.contains(id)
+    }
+
+    func progress(for id: String) -> Double? {
+        downloadProgresses[id]
+    }
     
     func moveTracks(from source: IndexSet, to destination: Int) {
         downloadedTracks.move(fromOffsets: source, toOffset: destination)

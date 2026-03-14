@@ -38,6 +38,17 @@ struct Track: Codable, Identifiable, Hashable {
         return String(format: "%d:%02d", m, s)
     }
 
+    func thumbnailURL(baseURL: String) -> URL? {
+        Track.thumbnailURL(path: thumbnail, baseURL: baseURL)
+    }
+
+    static func thumbnailURL(path: String, baseURL: String) -> URL? {
+        if path.hasPrefix("http") {
+            return URL(string: path)
+        }
+        return URL(string: "\(baseURL)/proxy/image?url=\(path.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")
+    }
+
     enum CodingKeys: String, CodingKey {
         case id
         case title
@@ -60,6 +71,14 @@ struct Playlist: Codable, Identifiable, Hashable {
     let name: String
     let thumbnails: [String]?
     let trackCount: Int?
+
+    func thumbnailURL(baseURL: String) -> URL? {
+        guard let thumb = thumbnails?.first else { return nil }
+        if thumb.hasPrefix("http") {
+            return URL(string: thumb)
+        }
+        return URL(string: "\(baseURL)/proxy/image?url=\(thumb.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")
+    }
 }
 
 struct PlayerState: Codable {
