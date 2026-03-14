@@ -175,14 +175,31 @@ final class PlayerService: ObservableObject {
         // 1. Prepare secondary player
         newPlayer.replaceCurrentItem(with: newItem)
         newPlayer.volume = 0
-        newPlayer.play()
         
+        // Wait for secondary player to be ready before starting fade
+        statusObserver?.invalidate()
+        statusObserver = newItem.observe(\.status, options: [.new]) { [weak self] item, _ in
+            guard let self = self else { return }
+            Task { @MainActor in
+                if item.status == .readyToPlay {
+                    newPlayer.play()
+                    self.startFadeLogic(fadeId: fadeId, oldPlayer: oldPlayer, newPlayer: newPlayer, fadeDuration: fadeDuration, track: track)
+                } else if item.status == .failed {
+                    print("❌ Crossfade secondary track failed to load, aborting fade")
+                    self.isCrossfading = false
+                    self.currentCrossfadeId = nil
+                }
+            }
+        }
+    }
+    
+    private func startFadeLogic(fadeId: UUID, oldPlayer: AVPlayer, newPlayer: AVPlayer, fadeDuration: Double, track: Track) {
         // 2. SWAP active player IMMEDIATELY so UI/Observers track the new track
         activePlayerA.toggle()
         
         // 3. Refresh observers for the NEW active player
         reattachObservers()
-        updateNowPlaying(track: track, duration: 0)
+        updateNowPlaying(track: track, duration: duration)
         
         // 4. Optimized and controllable fade loop
         let steps = 20
@@ -257,7 +274,17 @@ final class PlayerService: ObservableObject {
     func prepareTrack(_ track: Track, at position: Double, autoPlay: Bool = false) {
         guard api != nil else { return }
         currentTrackId = track.id
-        let asset = createAsset(for: track)
+        
+        // Optimization: if we are just preparing (e.g. app launch), don't trigger download if not in cache
+        let asset: AVURLAsset
+        if !autoPlay && AudioCacheService.shared.localURL(for: track.id) == nil {
+            print("Preparing track (launch/restore) without auto-caching: \(track.id)")
+            let url = api!.streamURL(for: track.id)
+            asset = AVURLAsset(url: url) // Bypass ResourceLoader to avoid parasitic download
+        } else {
+            asset = createAsset(for: track)
+        }
+        
         let item = AVPlayerItem(asset: asset)
         item.preferredForwardBufferDuration = 10
 
@@ -728,19 +755,31 @@ final class PlayerService: ObservableObject {
         }
     }
 
+    private var resourceLoaderDelegate: AudioResourceLoaderDelegate?
+
     private func createAsset(for track: Track) -> AVURLAsset {
         guard let api else { return AVURLAsset(url: URL(string: "about:blank")!) }
-        let url = api.streamURL(for: track.id)
+        
         if let localURL = AudioCacheService.shared.localURL(for: track.id) {
             print("Playing from cache: \(track.id)")
             appState?.downloadsStore.saveTrackInternal(track)
             return AVURLAsset(url: localURL)
         } else {
-            print("Streaming and caching: \(track.id)")
-            let headers = ["Authorization": "Bearer \(apiToken)"]
+            print("Streaming via ResourceLoader: \(track.id)")
+            let url = api.streamURL(for: track.id)
+            
+            // Use custom scheme to trigger resource loader
+            var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            components?.scheme = "musicplay-stream"
+            guard let streamURL = components?.url else { return AVURLAsset(url: url) }
+            
+            let asset = AVURLAsset(url: streamURL)
+            let delegate = AudioResourceLoaderDelegate(trackId: track.id, remoteURL: url, api: api)
+            self.resourceLoaderDelegate = delegate
+            asset.resourceLoader.setDelegate(delegate, queue: .main)
+            
             appState?.downloadsStore.registerPotentialTrack(track)
-            AudioCacheService.shared.cacheTrack(id: track.id, remoteURL: url, token: apiToken)
-            return AVURLAsset(url: url, options: ["AVURLAssetHTTPHeaderFieldsKey": headers])
+            return asset
         }
     }
     
@@ -758,12 +797,231 @@ final class PlayerService: ObservableObject {
     }
 
     deinit {
-        // Non-actor isolated deinit is okay as long as it doesn't access actor-protected state synchronously
-        // But since deinit is special, we must be careful.
+        // Cleanup
     }
 }
 
-// Subordinate services remain thread-safe but non-isolated if possible
+// MARK: - Audio Resource Loader Delegate
+
+final class AudioResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate {
+    private let trackId: String
+    private let remoteURL: URL
+    private let api: APIClient
+    private var session: URLSession?
+    private var task: URLSessionDataTask?
+    
+    private var response: HTTPURLResponse?
+    private var data = Data()
+    private var pendingRequests: [AVAssetResourceLoadingRequest] = []
+    
+    private let queue = DispatchQueue(label: "com.musicplay.resource-loader")
+    private var isCancelled = false
+    
+    init(trackId: String, remoteURL: URL, api: APIClient) {
+        self.trackId = trackId
+        self.remoteURL = remoteURL
+        self.api = api
+        super.init()
+    }
+    
+    func resourceLoader(_ resourceLoader: AVAssetResourceLoader, shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest) -> Bool {
+        queue.async { [weak self] in
+            guard let self = self else { return }
+            self.pendingRequests.append(loadingRequest)
+            if self.task == nil {
+                self.startRequest()
+            } else {
+                self.processPendingRequests()
+            }
+        }
+        return true
+    }
+    
+    func resourceLoader(_ resourceLoader: AVAssetResourceLoader, didCancel loadingRequest: AVAssetResourceLoadingRequest) {
+        queue.async { [weak self] in
+            self?.pendingRequests.removeAll { $0 == loadingRequest }
+        }
+    }
+    
+    private func startRequest() {
+        var request = URLRequest(url: remoteURL)
+        if let token = api.accessToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        request.setValue("true", forHTTPHeaderField: "X-Full-Download")
+        
+        let config = URLSessionConfiguration.default
+        session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
+        task = session?.dataTask(with: request)
+        task?.resume()
+    }
+    
+    private func processPendingRequests() {
+        var requestsToComplete: [AVAssetResourceLoadingRequest] = []
+        
+        for request in pendingRequests {
+            if let informationRequest = request.contentInformationRequest {
+                fillInformationRequest(informationRequest)
+            }
+            
+            if let dataRequest = request.dataRequest {
+                if fillDataRequest(dataRequest) {
+                    requestsToComplete.append(request)
+                }
+            }
+        }
+        
+        for request in requestsToComplete {
+            request.finishLoading()
+            pendingRequests.removeAll { $0 == request }
+        }
+    }
+    
+    private func fillInformationRequest(_ informationRequest: AVAssetResourceLoadingContentInformationRequest) {
+        guard let response = response else { return }
+        
+        informationRequest.contentType = response.mimeType
+        informationRequest.contentLength = response.expectedContentLength
+        informationRequest.isByteRangeAccessSupported = true
+    }
+    
+    private func fillDataRequest(_ dataRequest: AVAssetResourceLoadingDataRequest) -> Bool {
+        let requestedOffset = dataRequest.requestedOffset
+        let requestedLength = Int64(dataRequest.requestedLength)
+        let currentOffset = dataRequest.currentOffset
+        
+        let writeOffset = max(currentOffset, requestedOffset)
+        let dataLength = Int64(data.count)
+        
+        if writeOffset >= dataLength {
+            return false
+        }
+        
+        let unreadBytes = dataLength - writeOffset
+        let numberOfBytesToWrite = min(unreadBytes, requestedLength)
+        
+        let range = Int(writeOffset)..<Int(writeOffset + numberOfBytesToWrite)
+        let subdata = data.subdata(in: range)
+        dataRequest.respond(with: subdata)
+        
+        return dataRequest.currentOffset >= requestedOffset + requestedLength
+    }
+    
+    func cancel() {
+        queue.async { [weak self] in
+            self?.isCancelled = true
+            self?.task?.cancel()
+            self?.pendingRequests.forEach { $0.finishLoading() }
+            self?.pendingRequests.removeAll()
+        }
+    }
+}
+
+extension AudioResourceLoaderDelegate: URLSessionDataDelegate {
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+        queue.async { [weak self] in
+            guard let self = self else {
+                completionHandler(.cancel)
+                return
+            }
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                if httpResponse.statusCode == 401 {
+                    completionHandler(.cancel)
+                    self.handleUnauthorized()
+                    return
+                }
+                self.response = httpResponse
+                
+                if let durationStr = httpResponse.value(forHTTPHeaderField: "X-Audio-Duration"), let durationSeconds = Double(durationStr) {
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: NSNotification.Name("TrackDurationUpdated"), object: self.trackId, userInfo: ["duration": Int(durationSeconds)])
+                    }
+                }
+            }
+            
+            self.processPendingRequests()
+            completionHandler(.allow)
+        }
+    }
+    
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        queue.async { [weak self] in
+            guard let self = self else { return }
+            self.data.append(data)
+            self.processPendingRequests()
+            
+            if let total = self.response?.expectedContentLength, total > 0 {
+                let progress = Double(self.data.count) / Double(total)
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadProgress"), object: self.trackId, userInfo: ["progress": progress])
+                }
+            }
+        }
+    }
+    
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        queue.async { [weak self] in
+            guard let self = self else { return }
+            
+            if let error = error {
+                if (error as NSError).code != NSURLErrorCancelled {
+                    print("❌ Resource loader error for \(self.trackId): \(error.localizedDescription)")
+                    self.pendingRequests.forEach { $0.finishLoading(with: error) }
+                    self.pendingRequests.removeAll()
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFailed"), object: self.trackId)
+                    }
+                }
+                return
+            }
+            
+            self.saveToCache()
+            self.pendingRequests.forEach { $0.finishLoading() }
+            self.pendingRequests.removeAll()
+            
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFinished"), object: self.trackId)
+            }
+        }
+    }
+    
+    private func handleUnauthorized() {
+        Task {
+            let refreshed = (try? await api.refreshToken()) ?? false
+            if refreshed {
+                print("🔄 Token refreshed, retrying resource loader request...")
+                self.queue.async {
+                    self.data = Data()
+                    self.startRequest()
+                }
+            } else {
+                self.failWithAuthError()
+            }
+        }
+    }
+    
+    private func failWithAuthError() {
+        queue.async {
+            self.pendingRequests.forEach { $0.finishLoading(with: URLError(.userAuthenticationRequired)) }
+            self.pendingRequests.removeAll()
+        }
+    }
+    
+    private func saveToCache() {
+        let cacheDir = AudioCacheService.shared.getCacheDirectory()
+        let finalURL = cacheDir.appendingPathComponent("\(trackId).m4a")
+        do {
+            try data.write(to: finalURL)
+            print("✅ Track \(trackId) successfully saved to cache via ResourceLoader")
+        } catch {
+            print("❌ Failed to save track \(trackId) to cache: \(error.localizedDescription)")
+        }
+    }
+}
+
+// MARK: - Audio Cache Service
+
 final class AudioCacheService {
     static let shared = AudioCacheService()
     
@@ -782,7 +1040,7 @@ final class AudioCacheService {
         return paths[0].appendingPathComponent("AudioCache")
     }
     
-    private let maxCacheSize: UInt64 = UInt64.max
+    private let maxCacheSize: UInt64 = 500 * 1024 * 1024 // 500 MB limit
     private var downloadTasks: [String: Task<Void, Never>] = [:]
     private let queue = DispatchQueue(label: "com.musicplay.audiocache", qos: .userInitiated)
     private var lastCleanupDate = Date.distantPast
@@ -790,6 +1048,10 @@ final class AudioCacheService {
     private init() {
         migrateOldCache()
         cleanUpCacheIfNeeded()
+    }
+
+    func getCacheDirectory() -> URL {
+        return cacheDirectory
     }
 
     private func migrateOldCache() {
@@ -866,7 +1128,7 @@ final class AudioCacheService {
             try? fileManager.removeItem(at: tempURL)
             DispatchQueue.main.async { NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFailed"), object: trackId) }
         }
-        queue.sync { downloadTasks.removeValue(forKey: trackId) }
+        queue.sync { _ = downloadTasks.removeValue(forKey: trackId) }
     }
     
     func clearCache() {
@@ -890,12 +1152,12 @@ final class AudioCacheService {
         return totalSize
     }
     
-    private func cleanUpCacheIfNeeded() {
+    func cleanUpCacheIfNeeded() {
         let now = Date()
         guard now.timeIntervalSince(lastCleanupDate) > 60 else { return }
         lastCleanupDate = now
         queue.async { [weak self] in
-            guard let self else { return }
+            guard let self = self else { return }
             let files = (try? self.fileManager.contentsOfDirectory(at: self.cacheDirectory, includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey])) ?? []
             var totalSize: UInt64 = 0
             var fileProps: [(url: URL, size: UInt64, date: Date)] = []
@@ -909,8 +1171,12 @@ final class AudioCacheService {
                 fileProps.sort { $0.date < $1.date }
                 var currentSize = totalSize
                 for prop in fileProps where currentSize > self.maxCacheSize {
+                    let trackId = prop.url.deletingPathExtension().lastPathComponent
                     try? self.fileManager.removeItem(at: prop.url)
                     currentSize -= prop.size
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: NSNotification.Name("TrackEvictedFromCache"), object: trackId)
+                    }
                 }
             }
         }

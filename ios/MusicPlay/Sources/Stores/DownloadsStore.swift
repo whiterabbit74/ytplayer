@@ -79,6 +79,20 @@ final class DownloadsStore: ObservableObject {
             }
         }
         observerTokens.append(uToken)
+        
+        // Listen for eviction from cache (cleanup)
+        let eToken = NotificationCenter.default.addObserver(forName: NSNotification.Name("TrackEvictedFromCache"), object: nil, queue: .main) { [weak self] note in
+            if let id = note.object as? String {
+                print("🗑️ Track \(id) evicted from cache, removing from downloads list")
+                self?.removeTrackLocalOnly(id)
+            }
+        }
+        observerTokens.append(eToken)
+    }
+    
+    private func removeTrackLocalOnly(_ id: String) {
+        downloadedTracks.removeAll { $0.id == id }
+        saveToDisk()
     }
     
     func startDownload(_ track: Track) {
