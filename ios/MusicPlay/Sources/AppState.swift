@@ -103,7 +103,7 @@ final class AppState: ObservableObject {
     
     private func setupObservers() {
         NotificationCenter.default.addObserver(forName: APIClient.sessionEndedNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.logout()
+            Task { @MainActor in self?.logout() }
         }
     }
 
@@ -120,8 +120,10 @@ final class AppState: ObservableObject {
     private func startHealthCheck() {
         // Periodic check if server is back
         Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
-            guard let self = self, !self.isServerAvailable else { return }
-            Task { await self.checkConnection() }
+            Task { @MainActor in
+                guard let self = self, !self.isServerAvailable else { return }
+                Task { await self.checkConnection() }
+            }
         }
     }
 

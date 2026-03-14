@@ -11,6 +11,9 @@ targets:
     deploymentTarget: "18.0"
     sources:
       - path: Sources
+        excludes:
+          - "**/*.strings"
+          - "Resources/**"
       - path: Sources/Resources
         group: Resources
         localize: true

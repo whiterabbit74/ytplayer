@@ -125,19 +125,21 @@ struct AudioRouteLabel: View {
     @State private var routeName: String = "iPhone"
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "airplayaudio")
-                .font(.system(size: 14))
-            Text(routeName).font(.caption.weight(.medium))
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(Color.white.opacity(0.1))
-        .clipShape(Capsule())
-        .foregroundStyle(.white.opacity(0.8))
-        .overlay {
-            // AirPlayButton (AVRoutePickerView) теперь растянут на всю область
-            // и ловит нажатие в любой его точке.
+        ZStack {
+            // Визуальный слой
+            HStack(spacing: 8) {
+                Image(systemName: "airplayaudio")
+                    .font(.system(size: 14))
+                Text(routeName).font(.caption.weight(.medium))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.white.opacity(0.1))
+            .clipShape(Capsule())
+            .foregroundStyle(.white.opacity(0.8))
+            .allowsHitTesting(false)
+            
+            // Слой-приемник касаний
             AirPlayButton()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .opacity(0.01)
