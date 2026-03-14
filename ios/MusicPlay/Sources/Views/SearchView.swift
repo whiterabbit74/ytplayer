@@ -21,6 +21,7 @@ struct SearchView: View {
                 loadMoreButton
             }
             .listStyle(.plain)
+            .animation(.easeInOut, value: searchStore.results)
             .safeAreaInset(edge: .bottom) {
                 if playerStore.currentTrack != nil {
                     Color.clear.frame(height: 70)
@@ -28,6 +29,7 @@ struct SearchView: View {
             }
             .navigationTitle("Search")
             .searchable(text: $query, prompt: "Search songs, artists...")
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: query)
             .searchSuggestions {
                 if !searchStore.suggestions.isEmpty {
                     Section("Suggestions") {

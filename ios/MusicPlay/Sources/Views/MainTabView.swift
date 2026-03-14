@@ -4,6 +4,7 @@ struct MainTabView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var keyboard = KeyboardObserver()
     @State private var showPlayer = false
+    @State private var showSplash = true
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -26,15 +27,15 @@ struct MainTabView: View {
                     baseURL: appState.baseURL,
                     showPlayer: $showPlayer
                 )
-                    .tabItem { Label("Search", systemImage: "magnifyingglass") }
+                    .tabItem { Label("Search", systemImage: "magnifyingglass").symbolEffect(.bounce, value: appState.selectedTab == 0) }
                     .tag(0)
 
                 PlaylistsView(playlistsStore: appState.playlistsStore, showPlayer: $showPlayer)
-                    .tabItem { Label("Playlists", systemImage: "music.note.list") }
+                    .tabItem { Label("Playlists", systemImage: "music.note.list").symbolEffect(.bounce, value: appState.selectedTab == 1) }
                     .tag(1)
 
                 FavoritesView(favoritesStore: appState.favoritesStore, showPlayer: $showPlayer)
-                    .tabItem { Label("Favorites", systemImage: "heart.fill") }
+                    .tabItem { Label("Favorites", systemImage: "heart.fill").symbolEffect(.bounce, value: appState.selectedTab == 2) }
                     .tag(2)
 
                 QueueView(
@@ -44,7 +45,7 @@ struct MainTabView: View {
                     baseURL: appState.baseURL,
                     showPlayer: $showPlayer
                 )
-                .tabItem { Label("Queue", systemImage: "list.bullet") }
+                .tabItem { Label("Queue", systemImage: "list.bullet").symbolEffect(.bounce, value: appState.selectedTab == 3) }
                 .tag(3)
             }
 
@@ -59,6 +60,24 @@ struct MainTabView: View {
                 )
                 .padding(.bottom, keyboard.isVisible ? 0 : 60) // Align above standard TabBar, but sit on keyboard when visible
                 .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
+            if showSplash {
+                ZStack {
+                    Color(UIColor.systemBackground).ignoresSafeArea()
+                    Image(systemName: "music.note")
+                        .font(.system(size: 80))
+                        .foregroundStyle(.blue)
+                }
+                .transition(.opacity.combined(with: .scale(scale: 1.2)))
+                .zIndex(100)
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        withAnimation(.easeInOut(duration: 0.5)) {
+                            showSplash = false
+                        }
+                    }
+                }
             }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: appState.playerStore.currentTrack != nil)

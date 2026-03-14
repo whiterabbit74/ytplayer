@@ -56,10 +56,17 @@ struct VinylRecordView: View {
             }
             .frame(width: size * 0.95, height: size * 0.95)
             .rotationEffect(.degrees(rotation))
+            .rotation3DEffect(
+                .degrees(isPlaying ? 3 : 0),
+                axis: (x: 1, y: 0.5, z: 0)
+            ) // Static axis wobble
             .scaleEffect(isPlaying ? 1.02 : 1.0) // Subtle pulse/ready scale
             .offset(x: isPlaying ? recordOffset : 5) 
             .shadow(color: .black.opacity(0.4), radius: 10, x: 5, y: 5)
-            .animation(.spring(response: 0.6, dampingFraction: 0.7), value: isPlaying)
+            .animation(
+                isPlaying ? .easeInOut(duration: 0.8).repeatForever(autoreverses: true) : .spring(response: 0.6, dampingFraction: 0.7),
+                value: isPlaying
+            )
             
             // The Sleeve
             TrackThumbnail(
@@ -102,15 +109,23 @@ struct VinylRecordView: View {
     }
 
     private func startRotation() {
-        withAnimation(.linear(duration: 20).repeatForever(autoreverses: false)) {
-            rotation += 360
+        // Smooth startup (ease in) then linear
+        withAnimation(.timingCurve(0.4, 0, 1, 1, duration: 2)) {
+            rotation += 36
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            if playerService.isPlaying && scenePhase == .active {
+                withAnimation(.linear(duration: 20).repeatForever(autoreverses: false)) {
+                    rotation += 360
+                }
+            }
         }
     }
 
     private func stopRotation() {
-        // Pause by using the current value and removing the animation
-        withAnimation(.none) {
-            rotation = rotation.truncatingRemainder(dividingBy: 360)
+        // Smooth stop (ease out) without snapping back
+        withAnimation(.easeOut(duration: 1.5)) {
+            rotation += 45
         }
     }
 }

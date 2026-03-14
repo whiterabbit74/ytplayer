@@ -9,6 +9,7 @@ struct MiniPlayerProgressBar: View {
             Rectangle()
                 .fill(Color.white)
                 .frame(width: geo.size.width * min(max(progress, 0), 1))
+                .animation(.linear(duration: 0.5), value: progress)
         }
         .frame(height: 2)
     }

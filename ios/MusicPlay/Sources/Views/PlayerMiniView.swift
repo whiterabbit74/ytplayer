@@ -31,22 +31,28 @@ struct PlayerMiniView: View {
                                 isFailed: downloadsStore.failedDownloads.contains(track.id)
                             )
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(track.title)
-                                    .font(.subheadline.weight(.medium))
-                                    .lineLimit(1)
-                                HStack(spacing: 4) {
-                                    if downloadsStore.isDownloaded(id: track.id) {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundStyle(.blue)
-                                            .font(.system(size: 10))
+                            ZStack(alignment: .leading) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    MarqueeText(text: track.title, font: .subheadline.weight(.medium), padding: 20)
+                                    HStack(spacing: 4) {
+                                        if downloadsStore.isDownloaded(id: track.id) {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundStyle(.blue)
+                                                .font(.system(size: 10))
+                                        }
+                                        Text(track.artist)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(1)
                                     }
-                                    Text(track.artist)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
                                 }
+                                .id(track.id)
+                                .transition(.asymmetric(
+                                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                                    removal: .move(edge: .leading).combined(with: .opacity)
+                                ))
                             }
+                            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: track.id)
                         }
                         .contentShape(Rectangle())
                     }
@@ -60,10 +66,18 @@ struct PlayerMiniView: View {
                             HapticManager.shared.trigger(.light)
                             playerService.togglePlayPause()
                         } label: {
-                            Image(systemName: playerService.isPlaying ? "pause.fill" : "play.fill")
-                                .font(.title3)
-                                .frame(width: 36, height: 36)
-                                .contentShape(Rectangle())
+                            ZStack {
+                                if playerService.isBuffering {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .primary))
+                                } else {
+                                    Image(systemName: playerService.isPlaying ? "pause.fill" : "play.fill")
+                                        .font(.title3)
+                                        .contentTransition(.symbolEffect(.replace))
+                                }
+                            }
+                            .frame(width: 36, height: 36)
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
 
@@ -72,11 +86,11 @@ struct PlayerMiniView: View {
                             playerService.next()
                         } label: {
                             Image(systemName: "forward.fill")
-                                    .font(.title3)
-                                    .frame(width: 36, height: 36)
-                                    .contentShape(Rectangle())
+                                .font(.title3)
+                                .frame(width: 36, height: 36)
+                                .contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(ScaleButtonStyle())
                     }
                 }
                 .padding(.horizontal, 12)

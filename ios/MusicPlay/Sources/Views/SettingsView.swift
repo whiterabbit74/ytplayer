@@ -88,7 +88,10 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Toggle(isOn: Binding(
                             get: { appState.crossfadeEnabled },
-                            set: { appState.updateCrossfade(enabled: $0, duration: appState.crossfadeDuration) }
+                            set: {
+                                HapticManager.shared.trigger(.light)
+                                appState.updateCrossfade(enabled: $0, duration: appState.crossfadeDuration)
+                            }
                         )) {
                             Label("Кроссфейд", systemImage: "arrow.triangle.merge")
                         }
@@ -126,7 +129,10 @@ struct SettingsView: View {
 
                     Toggle(isOn: Binding(
                         get: { appState.dynamicBackgroundEnabled },
-                        set: { appState.updateDynamicBackground(enabled: $0) }
+                        set: {
+                            HapticManager.shared.trigger(.light)
+                            appState.updateDynamicBackground(enabled: $0)
+                        }
                     )) {
                         Label("Динамический фон", systemImage: "wand.and.stars")
                     }

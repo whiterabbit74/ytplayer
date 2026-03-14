@@ -9,6 +9,7 @@ struct TrackThumbnail: View {
     let baseURL: String
     var downloadProgress: Double? = nil
     var isFailed: Bool = false
+    @State private var shakeAmount: CGFloat = 0
 
     var body: some View {
         ZStack {
@@ -47,8 +48,24 @@ struct TrackThumbnail: View {
                             .font(.system(size: size * 0.4))
                             .foregroundStyle(.red)
                             .shadow(radius: 2)
+                            .modifier(ShakeEffect(animatableData: shakeAmount))
                     }
                     .frame(width: size, height: size)
+                    .onAppear {
+                        if isFailed {
+                            withAnimation(.linear(duration: 0.5)) {
+                                shakeAmount = 1
+                            }
+                        }
+                    }
+                    .onChange(of: isFailed) { _, newValue in
+                        if newValue {
+                            shakeAmount = 0
+                            withAnimation(.linear(duration: 0.5)) {
+                                shakeAmount = 1
+                            }
+                        }
+                    }
                 }
             }
         }
