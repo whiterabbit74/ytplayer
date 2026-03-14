@@ -3,11 +3,9 @@ import Combine
 
 final class DownloadsStore: ObservableObject {
     @Published var downloadedTracks: [Track] = []
+    @Published var pendingTracks: [String: Track] = [:]
     @Published var downloadProgresses: [String: Double] = [:]
     @Published var failedDownloads: Set<String> = []
-    
-    // We store tracks being downloaded so we can save them once finished
-    private var pendingTracks: [String: Track] = [:]
     
     private var storageURL: URL {
         let paths = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
@@ -30,15 +28,24 @@ final class DownloadsStore: ObservableObject {
                 // If finished, save the track properly
                 if progress >= 1.0 {
                     self.failedDownloads.remove(id)
-                    if let track = self.pendingTracks[id] {
-                        self.saveTrackInternal(track)
-                        self.pendingTracks.removeValue(forKey: id)
-                    }
                     // Delay removal from progresses to let UI show 100% for a moment
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                         self.downloadProgresses.removeValue(forKey: id)
                     }
                 }
+            }
+        }
+        
+        // Listen for download finished (verified on disk)
+        NotificationCenter.default.addObserver(forName: NSNotification.Name("TrackDownloadFinished"), object: nil, queue: .main) { [weak self] note in
+            guard let self = self else { return }
+            if let id = note.object as? String {
+                self.failedDownloads.remove(id)
+                if let track = self.pendingTracks[id] {
+                    self.saveTrackInternal(track)
+                    self.pendingTracks.removeValue(forKey: id)
+                }
+                self.saveToDisk()
             }
         }
         
@@ -62,8 +69,7 @@ final class DownloadsStore: ObservableObject {
         pendingTracks[track.id] = track
         downloadProgresses[track.id] = 0.0
         
-        // Add to the list immediately
-        saveTrackInternal(track)
+        saveToDisk()
     }
 
     func clearError(id: String) {
@@ -78,6 +84,7 @@ final class DownloadsStore: ObservableObject {
         clearError(id: track.id)
         if pendingTracks[track.id] == nil && !downloadedTracks.contains(where: { $0.id == track.id }) {
             pendingTracks[track.id] = track
+            saveToDisk()
         }
     }
 
@@ -150,6 +157,7 @@ final class DownloadsStore: ObservableObject {
     private struct DownloadMetadata: Codable {
         let tracks: [Track]
         let failedIds: [String]
+        let pending: [String: Track]?
     }
     
     private func loadFromDisk() {
@@ -158,7 +166,9 @@ final class DownloadsStore: ObservableObject {
            let metadata = try? JSONDecoder().decode(DownloadMetadata.self, from: data) {
             self.downloadedTracks = metadata.tracks
             self.failedDownloads = Set(metadata.failedIds)
-            print("💾 Loaded \(downloadedTracks.count) downloads from disk")
+            self.pendingTracks = metadata.pending ?? [:]
+            print("💾 Loaded \(downloadedTracks.count) downloads and \(pendingTracks.count) pending from disk")
+            syncPendingOnStartup()
             return
         }
         
@@ -182,8 +192,30 @@ final class DownloadsStore: ObservableObject {
         }
     }
     
+    private func syncPendingOnStartup() {
+        var toMove: [Track] = []
+        for (id, track) in pendingTracks {
+            if AudioCacheService.shared.localURL(for: id) != nil {
+                toMove.append(track)
+            }
+        }
+        
+        if !toMove.isEmpty {
+            print("🔄 Syncing \(toMove.count) tracks that were found on disk but were pending")
+            for track in toMove {
+                saveTrackInternal(track)
+                pendingTracks.removeValue(forKey: track.id)
+            }
+            saveToDisk()
+        }
+    }
+    
     private func saveToDisk() {
-        let metadata = DownloadMetadata(tracks: downloadedTracks, failedIds: Array(failedDownloads))
+        let metadata = DownloadMetadata(
+            tracks: downloadedTracks,
+            failedIds: Array(failedDownloads),
+            pending: pendingTracks
+        )
         if let data = try? JSONEncoder().encode(metadata) {
             try? data.write(to: storageURL)
         }

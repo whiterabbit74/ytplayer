@@ -117,6 +117,11 @@ final class PlayerService: ObservableObject {
         duration = Double(track.duration)
         currentTime = 0
         isBuffering = true
+        
+        progressStore?.duration = duration
+        progressStore?.currentTime = 0
+        progressStore?.isPlaying = true
+        progressStore?.isBuffering = true
 
         statusObserver?.invalidate()
         statusObserver = item.observe(\.status, options: [.new]) { [weak self] item, _ in
@@ -151,7 +156,8 @@ final class PlayerService: ObservableObject {
         
         isPlaying = true
         playerStore?.isPlaying = true
-        updateNowPlaying(track: track, duration: 0)
+        progressStore?.isPlaying = true
+        updateNowPlaying(track: track, duration: duration)
     }
     
     private func performCrossfade(with newItem: AVPlayerItem, track: Track) {
@@ -250,6 +256,10 @@ final class PlayerService: ObservableObject {
 
         duration = Double(track.duration)
         currentTime = position
+        progressStore?.duration = duration
+        progressStore?.currentTime = position
+        progressStore?.isPlaying = autoPlay
+        
         if autoPlay {
             isBuffering = true
         }
@@ -312,6 +322,7 @@ final class PlayerService: ObservableObject {
         player.play()
         isPlaying = true
         playerStore?.isPlaying = true
+        progressStore?.isPlaying = true
         updateNowPlayingPlaybackState()
     }
 
@@ -348,6 +359,9 @@ final class PlayerService: ObservableObject {
         currentTime = 0
         duration = 0
         playerStore?.isPlaying = false
+        progressStore?.duration = 0
+        progressStore?.currentTime = 0
+        progressStore?.isPlaying = false
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
 
@@ -720,12 +734,12 @@ final class PlayerService: ObservableObject {
         } else {
             print("Streaming and caching: \(track.id)")
             let headers = ["Authorization": "Bearer \(apiToken)"]
-            // Automatically cache while streaming
-            AudioCacheService.shared.cacheTrack(id: track.id, remoteURL: url, token: apiToken)
-            
             // Systemic fix: Tell the store to expect this track as a download
             // so that once AudioCacheService finishes, it knows WHICH track object to save.
             appState?.downloadsStore.registerPotentialTrack(track)
+            
+            // Automatically cache while streaming
+            AudioCacheService.shared.cacheTrack(id: track.id, remoteURL: url, token: apiToken)
             
             return AVURLAsset(url: url, options: ["AVURLAssetHTTPHeaderFieldsKey": headers])
         }
@@ -866,6 +880,10 @@ final class AudioCacheService {
             
             cleanUpCacheIfNeeded()
             print("Successfully cached track: \(trackId)")
+            
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFinished"), object: trackId)
+            }
         } catch {
             print("Failed to cache track \(trackId): \(error)")
             try? fileManager.removeItem(at: tempURL)
