@@ -15,6 +15,9 @@ struct PlayerProgressSlider: View {
                     set: { newValue in
                         isSeeking = true
                         seekTime = newValue
+                        if newValue == 0 || newValue == progressStore.duration {
+                            HapticManager.shared.trigger(.selection)
+                        }
                     }
                 ),
                 in: 0...max(progressStore.duration, 1),

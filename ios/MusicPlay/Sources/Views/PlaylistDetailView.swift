@@ -27,8 +27,10 @@ struct PlaylistDetailView: View {
                 ContentUnavailableView("Empty Playlist", systemImage: "music.note.list", description: Text("Add tracks from search"))
             }
             
-            ForEach(playlistsStore.activeTracks) { track in
+            ForEach(Array(playlistsStore.activeTracks.enumerated()), id: \.element.id) { index, track in
                 trackRow(track)
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8).delay(Double(index) * 0.05), value: playlistsStore.activeTracks)
             }
             .onDelete { indexSet in
                 for index in indexSet.sorted(by: >) {

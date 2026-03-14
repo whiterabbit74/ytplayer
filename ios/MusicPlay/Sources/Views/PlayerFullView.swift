@@ -84,11 +84,7 @@ struct PlayerFullView: View {
 
                     // 2. Info Section (Centered)
                     VStack(spacing: 8) {
-                        Text(track.title)
-                            .font(.title3.weight(.bold))
-                            .multilineTextAlignment(.center)
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.7)
+                        MarqueeText(text: track.title, font: .title3.weight(.bold))
                             .padding(.horizontal, 40)
                         
                         Button {
@@ -129,7 +125,9 @@ struct PlayerFullView: View {
                             playerService.previous()
                         } label: {
                             Image(systemName: "backward.fill").font(.title)
+                                .contentShape(Rectangle())
                         }
+                        .buttonStyle(ScaleButtonStyle())
 
                         Button {
                             HapticManager.shared.trigger(.light)
@@ -137,12 +135,21 @@ struct PlayerFullView: View {
                                 playerService.togglePlayPause()
                             }
                         } label: {
-                            Image(systemName: playerService.isPlaying ? "pause.fill" : "play.fill")
-                                .font(.system(size: 48, weight: .bold))
-                                .frame(width: 80, height: 80)
-                                .background(Circle().fill(Color.white.opacity(0.1)))
-                                .scaleEffect(playerService.isPlaying ? 1.0 : 0.9)
-                                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: playerService.isPlaying)
+                            ZStack {
+                                Circle().fill(Color.white.opacity(0.1))
+                                    .frame(width: 80, height: 80)
+                                if playerService.isBuffering {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .scaleEffect(1.5)
+                                } else {
+                                    Image(systemName: playerService.isPlaying ? "pause.fill" : "play.fill")
+                                        .font(.system(size: 48, weight: .bold))
+                                        .contentTransition(.symbolEffect(.replace))
+                                }
+                            }
+                            .scaleEffect(playerService.isPlaying ? 1.0 : 0.9)
+                            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: playerService.isPlaying)
                         }
 
                         Button {
@@ -150,7 +157,9 @@ struct PlayerFullView: View {
                             playerService.next()
                         } label: {
                             Image(systemName: "forward.fill").font(.title)
+                                .contentShape(Rectangle())
                         }
+                        .buttonStyle(ScaleButtonStyle())
                     }
                     .foregroundStyle(.white)
                     .padding(.bottom, 32)

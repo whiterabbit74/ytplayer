@@ -13,6 +13,9 @@ struct QueueView: View {
             List {
                 ForEach(playerStore.queue) { item in
                     queueRow(item: item)
+                        .shadow(radius: editMode == .active ? 2 : 0) // Small shadow for draggability
+                        .scaleEffect(editMode == .active ? 0.98 : 1.0)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: editMode)
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
                                 let index = playerStore.queue.firstIndex(where: { $0.id == item.id })

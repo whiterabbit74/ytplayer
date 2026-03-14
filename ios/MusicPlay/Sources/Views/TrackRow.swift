@@ -51,6 +51,8 @@ struct TrackRow: View {
         self.onRemove = onRemove
     }
 
+    @State private var showAddedToQueue = false
+
     var body: some View {
         HStack(spacing: 12) {
             TrackThumbnail(
@@ -64,12 +66,19 @@ struct TrackRow: View {
             )
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(track.title).font(.headline).lineLimit(1)
+                HStack {
+                    if playerStore.currentTrack?.id == track.id {
+                        EqualizerIndicator()
+                    }
+                    Text(track.title).font(.headline).lineLimit(1)
+                }
                 HStack(spacing: 4) {
                     if isDownloaded {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(.green)
                             .font(.caption2)
+                            .shadow(color: .green.opacity(0.4), radius: 2)
+                            .transition(.scale.combined(with: .opacity))
                     }
                     Text(track.artist)
                     Text("•")
@@ -83,17 +92,29 @@ struct TrackRow: View {
             Spacer()
 
             if editMode?.wrappedValue != .active {
+                if showAddedToQueue {
+                    Image(systemName: "checkmark")
+                        .font(.headline)
+                        .foregroundStyle(.green)
+                        .transition(.scale.combined(with: .opacity))
+                        .padding(.trailing, 8)
+                }
+
                 Menu {
                     Button(action: onPlay) {
                         Label("Play", systemImage: "play")
                     }
                     
-                    Button(action: onAddToQueue) {
+                    Button {
+                        onAddToQueue()
+                        triggerAddedAnimation()
+                    } label: {
                         Label("Add to Queue", systemImage: "text.badge.plus")
                     }
                     
                     Button {
                         playerStore.addToQueueNext(track)
+                        triggerAddedAnimation()
                     } label: {
                         Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
                     }
@@ -159,6 +180,13 @@ struct TrackRow: View {
                         .padding(8)
                 }
                 .buttonStyle(.plain)
+
+                if let progress = downloadProgress {
+                    ProgressView(value: progress)
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .frame(width: 20, height: 20)
+                        .padding(.leading, 4)
+                }
             }
         }
         .contentShape(Rectangle())
@@ -180,5 +208,17 @@ struct TrackRow: View {
             return URL(string: baseURL + cleaned)
         }
         return URL(string: baseURL + "/" + cleaned)
+    }
+
+    private func triggerAddedAnimation() {
+        HapticManager.shared.trigger(.success)
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            showAddedToQueue = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation(.easeOut) {
+                showAddedToQueue = false
+            }
+        }
     }
 }
