@@ -136,6 +136,16 @@ struct SettingsView: View {
                     )) {
                         Label("Динамический фон", systemImage: "wand.and.stars")
                     }
+
+                    Toggle(isOn: Binding(
+                        get: { appState.showVolumeSlider },
+                        set: {
+                            HapticManager.shared.trigger(.light)
+                            appState.updateShowVolumeSlider(enabled: $0)
+                        }
+                    )) {
+                        Label("Ползунок громкости", systemImage: "speaker.wave.3")
+                    }
                 } header: {
                     Text("Интерфейс")
                 } footer: {

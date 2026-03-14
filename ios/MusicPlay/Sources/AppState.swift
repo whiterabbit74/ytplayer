@@ -13,6 +13,7 @@ final class AppState: ObservableObject {
     @Published var crossfadeEnabled: Bool
     @Published var crossfadeDuration: Double
     @Published var dynamicBackgroundEnabled: Bool
+    @Published var showVolumeSlider: Bool
 
     enum CoverStyle: String, CaseIterable, Identifiable {
         case standard = "Standard"
@@ -59,7 +60,7 @@ final class AppState: ObservableObject {
         let savedCoverStyle = CoverStyle(rawValue: UserDefaults.standard.string(forKey: "musicplay_cover_style") ?? "") ?? .standard
         let savedCrossfadeEnabled = UserDefaults.standard.bool(forKey: "musicplay_crossfade_enabled")
         let savedCrossfadeDuration = UserDefaults.standard.double(forKey: "musicplay_crossfade_duration")
-        let savedDynamicBackground = UserDefaults.standard.bool(forKey: "musicplay_dynamic_background")
+        let savedShowVolume = UserDefaults.standard.bool(forKey: "musicplay_show_volume_slider")
         
         self.baseURL = savedURL
         self.audioQuality = savedQuality
@@ -68,6 +69,7 @@ final class AppState: ObservableObject {
         self.crossfadeEnabled = savedCrossfadeEnabled
         self.crossfadeDuration = savedCrossfadeDuration == 0 ? 6.0 : savedCrossfadeDuration
         self.dynamicBackgroundEnabled = savedDynamicBackground
+        self.showVolumeSlider = savedShowVolume
         
         self.apiClient = APIClient(baseURL: savedURL, tokenStore: tokenStore)
         self.apiClient.audioQuality = savedQuality
@@ -192,6 +194,11 @@ final class AppState: ObservableObject {
     func updateDynamicBackground(enabled: Bool) {
         dynamicBackgroundEnabled = enabled
         UserDefaults.standard.set(enabled, forKey: "musicplay_dynamic_background")
+    }
+
+    func updateShowVolumeSlider(enabled: Bool) {
+        showVolumeSlider = enabled
+        UserDefaults.standard.set(enabled, forKey: "musicplay_show_volume_slider")
     }
 
     func wireStores() {

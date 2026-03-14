@@ -119,18 +119,22 @@ struct PlayerFullView: View {
                     .padding(.bottom, 32)
 
                     // Volume Slider
-                    HStack(spacing: 16) {
-                        Image(systemName: "speaker.fill").font(.system(size: 10))
-                        Slider(value: Binding(
-                            get: { playerService.volume },
-                            set: { playerService.setVolume($0) }
-                        ), in: 0...1)
-                        .accentColor(.white.opacity(0.4))
-                        Image(systemName: "speaker.wave.3.fill").font(.system(size: 10))
+                    if appState.showVolumeSlider {
+                        HStack(spacing: 16) {
+                            Image(systemName: "speaker.fill").font(.system(size: 10))
+                            Slider(value: Binding(
+                                get: { playerService.volume },
+                                set: { playerService.setVolume($0) }
+                            ), in: 0...1)
+                            .accentColor(.white.opacity(0.4))
+                            Image(systemName: "speaker.wave.3.fill").font(.system(size: 10))
+                        }
+                        .foregroundStyle(.white.opacity(0.3))
+                        .padding(.horizontal, 48)
+                        .padding(.bottom, 40)
+                    } else {
+                        Spacer().frame(height: 20)
                     }
-                    .foregroundStyle(.white.opacity(0.3))
-                    .padding(.horizontal, 48)
-                    .padding(.bottom, 40)
 
                     // Action Bar
                     HStack {

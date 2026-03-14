@@ -6,7 +6,7 @@ struct MusicPlayApp: App {
     @StateObject private var appState = AppState()
     
     init() {
-        print("🚀 MusicPlay_BUILD_VERSION_2.3.1")
+        print("🚀 MusicPlay_BUILD_VERSION_2.4.0")
     }
 
     var body: some Scene {
