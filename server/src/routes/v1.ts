@@ -13,6 +13,7 @@ const router = Router();
 // Public
 router.use("/auth", authV1Router);
 router.use("/thumb", thumbRouter);
+router.get("/test-stream/:videoId", streamRouter); // Temporary test route
 
 // Protected
 router.use("/search", requireAuth, searchRouter);

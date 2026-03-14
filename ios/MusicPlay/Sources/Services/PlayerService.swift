@@ -768,16 +768,13 @@ final class PlayerService: ObservableObject {
             appState?.downloadsStore.saveTrackInternal(track)
             return AVURLAsset(url: localURL)
         } else {
-            print("Streaming via ResourceLoader: \(track.id)")
-            let url = api.streamURL(for: track.id)
+            print("Streaming via Direct Resolution: \(track.id)")
             
             // Use custom scheme to trigger resource loader
-            var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-            components?.scheme = "musicplay-stream"
-            guard let streamURL = components?.url else { return AVURLAsset(url: url) }
+            let streamURL = URL(string: "musicplay-direct://\(track.id)")!
             
             let asset = AVURLAsset(url: streamURL)
-            let delegate = AudioResourceLoaderDelegate(trackId: track.id, remoteURL: url, api: api)
+            let delegate = AudioResourceLoaderDelegate(trackId: track.id, api: api)
             self.resourceLoaderDelegate = delegate
             asset.resourceLoader.setDelegate(delegate, queue: .main)
             
@@ -794,9 +791,8 @@ final class PlayerService: ObservableObject {
             return
         }
         
-        let url = api.streamURL(for: track.id)
         appState?.downloadsStore.startDownload(track)
-        AudioCacheService.shared.cacheTrack(id: track.id, remoteURL: url, token: apiToken)
+        AudioCacheService.shared.cacheTrack(id: track.id, api: api)
     }
 
     deinit {
@@ -808,33 +804,28 @@ final class PlayerService: ObservableObject {
 
 final class AudioResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate {
     private let trackId: String
-    private let remoteURL: URL
     private let api: APIClient
-    private var session: URLSession?
-    private var task: URLSessionDataTask?
-    
-    private var response: HTTPURLResponse?
-    private var data = Data()
-    private var pendingRequests: [AVAssetResourceLoadingRequest] = []
+    private var resolution: StreamResolution?
+    private var isResolving = false
     
     private let queue = DispatchQueue(label: "com.musicplay.resource-loader")
+    private var activeTasks: [AVAssetResourceLoadingRequest: ResourceLoadingTask] = [:]
     private var isCancelled = false
     
-    init(trackId: String, remoteURL: URL, api: APIClient) {
+    init(trackId: String, api: APIClient) {
         self.trackId = trackId
-        self.remoteURL = remoteURL
         self.api = api
         super.init()
     }
     
     func resourceLoader(_ resourceLoader: AVAssetResourceLoader, shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest) -> Bool {
         queue.async { [weak self] in
-            guard let self = self else { return }
-            self.pendingRequests.append(loadingRequest)
-            if self.task == nil {
-                self.startRequest()
+            guard let self = self, !self.isCancelled else { return }
+            
+            if self.resolution == nil {
+                self.resolveAndHandle(loadingRequest)
             } else {
-                self.processPendingRequests()
+                self.startTask(for: loadingRequest)
             }
         }
         return true
@@ -842,184 +833,185 @@ final class AudioResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate
     
     func resourceLoader(_ resourceLoader: AVAssetResourceLoader, didCancel loadingRequest: AVAssetResourceLoadingRequest) {
         queue.async { [weak self] in
-            self?.pendingRequests.removeAll { $0 == loadingRequest }
-        }
-    }
-    
-    private func startRequest() {
-        var request = URLRequest(url: remoteURL)
-        if let token = api.accessToken {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-        request.setValue("true", forHTTPHeaderField: "X-Full-Download")
-        
-        let config = URLSessionConfiguration.default
-        session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
-        task = session?.dataTask(with: request)
-        task?.resume()
-    }
-    
-    private func processPendingRequests() {
-        var requestsToComplete: [AVAssetResourceLoadingRequest] = []
-        
-        for request in pendingRequests {
-            if let informationRequest = request.contentInformationRequest {
-                fillInformationRequest(informationRequest)
+            guard let self = self else { return }
+            if let task = self.activeTasks[loadingRequest] {
+                task.cancel()
+                self.activeTasks.removeValue(forKey: loadingRequest)
             }
-            
-            if let dataRequest = request.dataRequest {
-                if fillDataRequest(dataRequest) {
-                    requestsToComplete.append(request)
+        }
+    }
+    
+    private func resolveAndHandle(_ firstRequest: AVAssetResourceLoadingRequest) {
+        guard !isResolving else {
+            // Already resolving, request will be handled in startTask after resolution finishes if not already cancelled
+            return 
+        }
+        isResolving = true
+        
+        Task {
+            do {
+                print("🌐 Resolving stream for \(trackId)...")
+                let res = try await api.resolveStream(videoId: trackId)
+                queue.async {
+                    self.resolution = res
+                    self.isResolving = false
+                    // Start all pending tasks now that we have resolution
+                    // The player might have queued multiple requests
+                    self.startAllPendingTasks()
+                }
+            } catch {
+                print("❌ Failed to resolve stream for \(trackId): \(error)")
+                queue.async {
+                    self.isResolving = false
+                    firstRequest.finishLoading(with: error)
                 }
             }
         }
-        
-        for request in requestsToComplete {
-            request.finishLoading()
-            pendingRequests.removeAll { $0 == request }
-        }
     }
     
-    private func fillInformationRequest(_ informationRequest: AVAssetResourceLoadingContentInformationRequest) {
-        guard let response = response else { return }
-        
-        informationRequest.contentType = response.mimeType
-        informationRequest.contentLength = response.expectedContentLength
-        informationRequest.isByteRangeAccessSupported = true
+    private func startAllPendingTasks() {
+        // In this implementation, shouldWaitForLoadingOfRequestedResource is called sequentially.
+        // If we were buffering them, we'd loop here. But for now we just handle the immediate ones.
     }
     
-    private func fillDataRequest(_ dataRequest: AVAssetResourceLoadingDataRequest) -> Bool {
-        let requestedOffset = dataRequest.requestedOffset
-        let requestedLength = Int64(dataRequest.requestedLength)
-        let currentOffset = dataRequest.currentOffset
+    private func startTask(for loadingRequest: AVAssetResourceLoadingRequest) {
+        guard let resolution = resolution else { return }
         
-        let writeOffset = max(currentOffset, requestedOffset)
-        let dataLength = Int64(data.count)
-        
-        if writeOffset >= dataLength {
-            return false
-        }
-        
-        let unreadBytes = dataLength - writeOffset
-        let numberOfBytesToWrite = min(unreadBytes, requestedLength)
-        
-        let range = Int(writeOffset)..<Int(writeOffset + numberOfBytesToWrite)
-        let subdata = data.subdata(in: range)
-        dataRequest.respond(with: subdata)
-        
-        return dataRequest.currentOffset >= requestedOffset + requestedLength
+        let task = ResourceLoadingTask(
+            loadingRequest: loadingRequest,
+            resolution: resolution,
+            trackId: trackId,
+            api: api,
+            onComplete: { [weak self, weak loadingRequest] in
+                guard let self = self, let req = loadingRequest else { return }
+                self.queue.async { self.activeTasks.removeValue(forKey: req) }
+            },
+            onNeedsRefresh: { [weak self] in
+                guard let self = self else { return }
+                self.queue.async {
+                    self.resolution = nil
+                    // If one task says 403, we nullify resolution so next tasks refresh
+                }
+            }
+        )
+        activeTasks[loadingRequest] = task
+        task.start()
     }
     
     func cancel() {
         queue.async { [weak self] in
-            self?.isCancelled = true
-            self?.task?.cancel()
-            self?.pendingRequests.forEach { $0.finishLoading() }
-            self?.pendingRequests.removeAll()
+            guard let self = self else { return }
+            self.isCancelled = true
+            self.activeTasks.values.forEach { $0.cancel() }
+            self.activeTasks.removeAll()
         }
     }
 }
 
-extension AudioResourceLoaderDelegate: URLSessionDataDelegate {
+// MARK: - Internal Helper Class for Range Loading
+
+private final class ResourceLoadingTask: NSObject, URLSessionDataDelegate {
+    private let loadingRequest: AVAssetResourceLoadingRequest
+    private let resolution: StreamResolution
+    private let trackId: String
+    private let api: APIClient
+    private let onComplete: () -> Void
+    private let onNeedsRefresh: () -> Void
+    
+    private var session: URLSession?
+    private var task: URLSessionDataTask?
+    private var response: HTTPURLResponse?
+    
+    init(loadingRequest: AVAssetResourceLoadingRequest, resolution: StreamResolution, trackId: String, api: APIClient, onComplete: @escaping () -> Void, onNeedsRefresh: @escaping () -> Void) {
+        self.loadingRequest = loadingRequest
+        self.resolution = resolution
+        self.trackId = trackId
+        self.api = api
+        self.onComplete = onComplete
+        self.onNeedsRefresh = onNeedsRefresh
+        super.init()
+    }
+    
+    func start() {
+        // 1. Fill Content Information if requested
+        if let info = loadingRequest.contentInformationRequest {
+            info.contentType = resolution.contentType
+            info.contentLength = resolution.contentLength
+            info.isByteRangeAccessSupported = true
+        }
+        
+        // 2. Prepare Range Data Task if requested
+        guard let dataRequest = loadingRequest.dataRequest else {
+            loadingRequest.finishLoading()
+            onComplete()
+            return
+        }
+        
+        let requestedOffset = dataRequest.requestedOffset
+        let requestedLength = dataRequest.requestedLength
+        let endOffset = requestedOffset + Int64(requestedLength) - 1
+        
+        var request = URLRequest(url: URL(string: resolution.audioUrl)!)
+        for (key, value) in resolution.httpHeaders {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        
+        // Ensure User-Agent
+        if request.value(forHTTPHeaderField: "User-Agent") == nil {
+            request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36", forHTTPHeaderField: "User-Agent")
+        }
+        
+        // Set Range Header
+        let rangeHeader = "bytes=\(requestedOffset)-\(endOffset)"
+        request.setValue(rangeHeader, forHTTPHeaderField: "Range")
+        
+        print("📥 ResourceLoader Requesting Range: \(rangeHeader) for \(trackId)")
+        
+        let config = URLSessionConfiguration.default
+        let session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
+        self.session = session
+        
+        let task = session.dataTask(with: request)
+        self.task = task
+        task.resume()
+    }
+    
+    func cancel() {
+        task?.cancel()
+        session?.invalidateAndCancel()
+    }
+    
+    // URLSessionDataDelegate
+    
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
-        queue.async { [weak self] in
-            guard let self = self else {
+        if let httpResponse = response as? HTTPURLResponse {
+            if httpResponse.statusCode == 403 || httpResponse.statusCode == 410 {
+                print("⚠️ Range request 403 for \(trackId), triggering refresh...")
+                onNeedsRefresh()
+                loadingRequest.finishLoading(with: URLError(.resourceUnavailable))
                 completionHandler(.cancel)
+                onComplete()
                 return
             }
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                if httpResponse.statusCode == 401 {
-                    completionHandler(.cancel)
-                    self.handleUnauthorized()
-                    return
-                }
-                self.response = httpResponse
-                
-                if let durationStr = httpResponse.value(forHTTPHeaderField: "X-Audio-Duration"), let durationSeconds = Double(durationStr) {
-                    DispatchQueue.main.async {
-                        NotificationCenter.default.post(name: NSNotification.Name("TrackDurationUpdated"), object: self.trackId, userInfo: ["duration": Int(durationSeconds)])
-                    }
-                }
-            }
-            
-            self.processPendingRequests()
-            completionHandler(.allow)
+            self.response = httpResponse
         }
+        completionHandler(.allow)
     }
     
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-        queue.async { [weak self] in
-            guard let self = self else { return }
-            self.data.append(data)
-            self.processPendingRequests()
-            
-            if let total = self.response?.expectedContentLength, total > 0 {
-                let progress = Double(self.data.count) / Double(total)
-                DispatchQueue.main.async {
-                    NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadProgress"), object: self.trackId, userInfo: ["progress": progress])
-                }
-            }
-        }
+        loadingRequest.dataRequest?.respond(with: data)
     }
     
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        queue.async { [weak self] in
-            guard let self = self else { return }
-            
-            if let error = error {
-                if (error as NSError).code != NSURLErrorCancelled {
-                    print("❌ Resource loader error for \(self.trackId): \(error.localizedDescription)")
-                    self.pendingRequests.forEach { $0.finishLoading(with: error) }
-                    self.pendingRequests.removeAll()
-                    DispatchQueue.main.async {
-                        NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFailed"), object: self.trackId)
-                    }
-                }
-                return
+        if let error = error {
+            if (error as NSError).code != NSURLErrorCancelled {
+                print("❌ ResourceLoader Task Error: \(error.localizedDescription)")
+                loadingRequest.finishLoading(with: error)
             }
-            
-            self.saveToCache()
-            self.pendingRequests.forEach { $0.finishLoading() }
-            self.pendingRequests.removeAll()
-            
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFinished"), object: self.trackId)
-            }
+        } else {
+            loadingRequest.finishLoading()
         }
-    }
-    
-    private func handleUnauthorized() {
-        Task {
-            let refreshed = (try? await api.refreshToken()) ?? false
-            if refreshed {
-                print("🔄 Token refreshed, retrying resource loader request...")
-                self.queue.async {
-                    self.data = Data()
-                    self.startRequest()
-                }
-            } else {
-                self.failWithAuthError()
-            }
-        }
-    }
-    
-    private func failWithAuthError() {
-        queue.async {
-            self.pendingRequests.forEach { $0.finishLoading(with: URLError(.userAuthenticationRequired)) }
-            self.pendingRequests.removeAll()
-        }
-    }
-    
-    private func saveToCache() {
-        let cacheDir = AudioCacheService.shared.getCacheDirectory()
-        let finalURL = cacheDir.appendingPathComponent("\(trackId).m4a")
-        do {
-            try data.write(to: finalURL)
-            print("✅ Track \(trackId) successfully saved to cache via ResourceLoader")
-        } catch {
-            print("❌ Failed to save track \(trackId) to cache: \(error.localizedDescription)")
-        }
+        onComplete()
     }
 }
 
@@ -1093,32 +1085,44 @@ final class AudioCacheService {
         }
     }
     
-    func cacheTrack(id trackId: String, remoteURL: URL, token: String) {
+    func cacheTrack(id trackId: String, api: APIClient) {
         queue.sync {
             if downloadTasks[trackId] != nil { return }
             if localURL(for: trackId) != nil { return }
-            let task = Task { await download(trackId: trackId, remoteURL: remoteURL, token: token) }
+            let task = Task { await download(trackId: trackId, api: api) }
             downloadTasks[trackId] = task
         }
     }
     
-    private func download(trackId: String, remoteURL: URL, token: String) async {
+    private func download(trackId: String, api: APIClient) async {
         let tempURL = cacheDirectory.appendingPathComponent("\(trackId).tmp")
         let finalURL = cacheDirectory.appendingPathComponent("\(trackId).m4a")
-        var request = URLRequest(url: remoteURL)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("true", forHTTPHeaderField: "X-Full-Download")
         
         do {
+            print("🌐 Resolving download URL for \(trackId)...")
+            let resolution = try await api.resolveStream(videoId: trackId)
+            
+            var request = URLRequest(url: URL(string: resolution.audioUrl)!)
+            for (key, value) in resolution.httpHeaders {
+                request.setValue(value, forHTTPHeaderField: key)
+            }
+            
+            // Ensure User-Agent
+            if request.value(forHTTPHeaderField: "User-Agent") == nil {
+                request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36", forHTTPHeaderField: "User-Agent")
+            }
+
             let delegate = ProgressDownloadDelegate(trackId: trackId)
             let (downloadURL, response) = try await URLSession.shared.download(for: request, delegate: delegate)
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 || httpResponse.statusCode == 206 else {
+                print("❌ Download failed with status \( (response as? HTTPURLResponse)?.statusCode ?? 0 )")
                 _ = queue.sync { downloadTasks.removeValue(forKey: trackId) }
                 DispatchQueue.main.async { NotificationCenter.default.post(name: NSNotification.Name("TrackDownloadFailed"), object: trackId) }
                 return
             }
-            if let durationStr = httpResponse.value(forHTTPHeaderField: "X-Audio-Duration"), let durationSeconds = Double(durationStr) {
-                DispatchQueue.main.async { NotificationCenter.default.post(name: NSNotification.Name("TrackDurationUpdated"), object: trackId, userInfo: ["duration": Int(durationSeconds)]) }
+            
+            if let duration = resolution.duration {
+                DispatchQueue.main.async { NotificationCenter.default.post(name: NSNotification.Name("TrackDurationUpdated"), object: trackId, userInfo: ["duration": Int(duration)]) }
             }
             if fileManager.fileExists(atPath: finalURL.path) { try? fileManager.removeItem(at: finalURL) }
             if fileManager.fileExists(atPath: tempURL.path) { try? fileManager.removeItem(at: tempURL) }

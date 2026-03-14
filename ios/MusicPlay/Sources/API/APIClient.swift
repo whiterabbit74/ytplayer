@@ -361,9 +361,21 @@ final class APIClient {
         makeURL("/api/v1/stream/\(videoId)", queryItems: [URLQueryItem(name: "quality", value: audioQuality)])
     }
 
+    func resolveStream(videoId: String) async throws -> StreamResolution {
+        return try await request("/api/v1/stream/resolve/\(videoId)", query: [URLQueryItem(name: "quality", value: audioQuality)])
+    }
+
     func thumbURL(for videoId: String) -> URL {
         makeURL("/api/v1/thumb/\(videoId)")
     }
+}
+
+struct StreamResolution: Codable {
+    let audioUrl: String
+    let contentLength: Int64
+    let contentType: String
+    let httpHeaders: [String: String]
+    let duration: Double?
 }
 
 struct AnyEncodable: Encodable {

@@ -286,10 +286,32 @@ function proactiveReadAhead(buf: StreamBuffer): void {
     });
 }
 
+// --- Route handler: Resolver ---
+router.get("/resolve/:videoId", async (req, res) => {
+  const { videoId } = req.params;
+  const quality = req.query.quality === "low" ? "low" : "high";
+
+  if (!videoId || !isValidVideoId(videoId)) {
+    return res.status(400).json({ error: "Invalid video ID" });
+  }
+
+  try {
+    const audioInfo = await resolveAudioUrl(videoId, quality);
+    log.info({ videoId, quality }, "Stream resolution successful");
+    res.json(audioInfo);
+  } catch (err) {
+    log.error({ err, videoId, quality }, "Failed to resolve stream");
+    res.status(502).json({ error: "Failed to resolve audio" });
+  }
+});
+
 // --- Route handler ---
 router.get("/:videoId", async (req, res) => {
   const { videoId } = req.params;
   const quality = req.query.quality === "low" ? "low" : "high";
+  const rangeHeader = req.headers.range;
+
+  log.info({ videoId, quality, rangeHeader }, "Stream request received");
 
   if (!videoId || !isValidVideoId(videoId)) {
     return res.status(400).json({ error: "Invalid video ID" });
@@ -298,6 +320,7 @@ router.get("/:videoId", async (req, res) => {
   let audioInfo;
   try {
     audioInfo = await resolveAudioUrl(videoId, quality);
+    log.info({ videoId, quality }, "Audio URL resolved");
   } catch (err) {
     log.error({ err, videoId, quality }, "Failed to resolve audio URL");
     return res.status(502).json({ error: "Failed to resolve audio" });
@@ -317,7 +340,7 @@ router.get("/:videoId", async (req, res) => {
     return { ...httpHeaders, Range: rangeValue };
   }
 
-  const rangeHeader = req.headers.range;
+  // const rangeHeader = req.headers.range; // removed duplicate
 
   // ---- Full Download ----
   if (req.headers["x-full-download"] === "true") {

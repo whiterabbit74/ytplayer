@@ -82,8 +82,12 @@ function spawnYtdlp(videoId: string, useCookies: boolean, quality: string, signa
   return new Promise((resolve, reject) => {
     const url = buildStreamUrl(videoId);
     const args = buildYtdlpArgs(url, useCookies, quality);
-    log.info({ args: args.filter(a => !a.startsWith("http")), useCookies }, "yt-dlp args");
-    const proc = spawn("yt-dlp", args);
+    const ytdlpPath = "/opt/homebrew/bin/yt-dlp"; // Be explicit on Mac
+    
+    log.info({ ytdlpPath, args: args.filter(a => !a.startsWith("http")), useCookies }, "yt-dlp args");
+    
+    const proc = spawn(ytdlpPath, args);
+    proc.stdin?.end(); // Close stdin to prevent hanging if it expects input
 
     if (signal) {
       const onAbort = () => {
@@ -96,13 +100,21 @@ function spawnYtdlp(videoId: string, useCookies: boolean, quality: string, signa
 
     let stdout = "";
     let stderr = "";
-    proc.stdout.on("data", (chunk: Buffer) => { stdout += chunk.toString(); });
+    
+    proc.stdout.on("data", (chunk: Buffer) => { 
+      const data = chunk.toString();
+      stdout += data; 
+      log.debug({ videoId, len: data.length }, "yt-dlp stdout data");
+    });
+    
     proc.stderr.on("data", (data: Buffer) => {
       const msg = data.toString().trim();
       stderr += msg;
       log.warn({ stderr: msg }, "yt-dlp stderr");
     });
+    
     proc.on("close", (code) => {
+      log.info({ videoId, code }, "yt-dlp process closed");
       if (code !== 0) {
         log.error({ code, stderr, videoId }, "yt-dlp error exit");
         const err = new Error(`yt-dlp exited with code ${code}`);
@@ -113,10 +125,11 @@ function spawnYtdlp(videoId: string, useCookies: boolean, quality: string, signa
         const result = JSON.parse(stdout);
         resolve(result);
       } catch (e) {
-        log.error({ err: e, videoId, stdout: stdout.substring(0, 500) }, "Failed to parse yt-dlp output");
+        log.error({ err: e, videoId, stdoutLen: stdout.length }, "Failed to parse yt-dlp output");
         reject(new Error("Failed to parse yt-dlp JSON"));
       }
     });
+    
     proc.on("error", (err) => {
       log.error({ err, videoId }, "yt-dlp spawn error");
       reject(err);
@@ -127,10 +140,12 @@ function spawnYtdlp(videoId: string, useCookies: boolean, quality: string, signa
 const SIGN_IN_ERROR = "Sign in to confirm";
 
 async function fetchYtdlpJson(videoId: string, quality: string, signal?: AbortSignal): Promise<any> {
+  log.info({ videoId, quality }, "fetchYtdlpJson started");
   // Always use cookies when available (server IP gets bot-checked without them)
   const cookiePath = findCookiesPath();
   if (cookiePath) {
     try {
+      log.info({ videoId, cookiePath }, "Trying with cookies");
       return await spawnYtdlp(videoId, true, quality, signal);
     } catch (err: any) {
       if (signal?.aborted) throw err;
@@ -138,6 +153,7 @@ async function fetchYtdlpJson(videoId: string, quality: string, signal?: AbortSi
     }
   }
   // Fallback: try without cookies
+  log.info({ videoId }, "Trying without cookies");
   return await spawnYtdlp(videoId, false, quality, signal);
 }
 
@@ -170,6 +186,7 @@ export async function resolveAudioUrl(videoId: string, quality: string = "high",
       cache.delete(cacheKey);
 
       const json = await fetchYtdlpJson(videoId, quality, signal);
+      log.info({ videoId, quality }, "fetchYtdlpJson finished");
       
       // yt-dlp returns the selected format's properties at the root 
       const audioUrl = json.url;
