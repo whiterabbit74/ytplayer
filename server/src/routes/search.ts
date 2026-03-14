@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { searchYouTube, parseYouTubeUrl, getVideoInfo } from "../services/youtube";
+import { searchRateLimiter } from "../middleware/rate-limit";
 
 const router = Router();
 
-router.get("/", async (req, res) => {
+router.get("/", searchRateLimiter, async (req, res) => {
   const query = req.query.q as string;
   if (!query) {
     return res.status(400).json({ error: { code: "BAD_REQUEST", message: "Query parameter 'q' is required" } });
@@ -45,7 +46,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/suggest", async (req, res) => {
+router.get("/suggest", searchRateLimiter, async (req, res) => {
   const query = req.query.q as string;
   if (!query) {
     return res.json([]);

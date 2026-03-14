@@ -30,6 +30,10 @@ function createMockProcess(jsonData: object, exitCode = 0) {
 }
 
 const SAMPLE_FORMATS = {
+  url: "https://example.com/audio-high.webm",
+  abr: 160,
+  filesize: 3000000,
+  mime_type: "audio/webm; codecs=\"opus\"",
   formats: [
     {
       url: "https://example.com/video.mp4",
@@ -131,7 +135,7 @@ describe("resolveAudioUrl", () => {
       "--no-warnings",
       "--no-playlist",
       "-f",
-      "bestaudio",
+      "bestaudio[ext=m4a]/bestaudio/best",
       "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     ]);
   });
@@ -148,6 +152,10 @@ describe("resolveAudioUrl", () => {
 
   it("returns correct contentType for m4a (audio/mp4)", async () => {
     const m4aFormats = {
+      url: "https://example.com/audio.m4a",
+      filesize: 2000000,
+      ext: "m4a",
+      mime_type: "audio/mp4; codecs=\"mp4a.40.2\"",
       formats: [
         {
           url: "https://example.com/audio.m4a",
@@ -170,6 +178,9 @@ describe("resolveAudioUrl", () => {
 
   it("returns correct contentType from mime_type field", async () => {
     const webmFormats = {
+      url: "https://example.com/audio.webm",
+      filesize: 1500000,
+      mime_type: "audio/webm; codecs=\"opus\"",
       formats: [
         {
           url: "https://example.com/audio.webm",
@@ -190,6 +201,7 @@ describe("resolveAudioUrl", () => {
 
   it("throws when no audio-only formats are available", async () => {
     const videoOnlyFormats = {
+      // url is missing here to simulate failure or we can just not provide it
       formats: [
         {
           url: "https://example.com/video.mp4",
@@ -203,7 +215,7 @@ describe("resolveAudioUrl", () => {
     };
     mockSpawn.mockReturnValueOnce(createMockProcess(videoOnlyFormats) as any);
 
-    await expect(resolveAudioUrl("dQw4w9WgXcQ")).rejects.toThrow("No audio format found");
+    await expect(resolveAudioUrl("dQw4w9WgXcQ")).rejects.toThrow("No audio URL found in yt-dlp output");
   });
 
   it("throws when yt-dlp exits with non-zero code", async () => {

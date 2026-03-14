@@ -3,11 +3,12 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { getDb } from "../db";
 import { requireAuth, JWT_SECRET, COOKIE_NAME, MAX_AGE, TOKEN_TTL, type AuthRequest } from "../middleware/auth";
+import { authRateLimiter } from "../middleware/rate-limit";
 
 const router = Router();
 
 // POST /api/auth/login
-router.post("/login", (req, res) => {
+router.post("/login", authRateLimiter, (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     res.status(400).json({ error: { code: "BAD_REQUEST", message: "Email and password are required" } });

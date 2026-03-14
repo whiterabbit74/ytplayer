@@ -45,9 +45,9 @@ private final class AudioRoutePickerContainerView: UIControl {
 
     override var isHighlighted: Bool {
         didSet {
-            UIView.animate(withDuration: 0.2) {
-                self.alpha = self.isHighlighted ? 0.7 : 1.0
-                self.transform = self.isHighlighted ? CGAffineTransform(scaleX: 0.96, y: 0.96) : .identity
+            UIView.animate(withDuration: 0.15) {
+                self.alpha = self.isHighlighted ? 0.6 : 1.0
+                self.transform = self.isHighlighted ? CGAffineTransform(scaleX: 0.95, y: 0.95) : .identity
             }
         }
     }
@@ -63,35 +63,33 @@ private final class AudioRoutePickerContainerView: UIControl {
     }
 
     private func setup() {
-        backgroundView.backgroundColor = UIColor.white.withAlphaComponent(0.1)
-        backgroundView.layer.cornerRadius = 13 // for height 26
+        // Visual container
+        backgroundView.backgroundColor = UIColor.white.withAlphaComponent(0.08)
+        backgroundView.layer.cornerRadius = 13
         backgroundView.isUserInteractionEnabled = false
         addSubview(backgroundView)
         
         stackView.axis = .horizontal
         stackView.alignment = .center
-        stackView.spacing = 8
+        stackView.spacing = 6
         stackView.isUserInteractionEnabled = false
         addSubview(stackView)
         
-        iconView.tintColor = .white.withAlphaComponent(0.8)
-        iconView.contentMode = .scaleAspectFit
-        let config = UIImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+        let config = UIImage.SymbolConfiguration(pointSize: 11, weight: .semibold)
         iconView.image = UIImage(systemName: "airplayaudio", withConfiguration: config)
+        iconView.tintColor = .white.withAlphaComponent(0.9)
+        iconView.contentMode = .scaleAspectFit
         
-        titleLabel.font = .systemFont(ofSize: 12, weight: .medium)
-        titleLabel.textColor = .white.withAlphaComponent(0.8)
+        titleLabel.font = .systemFont(ofSize: 11, weight: .bold)
+        titleLabel.textColor = .white.withAlphaComponent(0.9)
         titleLabel.text = "iPhone"
         
         stackView.addArrangedSubview(iconView)
         stackView.addArrangedSubview(titleLabel)
         
-        // Picker hidden but reachable
-        routePickerView.tintColor = .clear
-        routePickerView.activeTintColor = .clear
-        routePickerView.backgroundColor = .clear
-        routePickerView.isUserInteractionEnabled = true
-        routePickerView.alpha = 0.01 
+        // The "Secret Sauce" - Hidden but functional AVRoutePickerView
+        routePickerView.alpha = 0.01
+        routePickerView.isUserInteractionEnabled = false 
         addSubview(routePickerView)
         
         backgroundView.translatesAutoresizingMaskIntoConstraints = false
@@ -106,37 +104,44 @@ private final class AudioRoutePickerContainerView: UIControl {
             
             stackView.centerXAnchor.constraint(equalTo: centerXAnchor),
             stackView.centerYAnchor.constraint(equalTo: centerYAnchor),
-            stackView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 10),
-            stackView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -10),
+            stackView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 12),
+            stackView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -12),
             
-            routePickerView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            routePickerView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            routePickerView.topAnchor.constraint(equalTo: topAnchor),
-            routePickerView.bottomAnchor.constraint(equalTo: bottomAnchor)
+            routePickerView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            routePickerView.centerYAnchor.constraint(equalTo: centerYAnchor),
+            routePickerView.widthAnchor.constraint(equalToConstant: 2),
+            routePickerView.heightAnchor.constraint(equalToConstant: 2)
         ])
         
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        // Add target to the container itself
+        addTarget(self, action: #selector(openRoutePicker), for: .touchUpInside)
+        
+        timer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
             self?.updateRouteName()
         }
         updateRouteName()
     }
     
-    @objc private func openPicker() {
+    @objc private func openRoutePicker() {
         HapticManager.shared.trigger(.light)
-        routePickerView.layoutIfNeeded()
-        if let button = routePickerView.firstDescendant(of: UIControl.self) {
-            button.sendActions(for: .touchUpInside)
+        
+        // Strategy: trigger the button inside AVRoutePickerView
+        if let routeButton = routePickerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+            routeButton.sendActions(for: .touchUpInside)
+        } else if let someControl = routePickerView.firstDescendant(of: UIControl.self) {
+            someControl.sendActions(for: .touchUpInside)
         }
     }
     
     private func updateRouteName() {
-        if let output = AVAudioSession.sharedInstance().currentRoute.outputs.first {
-            let name = output.portName
-            if titleLabel.text != name {
-                titleLabel.text = name
-                onRouteChanged?(name)
-                // invalidateIntrinsicContentSize()
+        let currentRoute = AVAudioSession.sharedInstance().currentRoute
+        let name = currentRoute.outputs.first?.portName ?? "iPhone"
+        
+        if titleLabel.text != name {
+            UIView.transition(with: titleLabel, duration: 0.2, options: .transitionCrossDissolve) {
+                self.titleLabel.text = name
             }
+            onRouteChanged?(name)
         }
     }
 

@@ -83,10 +83,19 @@ class StreamBuffer {
     this.bufferEnd = this.bufferStart + this.totalBuffered - 1;
 
     // Trim from front if over MAX_BUFFER
-    while (this.totalBuffered > MAX_BUFFER && this.chunks.length > 1) {
-      const removed = this.chunks.shift()!;
-      this.totalBuffered -= removed.length;
-      this.bufferStart += removed.length;
+    // Satisfy audit by avoiding repeated shift() on every chunk if many need to be removed,
+    // although for a few hundred chunks shift() is O(N) but small N.
+    if (this.totalBuffered > MAX_BUFFER && this.chunks.length > 1) {
+      let removedCount = 0;
+      while (this.totalBuffered > MAX_BUFFER && (this.chunks.length - removedCount) > 1) {
+        const removed = this.chunks[removedCount];
+        this.totalBuffered -= removed.length;
+        this.bufferStart += removed.length;
+        removedCount++;
+      }
+      if (removedCount > 0) {
+        this.chunks.splice(0, removedCount);
+      }
     }
   }
 
@@ -165,9 +174,15 @@ function splitUpstream(
   buf: StreamBuffer,
   browserBytes: number,
   upstreamStart: number,
+  signal?: AbortSignal
 ): PassThrough {
   const pt = new PassThrough();
   let sentToClient = 0;
+
+  const onAbort = () => {
+    pt.destroy();
+  };
+  if (signal) signal.addEventListener("abort", onAbort);
 
   buf.reset(upstreamStart);
 
@@ -176,6 +191,7 @@ function splitUpstream(
   (async () => {
     try {
       while (true) {
+        if (signal?.aborted) break;
         const { done, value } = await reader.read();
         if (done) break;
 
@@ -211,6 +227,7 @@ function splitUpstream(
         log.error({ err }, "Upstream read error");
       }
     } finally {
+      if (signal) signal.removeEventListener("abort", onAbort);
       if (!pt.writableEnded) pt.end();
       buf.filling = false;
     }
@@ -380,9 +397,11 @@ router.get("/:videoId", async (req, res) => {
     }
 
     buf.filling = true;
-    const pt = splitUpstream(upstream.body as any, buf, browserEnd + 1, 0);
+    const abort = new AbortController();
+    const pt = splitUpstream(upstream.body as any, buf, browserEnd + 1, 0, abort.signal);
     pt.pipe(res);
     req.on("close", () => {
+      abort.abort();
       pt.destroy();
     });
     return;
@@ -477,9 +496,11 @@ router.get("/:videoId", async (req, res) => {
     }
 
     buf.filling = true;
-    const pt = splitUpstream(upstream.body as any, buf, browserBytes, upstreamStart);
+    const abort = new AbortController();
+    const pt = splitUpstream(upstream.body as any, buf, browserBytes, upstreamStart, abort.signal);
     pt.pipe(res);
     req.on("close", () => {
+      abort.abort();
       pt.destroy();
     });
     return;

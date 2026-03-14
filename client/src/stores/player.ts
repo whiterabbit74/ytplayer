@@ -101,7 +101,12 @@ export const usePlayerStore = create<PlayerState>()(
               newIndex = newQueue.length - 1;
             }
           }
-          return { queue: newQueue, currentIndex: newIndex };
+          let currentTrack = state.currentTrack;
+          if (index === state.currentIndex) {
+            // Removing current track: switch to next available track at same index
+            currentTrack = newQueue[newIndex] || null;
+          }
+          return { queue: newQueue, currentIndex: newIndex, currentTrack };
         }),
 
       playNext: () => {
@@ -161,7 +166,11 @@ export const usePlayerStore = create<PlayerState>()(
         set({ queue: [], currentIndex: -1, currentTrack: null, isPlaying: false }),
 
       setQueue: (tracks, index = 0) =>
-        set({ queue: tracks, currentIndex: index }),
+        set({ 
+          queue: tracks, 
+          currentIndex: index,
+          currentTrack: tracks[index] || null 
+        }),
 
       shuffle: () =>
         set((state) => {

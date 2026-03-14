@@ -73,7 +73,6 @@ export function initDb(path: string = process.env.DB_PATH || "./musicplay.db"): 
     );
     CREATE INDEX IF NOT EXISTS idx_playlist_tracks_playlist_id_position ON playlist_tracks(playlist_id, position);
     CREATE INDEX IF NOT EXISTS idx_favorites_user_id ON favorites(user_id);
-    CREATE INDEX IF NOT EXISTS idx_playlists_user_id ON playlists(user_id);
     CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
     CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
   `);
@@ -116,6 +115,13 @@ export function initDb(path: string = process.env.DB_PATH || "./musicplay.db"): 
       });
     }
   }
+  
+  // Post-migration indexes
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_playlists_user_id ON playlists(user_id);
+    CREATE INDEX IF NOT EXISTS idx_favorites_user_pos ON favorites(user_id, position);
+    CREATE INDEX IF NOT EXISTS idx_playlist_tracks_counts ON playlist_tracks(view_count, like_count);
+  `);
 }
 
 export function getDb(): Database.Database {

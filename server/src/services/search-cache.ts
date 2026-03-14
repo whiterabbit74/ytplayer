@@ -1,5 +1,6 @@
 import { getDb } from "../db";
 import { logger } from "../lib/logger";
+import type { Track } from "../types";
 
 const log = logger.child({ service: "search-cache" });
 
@@ -7,7 +8,7 @@ const CACHE_TTL_DAYS = 7;
 const CACHE_TTL_MS = CACHE_TTL_DAYS * 24 * 60 * 60 * 1000;
 
 export interface CachedSearch {
-  videoIds: string[];
+  tracks: Track[];
   nextPageToken?: string;
 }
 
@@ -44,7 +45,7 @@ export function getCachedSearch(query: string): CachedSearch | null {
   log.info({ query: normalized }, "cache hit");
 
   return {
-    videoIds: JSON.parse(row.video_ids),
+    tracks: JSON.parse(row.video_ids),
     nextPageToken: row.next_page_token || undefined,
   };
 }
@@ -54,7 +55,7 @@ export function getCachedSearch(query: string): CachedSearch | null {
  */
 export function cacheSearch(
   query: string,
-  videoIds: string[],
+  tracks: Track[],
   nextPageToken?: string
 ): void {
   const db = getDb();
@@ -63,9 +64,9 @@ export function cacheSearch(
   db.prepare(
     `INSERT OR REPLACE INTO search_cache (query, video_ids, next_page_token, created_at)
      VALUES (?, ?, ?, ?)`
-  ).run(normalized, JSON.stringify(videoIds), nextPageToken || null, Date.now());
+  ).run(normalized, JSON.stringify(tracks), nextPageToken || null, Date.now());
 
-  log.debug({ query: normalized, count: videoIds.length }, "cached search results");
+  log.debug({ query: normalized, count: tracks.length }, "cached search results");
 }
 
 /**

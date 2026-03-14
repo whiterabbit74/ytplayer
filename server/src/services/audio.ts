@@ -20,6 +20,7 @@ interface CacheEntry extends AudioInfo {
 }
 
 const cache = new Map<string, CacheEntry>();
+const inFlight = new Map<string, Promise<AudioInfo>>();
 
 export function isValidVideoId(videoId: string): boolean {
   return VIDEO_ID_REGEX.test(videoId);
@@ -77,12 +78,21 @@ function buildYtdlpArgs(videoUrl: string, useCookies: boolean, quality: string):
   return args;
 }
 
-function spawnYtdlp(videoId: string, useCookies: boolean, quality: string): Promise<any> {
+function spawnYtdlp(videoId: string, useCookies: boolean, quality: string, signal?: AbortSignal): Promise<any> {
   return new Promise((resolve, reject) => {
     const url = buildStreamUrl(videoId);
     const args = buildYtdlpArgs(url, useCookies, quality);
     log.info({ args: args.filter(a => !a.startsWith("http")), useCookies }, "yt-dlp args");
     const proc = spawn("yt-dlp", args);
+
+    if (signal) {
+      const onAbort = () => {
+        log.info({ videoId }, "Killing yt-dlp process due to abort");
+        proc.kill();
+      };
+      signal.addEventListener("abort", onAbort);
+      proc.on("close", () => signal.removeEventListener("abort", onAbort));
+    }
 
     let stdout = "";
     let stderr = "";
@@ -116,21 +126,22 @@ function spawnYtdlp(videoId: string, useCookies: boolean, quality: string): Prom
 
 const SIGN_IN_ERROR = "Sign in to confirm";
 
-async function fetchYtdlpJson(videoId: string, quality: string): Promise<any> {
+async function fetchYtdlpJson(videoId: string, quality: string, signal?: AbortSignal): Promise<any> {
   // Always use cookies when available (server IP gets bot-checked without them)
   const cookiePath = findCookiesPath();
   if (cookiePath) {
     try {
-      return await spawnYtdlp(videoId, true, quality);
+      return await spawnYtdlp(videoId, true, quality, signal);
     } catch (err: any) {
+      if (signal?.aborted) throw err;
       log.error({ err, videoId }, "yt-dlp failed with cookies, retrying without");
     }
   }
   // Fallback: try without cookies
-  return await spawnYtdlp(videoId, false, quality);
+  return await spawnYtdlp(videoId, false, quality, signal);
 }
 
-export async function resolveAudioUrl(videoId: string, quality: string = "high"): Promise<AudioInfo> {
+export async function resolveAudioUrl(videoId: string, quality: string = "high", signal?: AbortSignal): Promise<AudioInfo> {
   if (!videoId || !isValidVideoId(videoId)) {
     throw new Error("Invalid video ID");
   }
@@ -147,43 +158,59 @@ export async function resolveAudioUrl(videoId: string, quality: string = "high")
     };
   }
 
-  cache.delete(cacheKey);
-
-  const json = await fetchYtdlpJson(videoId, quality);
-  
-  // yt-dlp returns the selected format's properties at the root 
-  const audioUrl = json.url;
-  if (!audioUrl) throw new Error("No audio URL found in yt-dlp output");
-
-  let mimeType = json.mime_type;
-  if (mimeType) {
-    mimeType = mimeType.split(";")[0].trim();
-  } else {
-    mimeType = json.ext === "m4a" ? "audio/mp4" : "audio/webm";
+  // Check in-flight requests
+  const existing = inFlight.get(cacheKey);
+  if (existing) {
+    log.info({ videoId, quality }, "Cache stampede prevented (audio)");
+    return existing;
   }
 
-  const contentLength = json.filesize || json.content_length || json.filesize_approx || 0;
-  const duration = json.duration || 0;
-  const httpHeaders = json.http_headers || {};
+  const promise = (async () => {
+    try {
+      cache.delete(cacheKey);
 
-  log.info({ videoId, quality, ext: json.ext, mimeType, abr: json.abr, duration }, "Selected format directly from yt-dlp");
+      const json = await fetchYtdlpJson(videoId, quality, signal);
+      
+      // yt-dlp returns the selected format's properties at the root 
+      const audioUrl = json.url;
+      if (!audioUrl) throw new Error("No audio URL found in yt-dlp output");
 
-  const entry: CacheEntry = {
-    audioUrl,
-    contentLength,
-    contentType: mimeType,
-    httpHeaders,
-    duration,
-    expiresAt: Date.now() + CACHE_TTL,
-  };
+      let mimeType = json.mime_type;
+      if (mimeType) {
+        mimeType = mimeType.split(";")[0].trim();
+      } else {
+        mimeType = json.ext === "m4a" ? "audio/mp4" : "audio/webm";
+      }
 
-  cache.set(cacheKey, entry);
+      const contentLength = json.filesize || json.content_length || json.filesize_approx || 0;
+      const duration = json.duration || 0;
+      const httpHeaders = json.http_headers || {};
 
-  return {
-    audioUrl: entry.audioUrl,
-    contentLength: entry.contentLength,
-    contentType: entry.contentType,
-    httpHeaders: entry.httpHeaders,
-    duration: entry.duration
-  };
+      log.info({ videoId, quality, ext: json.ext, mimeType, abr: json.abr, duration }, "Selected format directly from yt-dlp");
+
+      const entry: CacheEntry = {
+        audioUrl,
+        contentLength,
+        contentType: mimeType,
+        httpHeaders,
+        duration,
+        expiresAt: Date.now() + CACHE_TTL,
+      };
+
+      cache.set(cacheKey, entry);
+
+      return {
+        audioUrl: entry.audioUrl,
+        contentLength: entry.contentLength,
+        contentType: entry.contentType,
+        httpHeaders: entry.httpHeaders,
+        duration: entry.duration
+      };
+    } finally {
+      inFlight.delete(cacheKey);
+    }
+  })();
+
+  inFlight.set(cacheKey, promise);
+  return promise;
 }

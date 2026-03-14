@@ -80,26 +80,49 @@ struct PlayerFullView: View {
                     Spacer(minLength: 40)
 
                     // Info Section
-                    VStack(spacing: 8) {
-                        MarqueeText(text: track.title, font: .title3.weight(.bold), speed: 20)
-                            .padding(.horizontal, 40)
+                    VStack(spacing: 12) {
+                        MarqueeText(text: track.title, font: .title2.weight(.bold), speed: 22)
+                            .padding(.horizontal, 32)
                         
                         Button {
                             HapticManager.shared.trigger(.light)
                             appState.selectedTab = 0
-                            NotificationCenter.default.post(name: NSNotification.Name("PerformSearch"), object: track.artist)
+                            // Small delay to ensure the UI transition is smooth
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                NotificationCenter.default.post(name: NSNotification.Name("ResetSearch"), object: nil)
+                                NotificationCenter.default.post(name: NSNotification.Name("PerformSearch"), object: track.artist)
+                            }
                             dismiss()
                         } label: {
-                            HStack(spacing: 6) {
+                            HStack(spacing: 8) {
                                 if downloadsStore.isTrackDownloaded(track.id) {
-                                    DownloadIcon(size: .medium)
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.green)
+                                        .font(.caption)
                                 }
-                                TrackMetadataView(track: track, showDuration: false)
+                                
+                                Text(track.artist)
+                                    .font(.title3.weight(.medium))
+                                    .foregroundStyle(.white.opacity(0.8))
+                                
+                                if track.duration > 0 {
+                                    Text("•")
+                                        .foregroundStyle(.white.opacity(0.4))
+                                    Text(track.formattedDuration)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.white.opacity(0.6))
+                                }
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 6)
+                            .background(Color.white.opacity(0.05))
+                            .clipShape(Capsule())
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(ScaleButtonStyle())
                     }
                     .padding(.bottom, 24)
+                    .frame(maxWidth: .infinity, alignment: .center) // Explicit centering
+
 
                     // Progress Slider
                     PlayerProgressSlider(progressStore: progressStore, playerService: playerService)

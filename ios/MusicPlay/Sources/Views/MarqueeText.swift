@@ -48,6 +48,8 @@ struct MarqueeText: View {
                     .frame(maxWidth: .infinity, alignment: .center)
             }
         }
+        .frame(maxWidth: .infinity) // Added to ensure ZStack takes full width for centering
+
         .background(
             GeometryReader { geometry in
                 Color.clear.onAppear {
