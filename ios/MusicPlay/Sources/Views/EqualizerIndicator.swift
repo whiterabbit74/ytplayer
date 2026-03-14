@@ -8,8 +8,8 @@ struct EqualizerIndicator: View {
         HStack(spacing: 2) {
             ForEach(0..<3) { i in
                 RoundedRectangle(cornerRadius: 1)
-                    .fill(Color.blue)
-                    .frame(width: 3, height: 12 * heights[i])
+                    .fill(Color.white)
+                    .frame(width: 2, height: 10 * heights[i])
                     .animation(.easeInOut(duration: 0.2), value: heights[i])
             }
         }

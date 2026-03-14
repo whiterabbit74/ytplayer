@@ -45,7 +45,8 @@ struct VinylRecordView: View {
                     showStatus: false,
                     baseURL: baseURL,
                     downloadProgress: downloadProgress,
-                    isFailed: isFailed
+                    isFailed: isFailed,
+                    isPlaying: false // No eq on record center
                 )
                 .clipShape(Circle())
                 .overlay(Circle().stroke(Color.black.opacity(0.1), lineWidth: 1))
@@ -56,17 +57,8 @@ struct VinylRecordView: View {
             }
             .frame(width: size * 0.95, height: size * 0.95)
             .rotationEffect(.degrees(rotation))
-            .rotation3DEffect(
-                .degrees(isPlaying ? 3 : 0),
-                axis: (x: 1, y: 0.5, z: 0)
-            ) // Static axis wobble
-            .scaleEffect(isPlaying ? 1.02 : 1.0) // Subtle pulse/ready scale
-            .offset(x: isPlaying ? recordOffset : 5) 
+            .offset(x: isPlaying ? recordOffset : 0) 
             .shadow(color: .black.opacity(0.4), radius: 10, x: 5, y: 5)
-            .animation(
-                isPlaying ? .easeInOut(duration: 0.8).repeatForever(autoreverses: true) : .spring(response: 0.6, dampingFraction: 0.7),
-                value: isPlaying
-            )
             
             // The Sleeve
             TrackThumbnail(
@@ -77,13 +69,15 @@ struct VinylRecordView: View {
                 showStatus: false,
                 baseURL: baseURL,
                 downloadProgress: downloadProgress,
-                isFailed: isFailed
+                isFailed: isFailed,
+                isPlaying: isPlaying, // Show eq on sleeve when playing
+                showEqualizer: false
             )
             .offset(x: isPlaying ? -recordOffset / 3 : 0)
             .shadow(color: .black.opacity(0.3), radius: 15, x: 0, y: 10)
-            .animation(.spring(response: 0.6, dampingFraction: 0.7), value: isPlaying)
         }
         .frame(width: totalWidth, height: size)
+        .animation(.spring(response: 0.6, dampingFraction: 0.7), value: isPlaying)
         .onChange(of: isPlaying) { _, playing in
             if playing && scenePhase == .active {
                 startRotation()
@@ -103,29 +97,19 @@ struct VinylRecordView: View {
                 startRotation()
             }
         }
-        .onDisappear {
-            stopRotation()
-        }
     }
 
     private func startRotation() {
-        // Smooth startup (ease in) then linear
-        withAnimation(.timingCurve(0.4, 0, 1, 1, duration: 2)) {
-            rotation += 36
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            if playerService.isPlaying && scenePhase == .active {
-                withAnimation(.linear(duration: 20).repeatForever(autoreverses: false)) {
-                    rotation += 360
-                }
-            }
+        // Use linear animation directly for rotation to avoid "jumping"
+        withAnimation(.linear(duration: 20).repeatForever(autoreverses: false)) {
+            rotation += 360
         }
     }
 
     private func stopRotation() {
-        // Smooth stop (ease out) without snapping back
-        withAnimation(.easeOut(duration: 1.5)) {
-            rotation += 45
+        // Stop exactly where it is
+        withAnimation(.none) {
+            rotation = rotation.truncatingRemainder(dividingBy: 360)
         }
     }
 }

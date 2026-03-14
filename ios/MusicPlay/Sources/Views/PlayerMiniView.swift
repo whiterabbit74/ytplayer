@@ -20,30 +20,28 @@ struct PlayerMiniView: View {
                         showPlayer = true
                     } label: {
                         HStack(spacing: 12) {
-                            TrackThumbnail(
-                                track: track,
-                                size: 44,
-                                forceSquare: true,
-                                cornerRadius: 8,
-                                showStatus: false,
-                                baseURL: baseURL,
-                                downloadProgress: downloadsStore.downloadProgresses[track.id],
-                                isFailed: downloadsStore.failedDownloads.contains(track.id)
-                            )
+                                TrackThumbnail(
+                                    track: track,
+                                    size: 44,
+                                    forceSquare: true,
+                                    cornerRadius: 8,
+                                    showStatus: false,
+                                    baseURL: baseURL,
+                                    downloadProgress: downloadsStore.downloadProgresses[track.id],
+                                    isFailed: downloadsStore.failedDownloads.contains(track.id),
+                                    isPlaying: playerService.isPlaying
+                                )
 
                             ZStack(alignment: .leading) {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    MarqueeText(text: track.title, font: .subheadline.weight(.medium), padding: 20)
+                                    Text(track.title)
+                                        .font(.subheadline.weight(.medium))
+                                        .lineLimit(1)
                                     HStack(spacing: 4) {
                                         if downloadsStore.isDownloaded(id: track.id) {
-                                            Image(systemName: "checkmark.circle.fill")
-                                                .foregroundStyle(.blue)
-                                                .font(.system(size: 10))
+                                            DownloadIcon(size: .small)
                                         }
-                                        Text(track.artist)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                            .lineLimit(1)
+                                        TrackMetadataView(track: track, showDuration: false)
                                     }
                                 }
                                 .id(track.id)
@@ -62,24 +60,12 @@ struct PlayerMiniView: View {
 
                     // Playback controls — do NOT open full player
                     HStack(spacing: 16) {
-                        Button {
-                            HapticManager.shared.trigger(.light)
-                            playerService.togglePlayPause()
-                        } label: {
-                            ZStack {
-                                if playerService.isBuffering {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .primary))
-                                } else {
-                                    Image(systemName: playerService.isPlaying ? "pause.fill" : "play.fill")
-                                        .font(.title3)
-                                        .contentTransition(.symbolEffect(.replace))
-                                }
-                            }
-                            .frame(width: 36, height: 36)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
+                        PlayPauseButton(
+                            isPlaying: playerService.isPlaying,
+                            isBuffering: playerService.isBuffering,
+                            action: { playerService.togglePlayPause() },
+                            style: .mini
+                        )
 
                         Button {
                             HapticManager.shared.trigger(.medium)

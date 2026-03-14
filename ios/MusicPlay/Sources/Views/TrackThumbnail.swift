@@ -11,6 +11,8 @@ struct TrackThumbnail: View {
     var isFailed: Bool = false
     @State private var shakeAmount: CGFloat = 0
 
+    var showEqualizer: Bool = true
+
     var body: some View {
         ZStack {
             CachedAsyncImage(url: thumbURL, contentMode: .fill)
@@ -20,15 +22,12 @@ struct TrackThumbnail: View {
 
             if showStatus {
                 if let progress = downloadProgress {
-                    // Download progress overlay
                     ZStack {
                         Color.black.opacity(0.5)
                             .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-                        
                         Circle()
                             .stroke(Color.white.opacity(0.3), lineWidth: size * 0.06)
                             .frame(width: size * 0.5, height: size * 0.5)
-                        
                         Circle()
                             .trim(from: 0, to: CGFloat(max(0.05, progress)))
                             .stroke(Color.white, style: StrokeStyle(lineWidth: size * 0.06, lineCap: .round))
@@ -39,11 +38,9 @@ struct TrackThumbnail: View {
                     }
                     .frame(width: size, height: size)
                 } else if isFailed {
-                    // Failed indicator
                     ZStack {
                         Color.black.opacity(0.4)
                             .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-                        
                         Image(systemName: "exclamationmark.circle.fill")
                             .font(.system(size: size * 0.4))
                             .foregroundStyle(.red)
@@ -53,32 +50,55 @@ struct TrackThumbnail: View {
                     .frame(width: size, height: size)
                     .onAppear {
                         if isFailed {
-                            withAnimation(.linear(duration: 0.5)) {
-                                shakeAmount = 1
-                            }
-                        }
-                    }
-                    .onChange(of: isFailed) { _, newValue in
-                        if newValue {
-                            shakeAmount = 0
-                            withAnimation(.linear(duration: 0.5)) {
-                                shakeAmount = 1
-                            }
+                            withAnimation(.linear(duration: 0.5)) { shakeAmount = 1 }
                         }
                     }
                 }
             }
+            
+            if isPlaying && showEqualizer {
+                ZStack {
+                    Color.black.opacity(0.3)
+                        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                    EqualizerIndicator()
+                        .scaleEffect(size / 48.0)
+                }
+                .frame(width: size, height: size)
+            }
         }
+    }
+
+    private var isPlaying: Bool { _isPlaying }
+    private let _isPlaying: Bool
+
+    init(
+        track: Track,
+        size: CGFloat,
+        forceSquare: Bool = true,
+        cornerRadius: CGFloat,
+        showStatus: Bool = true,
+        baseURL: String,
+        downloadProgress: Double? = nil,
+        isFailed: Bool = false,
+        isPlaying: Bool = false,
+        showEqualizer: Bool = true
+    ) {
+        self.track = track
+        self.size = size
+        self.forceSquare = forceSquare
+        self.cornerRadius = cornerRadius
+        self.showStatus = showStatus
+        self.baseURL = baseURL
+        self.downloadProgress = downloadProgress
+        self.isFailed = isFailed
+        self._isPlaying = isPlaying
+        self.showEqualizer = showEqualizer
     }
 
     private var thumbURL: URL? {
         let cleaned = track.thumbnail
-        if cleaned.hasPrefix("http") {
-            return URL(string: cleaned)
-        }
-        if cleaned.hasPrefix("/") {
-            return URL(string: baseURL + cleaned)
-        }
+        if cleaned.hasPrefix("http") { return URL(string: cleaned) }
+        if cleaned.hasPrefix("/") { return URL(string: baseURL + cleaned) }
         return URL(string: baseURL + "/" + cleaned)
     }
 }

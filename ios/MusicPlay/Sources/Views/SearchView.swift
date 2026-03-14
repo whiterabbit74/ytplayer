@@ -23,9 +23,7 @@ struct SearchView: View {
             .listStyle(.plain)
             .animation(.easeInOut, value: searchStore.results)
             .safeAreaInset(edge: .bottom) {
-                if playerStore.currentTrack != nil {
-                    Color.clear.frame(height: 70)
-                }
+                MiniPlayerSpacer()
             }
             .navigationTitle("Search")
             .searchable(text: $query, prompt: "Search songs, artists...")

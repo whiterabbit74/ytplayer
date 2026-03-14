@@ -31,7 +31,7 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
 
   if (!token) {
     log.warn({ path: req.path, ip: req.ip }, "No token provided");
-    res.status(401).json({ error: "Not authenticated" });
+    res.status(401).json({ error: { code: "NOT_AUTHENTICATED", message: "Not authenticated" } });
     return;
   }
 
@@ -57,7 +57,7 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
     next();
   } catch (err) {
     log.warn({ path: req.path, ip: req.ip, err }, "Invalid token");
-    res.status(401).json({ error: "Invalid token" });
+    res.status(401).json({ error: { code: "INVALID_TOKEN", message: "Invalid token" } });
   }
 }
 

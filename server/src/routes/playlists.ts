@@ -25,9 +25,11 @@ router.get("/", (req, res) => {
   
   const result = playlists.map(p => {
     const tracks = db.prepare("SELECT thumbnail FROM playlist_tracks WHERE playlist_id = ? ORDER BY position LIMIT 4").all(p.id) as any[];
+    const count = db.prepare("SELECT COUNT(*) as count FROM playlist_tracks WHERE playlist_id = ?").get(p.id) as any;
     return {
       ...p,
-      thumbnails: tracks.map(t => t.thumbnail)
+      thumbnails: tracks.map(t => t.thumbnail),
+      trackCount: count?.count || 0
     };
   });
   
@@ -37,7 +39,7 @@ router.get("/", (req, res) => {
 // POST /api/playlists
 router.post("/", (req, res) => {
   const { name } = req.body;
-  if (!name) return res.status(400).json({ error: "Name is required" });
+  if (!name) return res.status(400).json({ error: { code: "BAD_REQUEST", message: "Name is required" } });
 
   const db = getDb();
   const result = db.prepare("INSERT INTO playlists (name, user_id) VALUES (?, ?)").run(name, (req as AuthRequest).userId);
@@ -52,7 +54,7 @@ router.put("/:id", (req, res) => {
   }
   const { name } = req.body;
   if (!name || !name.trim()) {
-    return res.status(400).json({ error: "Name is required" });
+    return res.status(400).json({ error: { code: "BAD_REQUEST", message: "Name is required" } });
   }
   const db = getDb();
   db.prepare("UPDATE playlists SET name = ? WHERE id = ? AND user_id = ?").run(name.trim(), req.params.id, (req as AuthRequest).userId);
@@ -101,7 +103,7 @@ router.post("/:id/tracks", (req, res) => {
   }
   const { video_id, title, artist, thumbnail, duration, view_count, like_count } = req.body;
   if (!video_id || !title) {
-    return res.status(400).json({ error: "video_id and title are required" });
+    return res.status(400).json({ error: { code: "BAD_REQUEST", message: "video_id and title are required" } });
   }
 
   const db = getDb();
@@ -128,7 +130,7 @@ router.put("/:id/tracks/reorder", (req, res) => {
   }
   const { trackIds } = req.body;
   if (!Array.isArray(trackIds)) {
-    return res.status(400).json({ error: "trackIds array is required" });
+    return res.status(400).json({ error: { code: "BAD_REQUEST", message: "trackIds array is required" } });
   }
 
   const db = getDb();
@@ -145,7 +147,7 @@ router.put("/:id/tracks/reorder", (req, res) => {
 // DELETE /api/playlists/:playlistId/tracks/:trackId
 router.delete("/:playlistId/tracks/:trackId", (req, res) => {
   if (!verifyPlaylistOwner(req.params.playlistId, (req as AuthRequest).userId!)) {
-    res.status(404).json({ error: "Playlist not found" });
+    res.status(404).json({ error: { code: "NOT_FOUND", message: "Playlist not found" } });
     return;
   }
   const db = getDb();

@@ -62,31 +62,21 @@ struct TrackRow: View {
                 cornerRadius: 8,
                 baseURL: baseURL,
                 downloadProgress: downloadProgress,
-                isFailed: isFailedDownload
+                isFailed: isFailedDownload,
+                isPlaying: playerStore.currentTrack?.id == track.id
             )
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    if playerStore.currentTrack?.id == track.id {
-                        EqualizerIndicator()
-                    }
                     Text(track.title).font(.headline).lineLimit(1)
                 }
                 HStack(spacing: 4) {
                     if isDownloaded {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                            .font(.caption2)
-                            .shadow(color: .green.opacity(0.4), radius: 2)
+                        DownloadIcon(size: .custom(12), showShadow: true)
                             .transition(.scale.combined(with: .opacity))
                     }
-                    Text(track.artist)
-                    Text("•")
-                    Text(track.formattedDuration)
+                    TrackMetadataView(track: track)
                 }
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
             }
 
             Spacer()
@@ -120,8 +110,10 @@ struct TrackRow: View {
                     }
                     
                     if let onToggleFavorite {
-                        Button(action: onToggleFavorite) {
-                            Label(isFavorite ? "Remove from Favorites" : "Add to Favorites", systemImage: isFavorite ? "heart.slash" : "heart")
+                        Button {
+                            onToggleFavorite()
+                        } label: {
+                            Label(isFavorite ? "Remove from Favorites" : "Add to Favorites", systemImage: isFavorite ? "heart.fill" : "heart")
                         }
                     }
                     

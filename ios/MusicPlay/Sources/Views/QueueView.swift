@@ -32,9 +32,7 @@ struct QueueView: View {
             }
             .environment(\.editMode, $editMode)
             .safeAreaInset(edge: .bottom) {
-                if playerStore.currentTrack != nil {
-                    Color.clear.frame(height: 70)
-                }
+                MiniPlayerSpacer()
             }
             .overlay {
                 if playerStore.queue.isEmpty {
@@ -95,9 +93,7 @@ struct QueueView: View {
                     .lineLimit(1)
                 HStack(spacing: 4) {
                     if downloadsStore.isDownloaded(id: track.id) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.blue)
-                            .font(.system(size: 10))
+                        DownloadIcon(size: .small)
                     }
                     Text(track.artist)
                         .font(.caption)

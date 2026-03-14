@@ -10,7 +10,7 @@ const router = Router();
 router.post("/login", (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    res.status(400).json({ error: "Email and password are required" });
+    res.status(400).json({ error: { code: "BAD_REQUEST", message: "Email and password are required" } });
     return;
   }
 
@@ -18,7 +18,7 @@ router.post("/login", (req, res) => {
   const user = db.prepare("SELECT id, email, password_hash FROM users WHERE email = ?").get(email) as any;
 
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
-    res.status(401).json({ error: "Invalid email or password" });
+    res.status(401).json({ error: { code: "UNAUTHORIZED", message: "Invalid email or password" } });
     return;
   }
 
@@ -44,7 +44,7 @@ router.get("/me", requireAuth, (req: AuthRequest, res) => {
   const db = getDb();
   const user = db.prepare("SELECT id, email FROM users WHERE id = ?").get(req.userId) as any;
   if (!user) {
-    res.status(401).json({ error: "User not found" });
+    res.status(401).json({ error: { code: "NOT_FOUND", message: "User not found" } });
     return;
   }
   res.json({ id: user.id, email: user.email });

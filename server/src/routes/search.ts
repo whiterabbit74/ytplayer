@@ -6,7 +6,7 @@ const router = Router();
 router.get("/", async (req, res) => {
   const query = req.query.q as string;
   if (!query) {
-    return res.status(400).json({ error: "Query parameter 'q' is required" });
+    return res.status(400).json({ error: { code: "BAD_REQUEST", message: "Query parameter 'q' is required" } });
   }
 
   try {

@@ -44,8 +44,8 @@ struct Track: Codable, Identifiable, Hashable {
         case artist
         case thumbnail
         case duration
-        case viewCount
-        case likeCount
+        case viewCount = "view_count"
+        case likeCount = "like_count"
         case rowId = "_rowId"
     }
 }
@@ -59,6 +59,7 @@ struct Playlist: Codable, Identifiable, Hashable {
     let id: Int
     let name: String
     let thumbnails: [String]?
+    let trackCount: Int?
 }
 
 struct PlayerState: Codable {
@@ -87,8 +88,8 @@ struct AddTrackRequest: Codable {
     let artist: String
     let thumbnail: String
     let duration: Int
-    let viewCount: Int
-    let likeCount: Int
+    let view_count: Int
+    let like_count: Int
 }
 
 struct AddFavoriteRequest: Codable {

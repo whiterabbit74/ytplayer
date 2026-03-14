@@ -174,7 +174,7 @@ struct SettingsView: View {
                     HStack {
                         Label("Версия", systemImage: "info.circle")
                         Spacer()
-                        Text("1.2.5")
+                        Text("1.2.7")
                             .foregroundStyle(.secondary)
                     }
                 } header: {

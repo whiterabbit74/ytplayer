@@ -42,7 +42,8 @@ struct PlaylistsView: View {
                             name: "Downloads",
                             thumbnails: appState.downloadsStore.downloadedTracks.prefix(4).map { $0.thumbnail },
                             defaultIcon: "arrow.down.circle",
-                            baseURL: appState.baseURL
+                            baseURL: appState.baseURL,
+                            count: appState.downloadsStore.downloadedTracks.count
                         )
                     }
 
@@ -62,7 +63,8 @@ struct PlaylistsView: View {
                             name: "Recently Played",
                             thumbnails: appState.historyStore.history.prefix(4).map { $0.thumbnail },
                             defaultIcon: "clock.arrow.circlepath",
-                            baseURL: appState.baseURL
+                            baseURL: appState.baseURL,
+                            count: appState.historyStore.history.count
                         )
                     }
 
@@ -83,7 +85,8 @@ struct PlaylistsView: View {
                                 name: pl.name,
                                 thumbnails: pl.thumbnails ?? [],
                                 defaultIcon: "music.note",
-                                baseURL: appState.baseURL
+                                baseURL: appState.baseURL,
+                                count: pl.trackCount ?? 0
                             )
                         }
                     }
@@ -96,9 +99,7 @@ struct PlaylistsView: View {
                 }
                 .listStyle(.plain)
                 .safeAreaInset(edge: .bottom) {
-                    if appState.playerStore.currentTrack != nil {
-                        Color.clear.frame(height: 70)
-                    }
+                    MiniPlayerSpacer()
                 }
             }
             .navigationTitle("Playlists")
@@ -279,6 +280,7 @@ struct PlaylistRow: View {
     let thumbnails: [String]
     let defaultIcon: String
     let baseURL: String
+    let count: Int
     
     var body: some View {
         HStack(spacing: 20) {
@@ -289,14 +291,18 @@ struct PlaylistRow: View {
                     .font(.headline)
                     .foregroundStyle(.primary)
                 
-                if !thumbnails.isEmpty {
-                    Text("\(thumbnails.count)+ tracks")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                Text(pluralizedTracks(count))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 8)
+    }
+    
+    private func pluralizedTracks(_ count: Int) -> String {
+        // Simple pluralization for now, could use a helper for ru/en
+        if count == 0 { return "No tracks" }
+        return "\(count) track\(count == 1 ? "" : "s")"
     }
 }
 

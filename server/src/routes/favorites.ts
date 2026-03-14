@@ -44,7 +44,7 @@ router.get("/ids", (req, res) => {
 router.post("/", (req, res) => {
   const { video_id, title, artist, thumbnail, duration } = req.body;
   if (!video_id || !title) {
-    return res.status(400).json({ error: "video_id and title are required" });
+    return res.status(400).json({ error: { code: "BAD_REQUEST", message: "video_id and title are required" } });
   }
 
   const db = getDb();
@@ -63,7 +63,7 @@ router.post("/", (req, res) => {
     res.status(201).json({ id: result.lastInsertRowid });
   } catch (err: any) {
     if (err.message.includes("UNIQUE constraint")) {
-      return res.status(400).json({ error: "Already in favorites" });
+      return res.status(400).json({ error: { code: "ALREADY_EXISTS", message: "Already in favorites" } });
     }
     throw err;
   }
@@ -73,7 +73,7 @@ router.post("/", (req, res) => {
 router.put("/reorder", (req, res) => {
   const { trackIds } = req.body;
   if (!Array.isArray(trackIds)) {
-    return res.status(400).json({ error: "trackIds array is required" });
+    return res.status(400).json({ error: { code: "BAD_REQUEST", message: "trackIds array is required" } });
   }
 
   const db = getDb();

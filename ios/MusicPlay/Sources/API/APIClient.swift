@@ -287,8 +287,8 @@ final class APIClient {
             artist: track.artist,
             thumbnail: track.thumbnail,
             duration: track.duration,
-            viewCount: track.viewCount ?? 0,
-            likeCount: track.likeCount ?? 0
+            view_count: track.viewCount ?? 0,
+            like_count: track.likeCount ?? 0
         )
         try await requestVoid("/api/v1/playlists/\(id)/tracks", method: "POST", body: body)
     }

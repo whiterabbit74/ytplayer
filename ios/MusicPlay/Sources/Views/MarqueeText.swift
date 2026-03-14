@@ -4,6 +4,7 @@ struct MarqueeText: View {
     let text: String
     let font: Font
     var padding: CGFloat = 30
+    var speed: Double = 30 // Points per second
 
     @State private var offset: CGFloat = 0
     @State private var textSize: CGSize = .zero
@@ -16,8 +17,6 @@ struct MarqueeText: View {
                 Text(text)
                     .font(font)
                     .lineLimit(1)
-                    .multilineTextAlignment(.center)
-                    .frame(minWidth: geometry.size.width, alignment: .center)
                     .fixedSize(horizontal: true, vertical: false)
                     .background(
                         GeometryReader { textGeo in
@@ -30,7 +29,6 @@ struct MarqueeText: View {
                         }
                     )
                     .offset(x: offset)
-                    .padding(.trailing, needsScroll ? padding : 0)
                     .onAppear {
                         containerSize = geometry.size
                         startAnimation()
@@ -44,8 +42,7 @@ struct MarqueeText: View {
                         startAnimation()
                     }
             }
-            .disabled(true) // Disable manual scrolling
-            // Apply fade at the edges
+            .disabled(true)
             .mask(
                 HStack(spacing: 0) {
                     if needsScroll {
@@ -53,7 +50,7 @@ struct MarqueeText: View {
                             gradient: Gradient(colors: [Color.black.opacity(0), Color.black]),
                             startPoint: .leading, endPoint: .trailing
                         )
-                        .frame(width: 10)
+                        .frame(width: 15)
                     }
 
                     Color.black
@@ -63,7 +60,7 @@ struct MarqueeText: View {
                             gradient: Gradient(colors: [Color.black, Color.black.opacity(0)]),
                             startPoint: .leading, endPoint: .trailing
                         )
-                        .frame(width: 10)
+                        .frame(width: 15)
                     }
                 }
             )
@@ -77,23 +74,30 @@ struct MarqueeText: View {
 
     private func startAnimation() {
         scrollTask?.cancel()
-
-        withAnimation(.none) {
-            offset = 0
-        }
+        offset = 0
 
         guard needsScroll else { return }
 
         let scrollDistance = textSize.width - containerSize.width + padding
-        let duration = Double(scrollDistance) / 30.0 // 30 points per second
+        let duration = Double(scrollDistance) / speed
 
         scrollTask = Task {
-            try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
             guard !Task.isCancelled else { return }
-            await MainActor.run {
-                withAnimation(.linear(duration: duration).repeatForever(autoreverses: false)) {
-                    offset = -scrollDistance
+            
+            while !Task.isCancelled {
+                await MainActor.run {
+                    withAnimation(.linear(duration: duration)) {
+                        offset = -scrollDistance
+                    }
                 }
+                try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000) + 1_000_000_000)
+                guard !Task.isCancelled else { return }
+                
+                await MainActor.run {
+                    offset = 0
+                }
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
             }
         }
     }

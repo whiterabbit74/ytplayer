@@ -59,9 +59,7 @@ struct FavoritesView: View {
             .environment(\.editMode, $editMode)
             .listStyle(.plain)
             .safeAreaInset(edge: .bottom) {
-                if appState.playerStore.currentTrack != nil {
-                    Color.clear.frame(height: 70)
-                }
+                MiniPlayerSpacer()
             }
             .navigationTitle("Favorites")
             .toolbar {

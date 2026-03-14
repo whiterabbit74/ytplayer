@@ -70,43 +70,36 @@ struct PlayerFullView: View {
                                 showStatus: false,
                                 baseURL: baseURL,
                                 downloadProgress: downloadsStore.downloadProgresses[track.id],
-                                isFailed: downloadsStore.failedDownloads.contains(track.id)
+                                isFailed: downloadsStore.failedDownloads.contains(track.id),
+                                isPlaying: playerService.isPlaying,
+                                showEqualizer: false
                             )
                             .shadow(color: .black.opacity(0.5), radius: 30, x: 0, y: 15)
-                            .transition(.asymmetric(insertion: .scale(scale: 0.9).combined(with: .opacity), removal: .opacity))
+                            .transition(.opacity.combined(with: .scale(scale: 0.98)))
                         }
                     }
                     // Apply animation to track changes
                     .id(track.id)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.75), value: track.id)
+                    .animation(.easeInOut(duration: 0.4), value: track.id)
                     
                     Spacer(minLength: 40)
 
                     // 2. Info Section (Centered)
                     VStack(spacing: 8) {
-                        MarqueeText(text: track.title, font: .title3.weight(.bold))
+                        MarqueeText(text: track.title, font: .title3.weight(.bold), speed: 20)
                             .padding(.horizontal, 40)
                         
                         Button {
                             HapticManager.shared.trigger(.light)
-                            // 1. Switch to Search tab
                             appState.selectedTab = 0
-                            // 2. Trigger search via notification
                             NotificationCenter.default.post(name: NSNotification.Name("PerformSearch"), object: track.artist)
-                            // 3. Dismiss player
                             dismiss()
                         } label: {
                             HStack(spacing: 6) {
                                 if downloadsStore.isDownloaded(id: track.id) {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(.blue)
-                                        .font(.caption)
+                                    DownloadIcon(size: .medium)
                                 }
-                                Text(track.artist)
-                                    .font(.body)
-                                    .foregroundStyle(.secondary)
-                                    .multilineTextAlignment(.center)
-                                    .lineLimit(1)
+                                TrackMetadataView(track: track, showDuration: false)
                             }
                         }
                         .buttonStyle(.plain)
@@ -129,28 +122,12 @@ struct PlayerFullView: View {
                         }
                         .buttonStyle(ScaleButtonStyle())
 
-                        Button {
-                            HapticManager.shared.trigger(.light)
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                                playerService.togglePlayPause()
-                            }
-                        } label: {
-                            ZStack {
-                                Circle().fill(Color.white.opacity(0.1))
-                                    .frame(width: 80, height: 80)
-                                if playerService.isBuffering {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                        .scaleEffect(1.5)
-                                } else {
-                                    Image(systemName: playerService.isPlaying ? "pause.fill" : "play.fill")
-                                        .font(.system(size: 48, weight: .bold))
-                                        .contentTransition(.symbolEffect(.replace))
-                                }
-                            }
-                            .scaleEffect(playerService.isPlaying ? 1.0 : 0.9)
-                            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: playerService.isPlaying)
-                        }
+                        PlayPauseButton(
+                            isPlaying: playerService.isPlaying,
+                            isBuffering: playerService.isBuffering,
+                            action: { playerService.togglePlayPause() },
+                            style: .large
+                        )
 
                         Button {
                             HapticManager.shared.trigger(.medium)
@@ -183,16 +160,12 @@ struct PlayerFullView: View {
                         // Left-side: Like and More Menu
                         HStack(spacing: 24) {
                             // Like
-                            Button {
-                                HapticManager.shared.trigger(.medium)
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
-                                    Task { await favoritesStore.toggleFavorite(track) }
-                                }
-                            } label: {
-                                Image(systemName: favoritesStore.isFavorite(track.id) ? "heart.fill" : "heart")
-                                    .foregroundStyle(favoritesStore.isFavorite(track.id) ? .white : .white.opacity(0.5))
-                                    .scaleEffect(favoritesStore.isFavorite(track.id) ? 1.2 : 1.0)
-                            }
+                            FavoriteButton(
+                                isFavorite: favoritesStore.isFavorite(track.id),
+                                action: { Task { await favoritesStore.toggleFavorite(track) } },
+                                size: 24,
+                                style: .standard
+                            )
                             
                             // More Menu (Ellipsis)
                             Menu {
@@ -221,11 +194,6 @@ struct PlayerFullView: View {
                                     Button { playerStore.addToQueueNext(track) } label: {
                                         Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
                                     }
-                                    Menu("Add to Playlist...") {
-                                        ForEach(playlistsStore.playlists) { pl in
-                                            Button(pl.name) { Task { await playlistsStore.addTrack(playlistId: pl.id, track: track) } }
-                                        }
-                                    }
                                 }
                             } label: {
                                 Image(systemName: "ellipsis.circle")
@@ -235,11 +203,21 @@ struct PlayerFullView: View {
                         
                         Spacer()
                         
-                        // Right-side: AirPlay and Queue
+                        // Center-side: Current Output
+                        AudioRouteLabel()
+                        
+                        Spacer()
+                        
+                        // Right-side: Playlists and Queue
                         HStack(spacing: 24) {
-                            AirPlayButton()
-                                .frame(width: 24, height: 24)
-                                .foregroundStyle(.white.opacity(0.5))
+                            Menu {
+                                ForEach(playlistsStore.playlists) { pl in
+                                    Button(pl.name) { Task { await playlistsStore.addTrack(playlistId: pl.id, track: track) } }
+                                }
+                            } label: {
+                                Image(systemName: "plus.square.on.square")
+                                    .foregroundStyle(.white.opacity(0.5))
+                            }
                             
                             Button {
                                 showQueue.toggle()
